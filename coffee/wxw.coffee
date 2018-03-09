@@ -6,10 +6,17 @@
 00     00  000   000  00     00  
 ###
 
-module.exports =
+if not module.parent?.filename? or module.parent.filename.endsWith 'default_app.asar\\main.js'
     
-    kernel:     require './kernel'
-    user:       require './user'
-    zorder:     require './zorder'
-    winlist:    require './winlist'
-    foreground: require './foreground'
+    require './app'
+
+else
+
+    module.exports =
+        
+        kernel:     require './kernel'
+        user:       require './user'
+        zorder:     require './zorder'
+        winlist:    require './winlist'
+        foreground: require './foreground'
+    
