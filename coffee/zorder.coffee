@@ -7,7 +7,8 @@
 ###
 
 user = require './user'
-    
+ref  = require 'ref'
+
 zOrder = (hWnd) ->
     
     GW_HWNDPREV = 3
