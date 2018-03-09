@@ -9,12 +9,12 @@
 { slash, log } = require 'kxk'
 
 user    = require './user'
-winList = require './winlist'
+winlist = require './winlist'
     
 foreground = (exePath) ->
     
     exePath = slash.resolve exePath
-    appWins = winList().filter (win) -> win.path == exePath
+    appWins = winlist().filter (win) -> win.path == exePath
     visWins = appWins.filter (win) -> not win.minimized
     
     if visWins.length == 0

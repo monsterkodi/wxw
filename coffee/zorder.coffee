@@ -6,7 +6,7 @@
 0000000   0000000   000   000  0000000    00000000  000   000  
 ###
 
-user = require 'user'
+user = require './user'
     
 zOrder = (hWnd) ->
     
