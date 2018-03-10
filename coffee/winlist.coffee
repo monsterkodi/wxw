@@ -6,21 +6,18 @@
 00     00  000  000   000  0000000  000  0000000      000     
 ###
 
-{ slash, empty, log } = require 'kxk'
+{ empty, log } = require 'kxk'
 
-ffi    = require 'ffi'
-ref    = require 'ref'
-wchar  = require 'ref-wchar'
+ffi   = require 'ffi'
+ref   = require 'ref'
+wchar = require 'ref-wchar'
 
-user   = require './user'
-kernel = require './kernel'
-zorder = require './zorder'
+user    = require './user'
+wininfo = require './wininfo'
 
 winList = ->
      
-    WS_MINIMIZE = 0x20000000
-    GWL_STYLE   = -16
-    GW_OWNER    = 4
+    GW_OWNER = 4
     
     windows = []
     
@@ -34,44 +31,15 @@ winList = ->
         if not visible
             return 1
         
-        winID = ref.address hWnd
+        win = wininfo hWnd
         
-        titleLength = user.GetWindowTextLengthW(hWnd)+2
-        titleBuffer = Buffer.alloc titleLength * 2
-        user.GetWindowTextW hWnd, titleBuffer, titleLength
-        titleClean = ref.reinterpretUntilZeros titleBuffer, wchar.size
-        title      = wchar.toString titleClean
-        
-        if empty title
+        if empty win.title
             return 1
             
-        if title == 'Program Manager'
+        if win.title == 'Program Manager'
             return 1
         
-        minimized  = user.GetWindowLongW(hWnd, GWL_STYLE) & WS_MINIMIZE
-            
-        procBuffer = ref.alloc 'uint32'
-        threadID   = user.GetWindowThreadProcessId hWnd, procBuffer
-        procID     = ref.get procBuffer
-        
-        procHandle = kernel.OpenProcess 0x1000, false, procID
-        pathBuffer = Buffer.alloc 10000
-        pathLength = ref.alloc 'uint32', 5000
-        kernel.QueryFullProcessImageNameW procHandle, 0, pathBuffer, pathLength
-        pathString = wchar.toString ref.reinterpretUntilZeros pathBuffer, wchar.size
-        path       = pathString and slash.path(pathString) or ''
-        
-        kernel.CloseHandle procHandle
-                
-        windows.push
-            zOrder:     zorder hWnd
-            hwnd:       hWnd
-            title:      title
-            minimized:  minimized
-            winID:      winID
-            procID:     procID
-            threadID:   threadID
-            path:       path
+        windows.push win
             
         return 1
     

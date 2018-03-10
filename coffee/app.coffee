@@ -6,9 +6,10 @@
 00     00  000   000  00     00        000   000  000        000        
 ###
 
-{ prefs, about, log } = require 'kxk'
+{ prefs, about, log, _ } = require 'kxk'
 
 user     = require './user'
+wininfo  = require './wininfo'
 
 pkg      = require '../package.json'
 electron = require 'electron'
@@ -34,7 +35,27 @@ app.on 'window-all-closed', (event) -> event.preventDefault()
 # 000   000  000          000     000  000   000  000  0000  
 # 000   000   0000000     000     000   0000000   000   000  
 
-action = (dir) ->
+action = (act) ->
+    
+    switch act
+        when 'minimize' then minimizeWindow()
+        else moveWindow act
+    
+ensureFocusWindow = ->
+    
+    if not user.GetForegroundWindow()
+        log 'no focus window!'
+    # else
+        # log wininfo(user.GetForegroundWindow()).path
+        
+minimizeWindow = ->
+    
+    if hWnd = user.GetForegroundWindow()
+        SW_MINIMIZE = 6
+        user.ShowWindow hWnd, SW_MINIMIZE
+        setTimeout ensureFocusWindow, 50
+        
+moveWindow = (dir) ->
     
     Rect = Struct left:'long', top:'long', right:'long', bottom:'long'
     rect = new Rect
@@ -52,8 +73,8 @@ action = (dir) ->
         [x,y,w,h] = switch dir
             when 'left'   then [-10,             0, rect.right/2+20, rect.bottom+10]
             when 'right'  then [rect.right/2-10, 0, rect.right/2+20, rect.bottom+10]
-            when 'up'     then [-10,             0, rect.right+20,   rect.bottom+10]
             when 'down'   then [rect.right/4-10, 0, rect.right/2+20, rect.bottom+10]
+            when 'up'     then [rect.right/6-10, 0, 2/3*rect.right+20,   rect.bottom+10]
         
         sl = 20 > Math.abs wr.left   -  x
         sr = 20 > Math.abs wr.right  - (x+w)
@@ -64,17 +85,17 @@ action = (dir) ->
             switch dir
                 when 'left'  then w  = rect.right/4+20
                 when 'right' then w  = rect.right/4+20;   x = 3*rect.right/4-10
-                when 'up'    then w  = 2/3*rect.right+20; x = rect.right/6-10
                 when 'down'  then h  = rect.bottom/2+20;  y = rect.bottom/2-10
+                when 'up'    then w  = rect.right+20; x = -10
         
         user.SetWindowPos hWnd, null, x, y, w, h, SWP_NOZORDER
     
     
-#00000000   00000000   0000000   0000000    000   000
-#000   000  000       000   000  000   000   000 000 
-#0000000    0000000   000000000  000   000    00000  
-#000   000  000       000   000  000   000     000   
-#000   000  00000000  000   000  0000000       000   
+# 00000000   00000000   0000000   0000000    000   000
+# 000   000  000       000   000  000   000   000 000 
+# 0000000    0000000   000000000  000   000    00000  
+# 000   000  000       000   000  000   000     000   
+# 000   000  00000000  000   000  0000000       000   
 
 app.on 'ready', ->
     
@@ -91,13 +112,17 @@ app.on 'ready', ->
     ]
     
     app.dock?.hide()
-            
-    prefs.init 
-        left:  'ctrl+alt+left'
-        right: 'ctrl+alt+right'
-        up:    'ctrl+alt+up'
-        down:  'ctrl+alt+down'
+    
+    keys = 
+        left:      'ctrl+alt+left'
+        right:     'ctrl+alt+right'
+        up:        'ctrl+alt+up'
+        down:      'ctrl+alt+down'
+        minimize:  'ctrl+alt+m'
+        
+    prefs.init keys
 
-    for a in ['left', 'right', 'up', 'down']
+    for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
+        
   
