@@ -11,16 +11,18 @@ if not module.parent?.filename? or module.parent.filename.endsWith 'default_app.
     require './app'
 
 else
-
+    
     module.exports =
         
+        user:       require './user'
         advapi:     require './advapi'
         kernel:     require './kernel'
-        user:       require './user'
         shell:      require './shell'
+        rect:       require './rect'
+        struct:     require './struct'
         zorder:     require './zorder'
         winlist:    require './winlist'
         wininfo:    require './wininfo'
         foreground: require './foreground'
         active:     require('./user').GetForegroundWindow
-    
+        

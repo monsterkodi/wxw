@@ -17,6 +17,7 @@ user = new ffi.Library 'User32.dll',
     GetDesktopWindow:           ['pointer', []]
     GetForegroundWindow:        ['pointer', []]
     GetWindow:                  ['pointer', ['pointer', 'uint32']]
+    GetWindowDC:                ['pointer', ['pointer']]
     GetWindowLongW:             ['long',    ['pointer', 'int']]
     GetWindowRect:              ['int',     ['pointer', 'pointer']]
     GetWindowTextW:             ['int',     ['pointer', 'pointer', 'int']]
