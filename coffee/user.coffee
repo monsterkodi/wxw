@@ -13,6 +13,7 @@ user = new ffi.Library 'User32.dll',
     AttachThreadInput:          ['int',     ['uint32', 'uint32', 'int']]
     BringWindowToTop:           ['int',     ['pointer']]
     EnumWindows:                ['int',     ['pointer', 'pointer']]
+    ExitWindowsEx:              ['int',     ['uint32', 'uint32']]
     GetDesktopWindow:           ['pointer', []]
     GetForegroundWindow:        ['pointer', []]
     GetWindow:                  ['pointer', ['pointer', 'uint32']]

@@ -13,6 +13,7 @@ kernel = new ffi.Library 'kernel32',
     OpenProcess:                ['pointer', ['uint32', 'int', 'uint32']]
     CloseHandle:                ['int',     ['pointer']]
     QueryFullProcessImageNameW: ['int',     ['pointer', 'uint32', 'pointer', 'pointer']]
-    GetCurrentThreadId:         ['uint32', []]
+    GetCurrentThreadId:         ['uint32',  []]
+    GetCurrentProcess:          ['pointer', []]
 
 module.exports = kernel

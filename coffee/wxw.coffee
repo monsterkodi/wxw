@@ -14,9 +14,13 @@ else
 
     module.exports =
         
+        advapi:     require './advapi'
         kernel:     require './kernel'
         user:       require './user'
+        shell:      require './shell'
         zorder:     require './zorder'
         winlist:    require './winlist'
+        wininfo:    require './wininfo'
         foreground: require './foreground'
+        active:     require('./user').GetForegroundWindow
     

@@ -10,7 +10,6 @@
 
 ffi   = require 'ffi'
 ref   = require 'ref'
-wchar = require 'ref-wchar'
 
 user    = require './user'
 wininfo = require './wininfo'
