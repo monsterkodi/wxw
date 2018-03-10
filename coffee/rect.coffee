@@ -21,7 +21,7 @@ module.exports =
     workarea: ->
         
         rect = new struct.Rect
-        SPI_GETWORKAREA= 0x0030
+        SPI_GETWORKAREA = 0x30
         user.SystemParametersInfoW SPI_GETWORKAREA, 0, rect.ref(), 0
         convert rect
         
