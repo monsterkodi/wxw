@@ -15,6 +15,7 @@ electron = require 'electron'
 Struct   = require 'ref-struct'
 
 app      = electron.app
+Menu     = electron.Menu
 tray     = null
 
 showAbout = ->
@@ -75,9 +76,20 @@ action = (dir) ->
 #000   000  000       000   000  000   000     000   
 #000   000  00000000  000   000  0000000       000   
 
-app.on 'ready', -> 
+app.on 'ready', ->
+    
     tray = new electron.Tray "#{__dirname}/../img/menu.png"
     tray.on 'click', showAbout
+    tray.on 'double-click', -> app.exit 0; process.exit 0
+    
+    tray.setContextMenu Menu.buildFromTemplate [
+        label: "Quit"
+        click: -> app.exit 0; process.exit 0
+    ,
+        label: "About"
+        click: showAbout
+    ]
+    
     app.dock?.hide()
             
     prefs.init 

@@ -1,6 +1,6 @@
 name            wxw
-version         0.1.0
-description     wxw
+version         0.2.0
+description     moves my windows
 main            js/wxw.js
 scripts
                 win  bash ./bin/buildwin.sh
