@@ -6,7 +6,7 @@
 00     00  000   000  00     00        000   000  000        000        
 ###
 
-{ prefs, about, slash, childp, error, log, _ } = require 'kxk'
+{ prefs, about, slash, childp, karg, error, log, _ } = require 'kxk'
 
 user     = require './user'
 wininfo  = require './wininfo'
@@ -19,6 +19,13 @@ app      = electron.app
 Menu     = electron.Menu
 tray     = null
 
+args = karg """
+wxw
+    debug  . ? log debug    . = false . - D
+
+version  #{pkg.version}
+"""
+
 #  0000000    0000000  000000000  000   0000000   000   000  
 # 000   000  000          000     000  000   000  0000  000  
 # 000000000  000          000     000  000   000  000 0 000  
@@ -29,7 +36,7 @@ action = (act) ->
     
     switch act
         when 'minimize'   then minimizeWindow()
-        when 'screenzoom' then require('./screenzoom')()
+        when 'screenzoom' then require('./screenzoom').start()
         else moveWindow act
         
 # 00     00  000  000   000  000  00     00  000  0000000  00000000  
@@ -137,3 +144,6 @@ app.on 'ready', ->
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
         
   
+if args.debug
+    require('./screenzoom').start debug:true
+    
