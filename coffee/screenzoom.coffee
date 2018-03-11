@@ -8,6 +8,7 @@
 
 rect     = require './rect'
 electron = require 'electron'
+robot    = require 'robotjs' 
 
 zoomWin  = null
 vw = electron.screen.getPrimaryDisplay().workAreaSize.width
@@ -117,6 +118,7 @@ init = ->
     
     a =$ 'image'
     a.ondblclick   = onDblClick
+    a.onmousemove  = onMouseMove
     a.onmousewheel = onWheel
     a.onkeydown    = done
     if not win.debug
@@ -172,7 +174,60 @@ onWheel = (event) ->
     
     scale *= scaleFactor
     transform()
+    
+robotPos = -> pos(robot.getMousePos()).div(pos(robot.getScreenSize().width,robot.getScreenSize().height)).mul pos(vw,vh)
+
+borderTimer = null
+onMouseMove = (event) ->
+    if not borderTimer
+        borderScroll()
+
+mapRange = (value, valueRange, targetRange) ->
+    targetWidth   = targetRange[1] - targetRange[0]
+    valueWidth    = valueRange[1]  - valueRange[0]
+    clampedValue  = clamp valueRange[0], valueRange[1], value
+    relativeValue = (clampedValue - valueRange[0]) / valueWidth
+    targetRange[0] + targetWidth * relativeValue
         
+scrollSpeed = 0
+doScroll = ->
+    transform()
+    ms = mapRange scrollSpeed, [0,1], [1000/10, 1000/30]
+    borderTimer = setTimeout borderScroll, ms
+    
+borderScroll = ->
+
+    clearTimeout borderTimer
+    borderTimer = null
+    
+    mousePos = robotPos()
+    
+    scroll = false
+    border = 200
+    
+    direction = pos(vw,vh).times(0.5).to(mousePos).mul(pos(1/vw,1/vh)).times(-1)
+    
+    if mousePos.x < border
+        scrollSpeed = (border-mousePos.x)/border
+        offset.add direction.times (1.0+scrollSpeed*30)/scale
+        scroll = true
+    else if mousePos.x > vw-border
+        scrollSpeed = (border-(vw-mousePos.x))/border
+        offset.add direction.times (1.0+scrollSpeed*30)/scale
+        scroll = true
+        
+    if mousePos.y < border
+        scrollSpeed = (border-mousePos.y)/border
+        offset.add direction.times (1.0+scrollSpeed*30)/scale
+        scroll = true
+    else if mousePos.y > vh-border
+        scrollSpeed = (border-(vh-mousePos.y))/border
+        offset.add direction.times (1.0+scrollSpeed*30)/scale
+        scroll = true
+        
+    if scroll
+        doScroll()
+    
 # 0000000    00000000    0000000    0000000   
 # 000   000  000   000  000   000  000        
 # 000   000  0000000    000000000  000  0000  
