@@ -138,8 +138,8 @@ app.on 'ready', ->
         right:      'ctrl+alt+right'
         up:         'ctrl+alt+up'
         down:       'ctrl+alt+down'
-        minimize:   'ctrl+alt+m'
-        screenzoom: 'ctrl+alt+z'
+        minimize:   'ctrl+h'
+        screenzoom: 'alt+z'
         
     prefs.init keys
 

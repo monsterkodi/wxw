@@ -10,6 +10,8 @@ rect     = require './rect'
 electron = require 'electron'
 
 zoomWin  = null
+vw = electron.screen.getPrimaryDisplay().workAreaSize.width
+vh = electron.screen.getPrimaryDisplay().workAreaSize.height
 
 #  0000000  000000000   0000000   00000000   000000000  
 # 000          000     000   000  000   000     000     
@@ -29,21 +31,22 @@ start = (opt={}) ->
         return error err if err
         createWindow opt
 
+# 000   000  000  000   000  0000000     0000000   000   000  
+# 000 0 000  000  0000  000  000   000  000   000  000 0 000  
+# 000000000  000  000 0 000  000   000  000   000  000000000  
+# 000   000  000  000  0000  000   000  000   000  000   000  
+# 00     00  000  000   000  0000000     0000000   00     00  
+
 createWindow = (opt) ->
-    
-    ar = rect.workarea()
-    
-    width  = opt.debug and ar.w/2 or ar.w
-    height = opt.debug and ar.h/2 or ar.h
-    
+        
     win = new electron.BrowserWindow
         backgroundColor: '#00000000'
         transparent:     true
         preloadWindow:   true
-        x:               ar.x
-        y:               ar.y
-        width:           width
-        height:          height
+        x:               0 
+        y:               0 
+        width:           vw
+        height:          vh
         hasShadow:       false
         resizable:       false
         frame:           false
@@ -57,9 +60,6 @@ createWindow = (opt) ->
     
     pngFile = slash.fileUrl slash.join process.cwd(),'screenshot.png'
             
-    vw = electron.screen.getPrimaryDisplay().workAreaSize.width
-    vh = electron.screen.getPrimaryDisplay().workAreaSize.height
-    
     html = """
         <head>
         <style type="text/css">
@@ -101,6 +101,11 @@ createWindow = (opt) ->
 # 000  000  0000  000     000       
 # 000  000   000  000     000     
 
+done = -> 
+    win = electron.remote.getCurrentWindow()
+    win.close()
+    if win.debug then electron.remote.app.exit 0
+        
 init = ->
     
     post.on 'slog', (text) ->
@@ -108,17 +113,14 @@ init = ->
         console.log 'slog', text
         post.toMain 'winlog', text
     
-    win  = electron.remote.getCurrentWindow()
-    done = -> 
-        win.close()
-        if win.debug then electron.remote.app.exit 0
+    win = electron.remote.getCurrentWindow()
     
     a =$ 'image'
-    # a.onclick   = done
-    a.onkeydown = done
+    a.ondblclick   = onDblClick
+    a.onmousewheel = onWheel
+    a.onkeydown    = done
     if not win.debug
         a.onblur = done
-    a.onmousewheel = onWheel
     new drag
         target:  a
         onStart: onDragStart
@@ -126,20 +128,69 @@ init = ->
         onStop:  onDragStop
     a.focus()
 
+# 000000000  00000000    0000000   000   000   0000000  00000000   0000000   00000000   00     00  
+#    000     000   000  000   000  0000  000  000       000       000   000  000   000  000   000  
+#    000     0000000    000000000  000 0 000  0000000   000000    000   000  0000000    000000000  
+#    000     000   000  000   000  000  0000       000  000       000   000  000   000  000 0 000  
+#    000     000   000  000   000  000   000  0000000   000        0000000   000   000  000   000  
+
 scale  = 1.0
 offset = pos(0,0)
-onWheel = (event) ->
+
+transform = ->
     a =$ 'image'
-    scale = clamp 1, 20, scale * (1 - event.deltaY / 500.0)
-    a.style.transform = "scaleX(#{scale}) scaleY(#{scale}) translateX(#{offset.x}px) translateY(#{offset.y}px)"
+
+    scale = clamp 1, 20, scale
     
-onDragStart = (drag, event) -> #log 'start', drag.pos, pos(event)
-onDragStop  = (drag, event) -> #log 'stop',  drag.pos, pos(event)
-onDragMove  = (drag, event) -> 
-    a =$ 'image'
-    offset.add drag.delta.times 1/scale
+    ox = vw * (scale-1)/(2*scale)
+    oy = vh * (scale-1)/(2*scale)
+    offset.x = clamp -ox, ox, offset.x
+    offset.y = clamp -oy, oy, offset.y
+    
     a.style.transform = "scaleX(#{scale}) scaleY(#{scale}) translateX(#{offset.x}px) translateY(#{offset.y}px)"
-    log a.style.transform
+
+onDblClick = (event) -> 
+    scale = 1 
+    transform()
+    
+# 000   000  000   000  00000000  00000000  000      
+# 000 0 000  000   000  000       000       000      
+# 000000000  000000000  0000000   0000000   000      
+# 000   000  000   000  000       000       000      
+# 00     00  000   000  00000000  00000000  0000000  
+
+onWheel = (event) ->
+    
+    scaleFactor =(1 - event.deltaY / 400.0)
+    newScale = clamp 1, 20, scale * scaleFactor
+    
+    mp = pos(event).minus pos(vw, vh).times 0.5
+    
+    oldPos = offset.plus pos(mp).times 1/scale
+    newPos = offset.plus pos(mp).times 1/newScale
+    offset.add newPos.minus oldPos
+    
+    scale *= scaleFactor
+    transform()
+        
+# 0000000    00000000    0000000    0000000   
+# 000   000  000   000  000   000  000        
+# 000   000  0000000    000000000  000  0000  
+# 000   000  000   000  000   000  000   000  
+# 0000000    000   000  000   000   0000000   
+
+onDragStart = (drag, event) -> 
+    
+    if event.button != 0
+        if event.button == 1
+            done()
+        return 'skip'
+    
+onDragStop  = (drag, event) -> 
+onDragMove  = (drag, event) -> 
+    
+    offset.add drag.delta.times 1/scale
+    transform()
     
 module.exports = 
     start:start
