@@ -4,7 +4,7 @@
 #      000  000       000   000  000       000       000  0000   000     000   000  000   000  000 0 000  
 # 0000000    0000000  000   000  00000000  00000000  000   000  0000000   0000000    0000000   000   000  
 
-{ childp, karg, slash, drag, clamp, pos, error, log, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, clamp, pos, error, log, $ } = require 'kxk'
 
 rect     = require './rect'
 electron = require 'electron'
@@ -80,7 +80,10 @@ createWindow = (opt) ->
         <body>
         <img id='image' tabindex=0 src="#{pngFile}"/>
         <script>
-            require(process.cwd() + "/js/screenzoom.js").init();
+            var pth = process.resourcesPath + "/app/js/screenzoom.js";
+            if (process.resourcesPath.indexOf("node_modules\\\\electron\\\\dist\\\\resources")>=0) { pth = process.cwd() + "/js/screenzoom.js"; }
+            console.log(pth, process.resourcesPath);
+            require(pth).init();
         </script>
         </body>
     """
@@ -99,6 +102,11 @@ createWindow = (opt) ->
 # 000  000   000  000     000     
 
 init = ->
+    
+    post.on 'slog', (text) ->
+    
+        console.log 'slog', text
+        post.toMain 'winlog', text
     
     win  = electron.remote.getCurrentWindow()
     done = -> 
@@ -131,6 +139,7 @@ onDragMove  = (drag, event) ->
     a =$ 'image'
     offset.add drag.delta.times 1/scale
     a.style.transform = "scaleX(#{scale}) scaleY(#{scale}) translateX(#{offset.x}px) translateY(#{offset.y}px)"
+    log a.style.transform
     
 module.exports = 
     start:start

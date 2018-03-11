@@ -6,7 +6,7 @@
 00     00  000   000  00     00        000   000  000        000        
 ###
 
-{ prefs, about, slash, childp, karg, error, log, _ } = require 'kxk'
+{ post, prefs, about, slash, childp, karg, error, log, _ } = require 'kxk'
 
 user     = require './user'
 wininfo  = require './wininfo'
@@ -25,6 +25,9 @@ wxw
 
 version  #{pkg.version}
 """
+# args.debug = true
+
+post.on 'winlog', (text) -> log ">>> " + text
 
 #  0000000    0000000  000000000  000   0000000   000   000  
 # 000   000  000          000     000  000   000  0000  000  
