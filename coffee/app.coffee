@@ -73,12 +73,19 @@ moveWindow = (dir) ->
     if hWnd = user.GetForegroundWindow()
         
         wr = rect.window hWnd
-        
+        b = 10.9
+        d = 2*b
         [x,y,w,h] = switch dir
-            when 'left'   then [-10,       0,     ar.w/2+20, ar.h+10]
-            when 'right'  then [ar.w/2-10, 0,     ar.w/2+20, ar.h+10]
-            when 'down'   then [ar.w/4-10, 0,     ar.w/2+20, ar.h+10]
-            when 'up'     then [ar.w/6-10, 0, 2/3*ar.w+20,   ar.h+10]
+            when 'left'     then [-b,         0,        ar.w/2+d, ar.h+b]
+            when 'right'    then [ar.w/2-b,   0,        ar.w/2+d, ar.h+b]
+            when 'down'     then [ar.w/4-b,   0,        ar.w/2+d, ar.h+b]
+            when 'up'       then [ar.w/6-b,   0,    2/3*ar.w+d,   ar.h+b]
+            when 'topleft'  then [-10,        0,        ar.w/3+d, ar.h/2]
+            when 'top'      then [ar.w/3-b,   0,        ar.w/3+d, ar.h/2]
+            when 'topright' then [2/3*ar.w-b, 0,        ar.w/3+d, ar.h/2]
+            when 'botleft'  then [-b,         ar.h/2-b, ar.w/3+d, ar.h/2+d]
+            when 'bot'      then [ar.w/3-b,   ar.h/2-b, ar.w/3+d, ar.h/2+d]
+            when 'botright' then [2/3*ar.w-b, ar.h/2-b, ar.w/3+d, ar.h/2+d]
         
         sl = 20 > Math.abs wr.x -  x
         sr = 20 > Math.abs wr.x+wr.w - (x+w)
@@ -138,7 +145,12 @@ app.on 'ready', ->
         right:      'ctrl+alt+right'
         up:         'ctrl+alt+up'
         down:       'ctrl+alt+down'
-        minimize:   'ctrl+h'
+        topleft:    'ctrl+alt+1'
+        botleft:    'ctrl+alt+2'
+        topright:   'ctrl+alt+3'
+        botright:   'ctrl+alt+4'
+        top:        'ctrl+alt+5'
+        bot:        'ctrl+alt+6'
         screenzoom: 'alt+z'
         
     prefs.init keys
