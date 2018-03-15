@@ -11,10 +11,24 @@
 user    = require './user'
 winlist = require './winlist'
     
-foreground = (exePath) ->
+foreground = (exePath, opt={}) ->
+    
+    opt.strict ?= false
+    opt.electron ?= true
+    
+    winMatches = (win) ->
+        return true if opt.strict and win.path == exePath
+        return true if slash.file(win.path) == slash.file exePath
+        if opt.electron 
+            if slash.file(win.path) == 'electron.exe' 
+                split = slash.split win.path
+                if split.length > 5 and split[split.length-5] == slash.base exePath
+                    return true
+        false
     
     exePath = slash.resolve exePath
-    appWins = winlist().filter (win) -> win.path == exePath
+    appWins = winlist().filter winMatches
+        
     visWins = appWins.filter (win) -> not win.minimized
     
     if visWins.length == 0
