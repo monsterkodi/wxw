@@ -11,6 +11,7 @@ electron = require 'electron'
 robot    = require 'robotjs' 
 
 zoomWin  = null
+
 vw = electron.screen.getPrimaryDisplay().workAreaSize.width
 vh = electron.screen.getPrimaryDisplay().workAreaSize.height
 
@@ -94,6 +95,8 @@ createWindow = (opt) ->
     win.on 'ready-to-show', ->
     if opt.debug
         win.webContents.openDevTools()
+    else
+        win.maximize()
     win
         
 # 000  000   000  000  000000000    
@@ -239,6 +242,9 @@ onDragStart = (drag, event) ->
     if event.button != 0
         if event.button == 1
             done()
+        return 'skip'
+    else if scale == 1
+        done()
         return 'skip'
     
 onDragStop  = (drag, event) -> 
