@@ -100,6 +100,7 @@ moveWindow = (dir) ->
                 when 'up'    then w  = ar.w+20;   x = -10
         
         SWP_NOZORDER = 0x4
+        user.RestoreWindow hWnd
         user.SetWindowPos hWnd, null, x, y, w, h, SWP_NOZORDER
 
 #  0000000   0000000     0000000   000   000  000000000  

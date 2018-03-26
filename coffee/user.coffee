@@ -32,4 +32,6 @@ user = new ffi.Library 'User32.dll',
     ShowWindow:                 ['int',     ['pointer', 'uint32']]
     keybd_event:                ['void',    ['byte', 'char', 'uint32', 'pointer']]
 
+user.RestoreWindow = (hWnd) -> user.ShowWindow hWnd, 9
+    
 module.exports = user

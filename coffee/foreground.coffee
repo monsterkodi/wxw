@@ -37,12 +37,11 @@ foreground = (exePath, opt={}) ->
     for win in visWins
         
         VK_MENU     = 0x12 # ALT key
-        SW_RESTORE  = 9
         KEYDOWN     = 1
         KEYUP       = 3
         
         if win.minimized
-            user.ShowWindow win.hwnd, SW_RESTORE
+            user.RestoreWindow win.hwnd
         
         user.keybd_event VK_MENU, 0, KEYDOWN, null # fake ALT press to enable foreground switch
         user.SetForegroundWindow win.hwnd          # ... no wonder windows is so bad
