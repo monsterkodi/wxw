@@ -4,7 +4,7 @@
 #      000  000       000   000  000       000       000  0000   000     000   000  000   000  000 0 000  
 # 0000000    0000000  000   000  00000000  00000000  000   000  0000000   0000000    0000000   000   000  
 
-{ childp, post, karg, slash, drag, clamp, pos, error, log, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, prefs, clamp, pos, error, log, $ } = require 'kxk'
 
 rect     = require './rect'
 electron = require 'electron'
@@ -15,6 +15,9 @@ zoomWin  = null
 vw = electron.screen.getPrimaryDisplay().workAreaSize.width
 vh = electron.screen.getPrimaryDisplay().workAreaSize.height
 
+screenshotFile = ->
+    slash.unslash slash.join prefs.get('screenhotFolder', slash.resolve "~/Desktop"), 'screenshot.png'
+
 #  0000000  000000000   0000000   00000000   000000000  
 # 000          000     000   000  000   000     000     
 # 0000000      000     000000000  0000000       000     
@@ -23,12 +26,14 @@ vh = electron.screen.getPrimaryDisplay().workAreaSize.height
 
 start = (opt={}) ->
     
-    screenshotexe = slash.join(__dirname,'..','bin','screenshot.exe')
+    screenshotexe = slash.unslash slash.resolve slash.join(__dirname,'..','bin','screenshot.exe')
     
     if not slash.isFile screenshotexe
         screenshotexe = slash.swapExt screenshotexe, 'bat'
         
-    childp.exec screenshotexe, (err) -> 
+    pngFile = 
+        
+    childp.exec "\"#{screenshotexe}\" #{screenshotFile()}", (err) -> 
         
         return error err if err
         createWindow opt
@@ -60,7 +65,7 @@ createWindow = (opt) ->
             
     zoomWin = win
     
-    pngFile = slash.fileUrl slash.join process.cwd(),'screenshot.png'
+    pngFile = screenshotFile()
             
     html = """
         <head>
