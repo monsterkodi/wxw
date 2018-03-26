@@ -1,4 +1,6 @@
-![wxw](img/about.png)
 
-moves my windows
-zooms my windows
+![wxw](./img/banner.png)
+
+##### moves my windows
+
+##### zooms my windows

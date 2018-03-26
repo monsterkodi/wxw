@@ -1,5 +1,6 @@
 .gitignore
 Icon?
 package.noon
+screenshot.png
 coffee/app.coffee
 *-x64
