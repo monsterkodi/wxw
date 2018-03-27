@@ -11,6 +11,7 @@
 user     = require './user'
 wininfo  = require './wininfo'
 rect     = require './rect'
+ref      = require 'ref'
 
 pkg      = require '../package.json'
 electron = require 'electron'
@@ -102,7 +103,7 @@ moveWindow = (dir) ->
         SWP_NOZORDER = 0x4
         user.RestoreWindow hWnd
         user.SetWindowPos hWnd, null, x, y, w, h, SWP_NOZORDER
-
+        
 #  0000000   0000000     0000000   000   000  000000000  
 # 000   000  000   000  000   000  000   000     000     
 # 000000000  0000000    000   000  000   000     000     
@@ -152,13 +153,16 @@ app.on 'ready', ->
         botright:   'ctrl+alt+4'
         top:        'ctrl+alt+5'
         bot:        'ctrl+alt+6'
+        minimize:   'ctrl+alt+m'
         screenzoom: 'alt+z'
         
     prefs.init keys
+    
+    if not slash.isFile prefs.store.file
+        prefs.save()
 
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
-        
   
 if args.debug
     require('./screenzoom').start debug:true
