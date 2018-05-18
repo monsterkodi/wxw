@@ -1,5 +1,5 @@
 name            wxw
-version         0.12.0
+version         0.13.0
 description     moves my windows
 main            js/wxw.js
 scripts
@@ -17,6 +17,6 @@ dependencies
                 ref-wchar   ^1.0.2
                 robotjs     ^0.5.1
 devDependencies
-                electron-packager  ^11.1.0
-                electron        ^1.6.2
-                electron-rebuild  ^1.5.7
+                electron-packager  ^12.0.2
+                electron        ^2.0.1
+                electron-rebuild  ^1.7.3
