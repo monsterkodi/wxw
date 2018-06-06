@@ -73,15 +73,21 @@ moveWindow = (dir) ->
         
     if hWnd = user.GetForegroundWindow()
         
+        info = wininfo hWnd
+        base = slash.base info.path
+        if base in ['electron', 'ko', 'konrad', 'clippo', 'klog', 'kaligraf', 'kalk', 'uniko']
+            b = 0    # sane window border
+        else
+            b = 10.9 # transparent window border
+        
         wr = rect.window hWnd
-        b = 10.9
         d = 2*b
         [x,y,w,h] = switch dir
             when 'left'     then [-b,         0,        ar.w/2+d, ar.h+b]
             when 'right'    then [ar.w/2-b,   0,        ar.w/2+d, ar.h+b]
             when 'down'     then [ar.w/4-b,   0,        ar.w/2+d, ar.h+b]
             when 'up'       then [ar.w/6-b,   0,    2/3*ar.w+d,   ar.h+b]
-            when 'topleft'  then [-10,        0,        ar.w/3+d, ar.h/2]
+            when 'topleft'  then [-b,         0,        ar.w/3+d, ar.h/2]
             when 'top'      then [ar.w/3-b,   0,        ar.w/3+d, ar.h/2]
             when 'topright' then [2/3*ar.w-b, 0,        ar.w/3+d, ar.h/2]
             when 'botleft'  then [-b,         ar.h/2-b, ar.w/3+d, ar.h/2+d]
@@ -95,10 +101,10 @@ moveWindow = (dir) ->
         
         if sl and sr and st and sb
             switch dir
-                when 'left'  then w  = ar.w/4+20
-                when 'right' then w  = ar.w/4+20; x = 3*ar.w/4-10
-                when 'down'  then h  = ar.h/2+20; y = ar.h/2-10
-                when 'up'    then w  = ar.w+20;   x = -10
+                when 'left'  then w  = ar.w/4+d
+                when 'right' then w  = ar.w/4+d; x = 3*ar.w/4-b
+                when 'down'  then h  = ar.h/2+d; y = ar.h/2-b
+                when 'up'    then w  = ar.w+d;   x = -b
         
         SWP_NOZORDER = 0x4
         user.RestoreWindow hWnd
