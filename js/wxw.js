@@ -1,0 +1,32 @@
+(function() {
+  /*
+  000   000  000   000  000   000  
+  000 0 000   000 000   000 0 000  
+  000000000    00000    000000000  
+  000   000   000 000   000   000  
+  00     00  000   000  00     00  
+  */
+  var ref;
+
+  if ((((ref = module.parent) != null ? ref.filename : void 0) == null) || module.parent.filename.endsWith('default_app.asar\\main.js')) {
+    require('./app');
+  } else {
+    module.exports = {
+      user: require('./user'),
+      advapi: require('./advapi'),
+      kernel: require('./kernel'),
+      shell: require('./shell'),
+      rect: require('./rect'),
+      struct: require('./struct'),
+      zorder: require('./zorder'),
+      winlist: require('./winlist'),
+      wininfo: require('./wininfo'),
+      foreground: require('./foreground'),
+      active: require('./user').GetForegroundWindow
+    };
+  }
+
+}).call(this);
+
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoid3h3LmpzIiwic291cmNlUm9vdCI6Ii4uIiwic291cmNlcyI6WyJqcy93eHcuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUE7RUFBQTs7Ozs7OztBQUFBLE1BQUE7O0VBUUEsSUFBTyxpRUFBSixJQUFnQyxNQUFNLENBQUMsTUFBTSxDQUFDLFFBQVEsQ0FBQyxRQUF2QixDQUFnQywyQkFBaEMsQ0FBbkM7SUFFSSxPQUFBLENBQVEsT0FBUixFQUZKO0dBQUEsTUFBQTtJQU1JLE1BQU0sQ0FBQyxPQUFQLEdBRUk7TUFBQSxJQUFBLEVBQVksT0FBQSxDQUFRLFFBQVIsQ0FBWjtNQUNBLE1BQUEsRUFBWSxPQUFBLENBQVEsVUFBUixDQURaO01BRUEsTUFBQSxFQUFZLE9BQUEsQ0FBUSxVQUFSLENBRlo7TUFHQSxLQUFBLEVBQVksT0FBQSxDQUFRLFNBQVIsQ0FIWjtNQUlBLElBQUEsRUFBWSxPQUFBLENBQVEsUUFBUixDQUpaO01BS0EsTUFBQSxFQUFZLE9BQUEsQ0FBUSxVQUFSLENBTFo7TUFNQSxNQUFBLEVBQVksT0FBQSxDQUFRLFVBQVIsQ0FOWjtNQU9BLE9BQUEsRUFBWSxPQUFBLENBQVEsV0FBUixDQVBaO01BUUEsT0FBQSxFQUFZLE9BQUEsQ0FBUSxXQUFSLENBUlo7TUFTQSxVQUFBLEVBQVksT0FBQSxDQUFRLGNBQVIsQ0FUWjtNQVVBLE1BQUEsRUFBWSxPQUFBLENBQVEsUUFBUixDQUFpQixDQUFDO0lBVjlCLEVBUlI7O0FBUkEiLCJzb3VyY2VzQ29udGVudCI6WyIjIyNcbjAwMCAgIDAwMCAgMDAwICAgMDAwICAwMDAgICAwMDAgIFxuMDAwIDAgMDAwICAgMDAwIDAwMCAgIDAwMCAwIDAwMCAgXG4wMDAwMDAwMDAgICAgMDAwMDAgICAgMDAwMDAwMDAwICBcbjAwMCAgIDAwMCAgIDAwMCAwMDAgICAwMDAgICAwMDAgIFxuMDAgICAgIDAwICAwMDAgICAwMDAgIDAwICAgICAwMCAgXG4jIyNcblxuaWYgbm90IG1vZHVsZS5wYXJlbnQ/LmZpbGVuYW1lPyBvciBtb2R1bGUucGFyZW50LmZpbGVuYW1lLmVuZHNXaXRoICdkZWZhdWx0X2FwcC5hc2FyXFxcXG1haW4uanMnXG4gICAgXG4gICAgcmVxdWlyZSAnLi9hcHAnXG5cbmVsc2VcbiAgICBcbiAgICBtb2R1bGUuZXhwb3J0cyA9XG4gICAgICAgIFxuICAgICAgICB1c2VyOiAgICAgICByZXF1aXJlICcuL3VzZXInXG4gICAgICAgIGFkdmFwaTogICAgIHJlcXVpcmUgJy4vYWR2YXBpJ1xuICAgICAgICBrZXJuZWw6ICAgICByZXF1aXJlICcuL2tlcm5lbCdcbiAgICAgICAgc2hlbGw6ICAgICAgcmVxdWlyZSAnLi9zaGVsbCdcbiAgICAgICAgcmVjdDogICAgICAgcmVxdWlyZSAnLi9yZWN0J1xuICAgICAgICBzdHJ1Y3Q6ICAgICByZXF1aXJlICcuL3N0cnVjdCdcbiAgICAgICAgem9yZGVyOiAgICAgcmVxdWlyZSAnLi96b3JkZXInXG4gICAgICAgIHdpbmxpc3Q6ICAgIHJlcXVpcmUgJy4vd2lubGlzdCdcbiAgICAgICAgd2luaW5mbzogICAgcmVxdWlyZSAnLi93aW5pbmZvJ1xuICAgICAgICBmb3JlZ3JvdW5kOiByZXF1aXJlICcuL2ZvcmVncm91bmQnXG4gICAgICAgIGFjdGl2ZTogICAgIHJlcXVpcmUoJy4vdXNlcicpLkdldEZvcmVncm91bmRXaW5kb3dcbiAgICAgICAgIl19
+//# sourceURL=C:/Users/kodi/s/wxw/coffee/wxw.coffee
