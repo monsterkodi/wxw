@@ -41,12 +41,15 @@ winInfo = (hWnd) ->
     pathString = wchar.toString ref.reinterpretUntilZeros pathBuffer, wchar.size
     path       = pathString and slash.path(pathString) or ''
      
+    foreground = hWnd == user.GetForegroundWindow()
+    
     kernel.CloseHandle procHandle
              
     hwnd:       hWnd
     zOrder:     zorder      hWnd
     title:      winTitle    hWnd
     minimized:  isMinimized hWnd
+    foreground: foreground
     winID:      ref.address hWnd
     procID:     procID
     threadID:   threadID
