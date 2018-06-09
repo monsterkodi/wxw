@@ -25,4 +25,5 @@ else
         wininfo:    require './wininfo'
         foreground: require './foreground'
         active:     require('./user').GetForegroundWindow
+        frontinfo:  -> require('./wininfo')(require('./user').GetForegroundWindow())
         
