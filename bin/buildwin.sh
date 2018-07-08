@@ -10,4 +10,5 @@ if rm -rf wxw-win32-x64; then
     IGNORE="/(.*\.dmg$|Icon$|coffee$|.*md$|styl$|package\.noon$|.*\.lock$|three/examples)"
     node_modules/electron-packager/cli.js . --overwrite --icon=img/app.ico --ignore $IGNORE
     
+    rm -rf wxw-win32-x64/resources/app/inno
 fi    
