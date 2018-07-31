@@ -75,7 +75,7 @@ moveWindow = (dir) ->
         
         info = wininfo hWnd
         base = slash.base info.path
-        if base in ['electron', 'ko', 'konrad', 'clippo', 'klog', 'kaligraf', 'kalk', 'uniko']
+        if base in ['electron', 'ko', 'konrad', 'clippo', 'klog', 'kaligraf', 'kalk', 'uniko', 'knot', 'Hyper']
             b = 0    # sane window border
         else
             b = 10.9 # transparent window border
