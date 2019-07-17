@@ -11,6 +11,7 @@
 #include <KnownFolders.h>
 #include <ShlObj.h>
 #include <Shobjidl.h>
+#include <atlbase.h>
 
 using namespace Gdiplus;
 using namespace std;
@@ -231,23 +232,28 @@ int trash(char* action)
         IShellItem* shellItem;
         PCWSTR path = wstr(action);
         wprintf(L"trash path: %ls\n", path);
-        if (SUCCEEDED(SHCreateItemFromParsingName(path, NULL, IID_IShellItem, (void**)&shellItem)))
+        HRESULT hr = S_OK;
+        hr = CoInitialize(NULL);
+        hr = SHCreateItemFromParsingName(path, NULL, IID_IShellItem, (void**)& shellItem);
+        if (SUCCEEDED(hr))
         {
-            klog("shellItem");
-            IFileOperation* pfo = NULL;
-            
-            if (SUCCEEDED(CoCreateInstance(CLSID_FileOperation, NULL, CLSCTX_ALL, IID_IFileOperation, (LPVOID*)pfo)))
+            CComPtr<IFileOperation> pfo;
+            hr = pfo.CoCreateInstance(CLSID_FileOperation);
+
+            if (SUCCEEDED(hr))
             {
-                klog("FileOperation");
                 if (SUCCEEDED(pfo->DeleteItem(shellItem, NULL)))
                 {
-                    klog("DeleteItem");
                     if (SUCCEEDED(pfo->PerformOperations()))
                     {
                         printf("trashed: %s\n", action);
                     }
                 }
             }
+        }
+        else
+        {
+            printf("cant parse: %s\n", action);
         }
         delete path;
         // LPSHFILEOPSTRUCTA op;
