@@ -10,9 +10,48 @@
 #include <shellscalingapi.h>
 #include <KnownFolders.h>
 #include <ShlObj.h>
+#include <Shobjidl.h>
 
 using namespace Gdiplus;
 using namespace std;
+
+//  0000000  00     00  00000000   
+// 000       000   000  000   000  
+// 000       000000000  00000000   
+// 000       000 0 000  000        
+//  0000000  000   000  000        
+
+int wcmp(wchar_t *a, char *b)
+{
+    size_t size = strlen(b);
+    std::wstring wc(size+1, L' ');
+    size_t conv;
+    mbstowcs_s(&conv, &wc[0], size+1, b, size);
+    
+    return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
+} 
+
+LPCWSTR wstr(char *s)
+{
+    size_t size = strlen(s);
+    wchar_t *ws = new wchar_t[size+1]; 
+    size_t conv;
+    mbstowcs_s(&conv, ws, size+1, s, size);
+    
+    return (LPCWSTR)ws;
+}
+
+int cmp(char *a, char *b)
+{
+    return _strcmpi(a, b) == 0;
+} 
+
+int klog(char *msg)
+{
+    printf(msg);
+    printf("\n");
+    return 0;
+}
 
 // 00000000   000   000   0000000   
 // 000   000  0000  000  000        
@@ -64,7 +103,6 @@ int screenshot(char *targetfile="screenshot.png")
     RECT rc; rc.left = 0; rc.right = 0;
     rc.right  = GetSystemMetrics(SM_CXSCREEN); // SM_CXVIRTUALSCREEN
     rc.bottom = GetSystemMetrics(SM_CYSCREEN); // SM_CYVIRTUALSCREEN
-    //cout << "rect " << rc.right << " " << rc.bottom << endl;
         
     auto hdc = GetDC(0);
     auto memdc = CreateCompatibleDC(hdc);
@@ -88,107 +126,7 @@ int screenshot(char *targetfile="screenshot.png")
     
     return 0;
 }
-
-//  0000000  00     00  00000000   
-// 000       000   000  000   000  
-// 000       000000000  00000000   
-// 000       000 0 000  000        
-//  0000000  000   000  000        
-
-int wcmp(wchar_t *a, char *b)
-{
-    size_t size = strlen(b);
-    std::wstring wc( size, L' ' );
-    size_t conv;
-    mbstowcs_s( &conv, &wc[0], size*2, b, size );
-    
-    return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
-} 
-
-int cmp(char *a, char *b)
-{
-    return _strcmpi(a, b) == 0;
-} 
-
-int klog(char *msg)
-{
-    printf(msg);
-    printf("\n");
-    return 0;
-}
-
-// 000   000   0000000   0000000    0000000   00000000  
-// 000   000  000       000   000  000        000       
-// 000   000  0000000   000000000  000  0000  0000000   
-// 000   000       000  000   000  000   000  000       
-//  0000000   0000000   000   000   0000000   00000000  
-
-int usage(void)
-{
-    klog("");
-    klog("wc [command] [args...]");
-    klog("");
-    klog("    commands:");
-    klog("");
-    klog("     help       <command>");
-    klog("     folder     <name>");
-    klog("     recycle    <action>");
-    klog("     screenshot [targetfile]");
-    klog("");
-    return 0;
-}
-
-// 000   000  00000000  000      00000000   
-// 000   000  000       000      000   000  
-// 000000000  0000000   000      00000000   
-// 000   000  000       000      000        
-// 000   000  00000000  0000000  000        
-
-int help(char *command)
-{
-	if (cmp(command, "folder"))
-	{
-        klog("");
-        klog("wc folder <name>");
-        klog("");
-        klog("Prints the path of specific folders. Recognized names are:");
-        klog("");
-        klog("      AppData");
-        klog("      Desktop");
-        klog("      Documents");
-        klog("      Downloads");
-        klog("      Fonts");
-        klog("      Program");
-        klog("      ProgramX86");
-        klog("      Startup");
-        klog("");
-	}
-    else if (cmp(command, "screenshot"))
-    {
-        klog("");
-        klog("wc screenshot [targetfile]");
-        klog("");
-        klog("      targetfile defaults to './screenshot.png'");
-        klog("");
-        klog("Takes a screenshot of the main monitor and saves it as a png file.");
-        klog("");
-    }
-    else if (cmp(command, "recycle"))
-    {
-        klog("");
-        klog("wc recycle <action>");
-        klog("");
-        klog("      actions:");
-        klog("");
-        klog("          list      list files in thrash bin");
-        klog("          name      prints name of thrash bin");
-        klog("          empty     empties the thrash bin");
-        klog("");
-    }
-    
-    return 0;
-}
-
+
 // 00000000   0000000   000      0000000    00000000  00000000   
 // 000       000   000  000      000   000  000       000   000  
 // 000000    000   000  000      000   000  0000000   0000000    
@@ -201,8 +139,6 @@ int folder(char *id)
     PWSTR path = NULL;
     HRESULT hr = S_OK; 
     
-    // doesn't work :( FOLDERID_RecycleBinFolder 
-    
     if      (cmp(id, "AppData"))    { hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData,  0, NULL, &path); }
     else if (cmp(id, "Desktop"))    { hr = SHGetKnownFolderPath(FOLDERID_Desktop,         0, NULL, &path); }
     else if (cmp(id, "Documents"))  { hr = SHGetKnownFolderPath(FOLDERID_Documents,       0, NULL, &path); }
@@ -211,6 +147,7 @@ int folder(char *id)
     else if (cmp(id, "Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
     else if (cmp(id, "ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
     else if (cmp(id, "Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
+    else if (cmp(id, "Trash"))      { hr = SHGetKnownFolderPath(FOLDERID_RecycleBinFolder, 0, NULL, &path); }// doesn't work :( 
     else
     {
         printf("ERROR: invalid folder name '%s'\n", id);
@@ -232,10 +169,17 @@ int folder(char *id)
     return result;
 }
 
-int recycle(char* action)
+// 000000000  00000000    0000000    0000000  000   000  
+//    000     000   000  000   000  000       000   000  
+//    000     0000000    000000000  0000000   000000000  
+//    000     000   000  000   000       000  000   000  
+//    000     000   000  000   000  0000000   000   000  
+
+int trash(char* action)
 {
     LPSHELLFOLDER pDesktop       = NULL;
     LPITEMIDLIST  pidlRecycleBin = NULL;
+    LPITEMIDLIST  pidl           = NULL;
 
     SHGetDesktopFolder(&pDesktop);
     SHGetSpecialFolderLocation (NULL, CSIDL_BITBUCKET, &pidlRecycleBin);
@@ -251,13 +195,12 @@ int recycle(char* action)
             wprintf(L"%ls\n", strRet.pOleStr);
         }
     }
-    if (cmp(action, "list"))
+    else if (cmp(action, "list"))
     {
         IEnumIDList *penumFiles;
         
         if (SUCCEEDED(pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
         {
-            LPITEMIDLIST pidl = NULL;
             while (penumFiles->Next(1, &pidl, NULL) != S_FALSE)
             {
                 STRRET strRet;
@@ -268,10 +211,124 @@ int recycle(char* action)
             }
         }
     }
-    if (cmp(action, "empty"))
+    else if (cmp(action, "count"))
+    {
+        IEnumIDList *penumFiles;
+        
+        if (SUCCEEDED(pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
+        {
+            int num = 0;
+            while (penumFiles->Next(1, &pidl, NULL) != S_FALSE) num++;
+            printf("%d\n", num);
+        }
+    }
+    else if (cmp(action, "empty"))
     {
         SHEmptyRecycleBinA(NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI);
     }
+    else
+    {
+        IShellItem* shellItem;
+        PCWSTR path = wstr(action);
+        wprintf(L"trash path: %ls\n", path);
+        if (SUCCEEDED(SHCreateItemFromParsingName(path, NULL, IID_IShellItem, (void**)&shellItem)))
+        {
+            klog("shellItem");
+            IFileOperation* pfo = NULL;
+            
+            if (SUCCEEDED(CoCreateInstance(CLSID_FileOperation, NULL, CLSCTX_ALL, IID_IFileOperation, (LPVOID*)pfo)))
+            {
+                klog("FileOperation");
+                if (SUCCEEDED(pfo->DeleteItem(shellItem, NULL)))
+                {
+                    klog("DeleteItem");
+                    if (SUCCEEDED(pfo->PerformOperations()))
+                    {
+                        printf("trashed: %s\n", action);
+                    }
+                }
+            }
+        }
+        delete path;
+        // LPSHFILEOPSTRUCTA op;
+        // op.wFunc = FO_MOVE;
+        // op.pFrom = 
+        // SHFileOperationA();
+    }
+    return 0;
+}
+
+
+// 000   000   0000000   0000000    0000000   00000000  
+// 000   000  000       000   000  000        000       
+// 000   000  0000000   000000000  000  0000  0000000   
+// 000   000       000  000   000  000   000  000       
+//  0000000   0000000   000   000   0000000   00000000  
+
+int usage(void)
+{
+    klog("");
+    klog("wc [command] [args...]");
+    klog("");
+    klog("    commands:");
+    klog("");
+    klog("     help       <command>");
+    klog("     folder     <name>");
+    klog("     trash      <action>");
+    klog("     screenshot [targetfile]");
+    klog("");
+    return 0;
+}
+
+// 000   000  00000000  000      00000000   
+// 000   000  000       000      000   000  
+// 000000000  0000000   000      00000000   
+// 000   000  000       000      000        
+// 000   000  00000000  0000000  000        
+
+int help(char *command)
+{
+    if (cmp(command, "folder"))
+    {
+        klog("");
+        klog("wc folder <name>");
+        klog("");
+        klog("Prints the path of specific folders. Recognized names are:");
+        klog("");
+        klog("      AppData");
+        klog("      Desktop");
+        klog("      Documents");
+        klog("      Downloads");
+        klog("      Fonts");
+        klog("      Program");
+        klog("      ProgramX86");
+        klog("      Startup");
+        klog("");
+    }
+    else if (cmp(command, "screenshot"))
+    {
+        klog("");
+        klog("wc screenshot [targetfile]");
+        klog("");
+        klog("      targetfile defaults to './screenshot.png'");
+        klog("");
+        klog("Takes a screenshot of the main monitor and saves it as a png file.");
+        klog("");
+    }
+    else if (cmp(command, "trash"))
+    {
+        klog("");
+        klog("wc trash <action>");
+        klog("");
+        klog("      actions:");
+        klog("");
+        klog("          list      prints names of files in thrash bin");
+        klog("          count     prints number of files in thrash bin");
+        klog("          name      prints name of thrash bin");
+        klog("          empty     empties the thrash bin");
+        klog("");
+    }
+    
     return 0;
 }
 
@@ -298,20 +355,20 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
         if (argc == 2) return usage();
         else           return help(argv[2]);
     }
-    if (cmp(cmd, "folder"))
+    else if (cmp(cmd, "folder"))
     {
         if (argc == 2) return help(cmd);
         else           return folder(argv[2]);
     }
-    if (cmp(cmd, "screenshot"))
+    else if (cmp(cmd, "screenshot"))
     {
         if (argc == 2) return screenshot();
         else           return screenshot(argv[2]);
     }
-    if (cmp(cmd, "recycle"))
+    else if (cmp(cmd, "trash"))
     {
         if (argc == 2) return help(cmd);
-        else           return recycle(argv[2]);
+        else           return trash(argv[2]);
     }
     
     return 0;
