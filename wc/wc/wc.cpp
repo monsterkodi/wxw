@@ -234,6 +234,10 @@ int trash(char* action)
         wprintf(L"trash path: %ls\n", path);
         HRESULT hr = S_OK;
         hr = CoInitialize(NULL);
+        
+        // check https://github.com/sindresorhus/recycle-bin/blob/master/recycle-bin.c
+        // ILCreateFromPath
+        
         hr = SHCreateItemFromParsingName(path, NULL, IID_IShellItem, (void**)& shellItem);
         if (SUCCEEDED(hr))
         {
