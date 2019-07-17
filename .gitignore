@@ -2,3 +2,7 @@ node_modules
 screenshot.png
 *win32-x64
 inno
+wc/.vs
+wc/wc/x64
+wc/x64
+

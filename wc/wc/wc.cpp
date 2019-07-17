@@ -1,12 +1,15 @@
 #include <windows.h>
 #include <WinUser.h>
+#include <gdiplus.h>
+#include <string.h>
 #include <tchar.h>
 #include <math.h>
-#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <gdiplus.h>
+#include <shellscalingapi.h>
+#include <KnownFolders.h>
+#include <ShlObj.h>
 
 using namespace Gdiplus;
 using namespace std;
@@ -64,11 +67,18 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     Gdiplus::GdiplusStartupInput tmp;
     Gdiplus::GdiplusStartup(&token, &tmp, NULL);
 
-    RECT rc;
-    GetClientRect(GetDesktopWindow(), &rc);
-    cout << "rect" << rc.right << rc.bottom << endl;
-    rc.right  = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    rc.bottom = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    RECT rc; rc.left = 0; rc.right = 0;
+    rc.right  = GetSystemMetrics(SM_CXSCREEN); // SM_CXVIRTUALSCREEN
+    rc.bottom = GetSystemMetrics(SM_CYSCREEN); // SM_CYVIRTUALSCREEN
+    cout << "rect " << rc.right << " " << rc.bottom << endl;
+    
+    UINT dpiX;
+    UINT dpiY;
+    POINT pt = { 0, 0 };
+    HMONITOR hmonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+    MONITOR_DPI_TYPE dpiType = MDT_DEFAULT;
+    
+    HRESULT result = GetDpiForMonitor( hmonitor, dpiType, &dpiX, &dpiY );
     
     auto hdc = GetDC(0);
     auto memdc = CreateCompatibleDC(hdc);
@@ -93,24 +103,12 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
 	return 0;
 }
 
-
-#include <windows.h>
-#include <initguid.h>
-#include <KnownFolders.h>
-#include <ShlObj.h>
-#include <wchar.h>
-// #include <shobjidl.h>
-#include <shtypes.h>
-
-#define true  1
-#define false 0
-
 int cmp(wchar_t *a, wchar_t *b)
 {
     return lstrcmpiW(a, b) == 0;
 } 
 
-int log(wchar_t *msg)
+int klog(wchar_t *msg)
 {
 	wprintf(msg);
 	wprintf(L"\n");
@@ -119,7 +117,7 @@ int log(wchar_t *msg)
 
 int error(wchar_t *msg)
 {
-    log(msg);
+    klog(msg);
     return 1;
 }
 
@@ -131,11 +129,11 @@ int error(wchar_t *msg)
 
 int usage(void)
 {
-    log(L"");
-    log(L"wxw [command] [options...]\n");
-    log(L"     help     <command>");
-    log(L"     folder   <name>");
-    log(L"");
+    klog(L"");
+    klog(L"wxw [command] [options...]\n");
+    klog(L"     help     <command>");
+    klog(L"     folder   <name>");
+    klog(L"");
     return 0;
 }
 
@@ -143,18 +141,18 @@ int help(wchar_t *command)
 {
 	if (cmp(command, L"folder"))
 	{
-        log(L"");
-        log(L"folder names:");
-        log(L"");
-        log(L"       AppData");
-        log(L"       Desktop");
-        log(L"       Documents");
-        log(L"       Downloads");
-        log(L"       Fonts");
-        log(L"       Program");
-        log(L"       ProgramX86");
-        log(L"       Startup");
-        log(L"");
+        klog(L"");
+        klog(L"folder names:");
+        klog(L"");
+        klog(L"       AppData");
+        klog(L"       Desktop");
+        klog(L"       Documents");
+        klog(L"       Downloads");
+        klog(L"       Fonts");
+        klog(L"       Program");
+        klog(L"       ProgramX86");
+        klog(L"       Startup");
+        klog(L"");
 	}
     return 0;
 }
@@ -173,14 +171,14 @@ int folder(wchar_t *id)
     
     // doesn't work :( FOLDERID_RecycleBinFolder 
     
-    if      (cmp(id, L"AppData"))    { hr = SHGetKnownFolderPath(&FOLDERID_RoamingAppData,  0, NULL, &path); }
-    else if (cmp(id, L"Desktop"))    { hr = SHGetKnownFolderPath(&FOLDERID_Desktop,         0, NULL, &path); }
-    else if (cmp(id, L"Documents"))  { hr = SHGetKnownFolderPath(&FOLDERID_Documents,       0, NULL, &path); }
-    else if (cmp(id, L"Downloads"))  { hr = SHGetKnownFolderPath(&FOLDERID_Downloads,       0, NULL, &path); }
-    else if (cmp(id, L"Fonts"))      { hr = SHGetKnownFolderPath(&FOLDERID_Fonts,           0, NULL, &path); }
-    else if (cmp(id, L"Program"))    { hr = SHGetKnownFolderPath(&FOLDERID_ProgramFiles,    0, NULL, &path); }
-    else if (cmp(id, L"ProgramX86")) { hr = SHGetKnownFolderPath(&FOLDERID_ProgramFilesX86, 0, NULL, &path); }
-    else if (cmp(id, L"Startup"))    { hr = SHGetKnownFolderPath(&FOLDERID_Startup,         0, NULL, &path); }
+    if      (cmp(id, L"AppData"))    { hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData,  0, NULL, &path); }
+    else if (cmp(id, L"Desktop"))    { hr = SHGetKnownFolderPath(FOLDERID_Desktop,         0, NULL, &path); }
+    else if (cmp(id, L"Documents"))  { hr = SHGetKnownFolderPath(FOLDERID_Documents,       0, NULL, &path); }
+    else if (cmp(id, L"Downloads"))  { hr = SHGetKnownFolderPath(FOLDERID_Downloads,       0, NULL, &path); }
+    else if (cmp(id, L"Fonts"))      { hr = SHGetKnownFolderPath(FOLDERID_Fonts,           0, NULL, &path); }
+    else if (cmp(id, L"Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
+    else if (cmp(id, L"ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
+    else if (cmp(id, L"Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
     else if (cmp(id, L"Recycle")) 
     {
         LPSHELLFOLDER pDesktop       = NULL;
