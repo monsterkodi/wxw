@@ -14,6 +14,12 @@
 using namespace Gdiplus;
 using namespace std;
 
+// 00000000   000   000   0000000   
+// 000   000  0000  000  000        
+// 00000000   000 0 000  000  0000  
+// 000        000  0000  000   000  
+// 000        000   000   0000000   
+
 bool save_png_memory(HBITMAP hbitmap, std::vector<BYTE>& data)
 {
     Gdiplus::Bitmap bmp(hbitmap, nullptr);
@@ -41,26 +47,14 @@ bool save_png_memory(HBITMAP hbitmap, std::vector<BYTE>& data)
     return true;
 }
 
-int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, __in_opt LPSTR lpCmdLine, __in int nShowCmd )
+//  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
+// 000       000       000   000  000       000       0000  000  000       000   000  000   000     000     
+// 0000000   000       0000000    0000000   0000000   000 0 000  0000000   000000000  000   000     000     
+//      000  000       000   000  000       000       000  0000       000  000   000  000   000     000     
+// 0000000    0000000  000   000  00000000  00000000  000   000  0000000   000   000   0000000      000     
+
+int screenshot(char *targetfile="screenshot.png")
 {
-    /*
-    if (argc < 2)
-    {
-        usage();
-        return 0;
-    }
-    
-    if (cmp(argv[1], L"help"))
-    {
-        if (argc == 2) usage();
-        else           help(argv[2]);
-    }
-    else if (cmp(argv[1], L"folder"))
-    {
-        if (argc == 2) help(argv[1]);
-        else           folder(argv[2]);
-    }*/
-    
     CoInitialize(NULL);
 
     ULONG_PTR token;
@@ -70,16 +64,8 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     RECT rc; rc.left = 0; rc.right = 0;
     rc.right  = GetSystemMetrics(SM_CXSCREEN); // SM_CXVIRTUALSCREEN
     rc.bottom = GetSystemMetrics(SM_CYSCREEN); // SM_CYVIRTUALSCREEN
-    cout << "rect " << rc.right << " " << rc.bottom << endl;
-    
-    UINT dpiX;
-    UINT dpiY;
-    POINT pt = { 0, 0 };
-    HMONITOR hmonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
-    MONITOR_DPI_TYPE dpiType = MDT_DEFAULT;
-    
-    HRESULT result = GetDpiForMonitor( hmonitor, dpiType, &dpiX, &dpiY );
-    
+    //cout << "rect " << rc.right << " " << rc.bottom << endl;
+        
     auto hdc = GetDC(0);
     auto memdc = CreateCompatibleDC(hdc);
     auto hbitmap = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
@@ -92,33 +78,43 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     std::vector<BYTE> data;
     if (save_png_memory(hbitmap, data))
     {
-        std::ofstream fout("screenshot.png", std::ios::binary);
+        std::ofstream fout(targetfile, std::ios::binary);
         fout.write((char*)data.data(), data.size());
     }
     DeleteObject(hbitmap);
 
     Gdiplus::GdiplusShutdown(token);
     CoUninitialize();
-
-	return 0;
-}
-
-int cmp(wchar_t *a, wchar_t *b)
-{
-    return lstrcmpiW(a, b) == 0;
-} 
-
-int klog(wchar_t *msg)
-{
-	wprintf(msg);
-	wprintf(L"\n");
+    
     return 0;
 }
 
-int error(wchar_t *msg)
+//  0000000  00     00  00000000   
+// 000       000   000  000   000  
+// 000       000000000  00000000   
+// 000       000 0 000  000        
+//  0000000  000   000  000        
+
+int wcmp(wchar_t *a, char *b)
 {
-    klog(msg);
-    return 1;
+    size_t size = strlen(b);
+    std::wstring wc( size, L' ' );
+    size_t conv;
+    mbstowcs_s( &conv, &wc[0], size*2, b, size );
+    
+    return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
+} 
+
+int cmp(char *a, char *b)
+{
+    return _strcmpi(a, b) == 0;
+} 
+
+int klog(char *msg)
+{
+    printf(msg);
+    printf("\n");
+    return 0;
 }
 
 // 000   000   0000000   0000000    0000000   00000000  
@@ -129,31 +125,67 @@ int error(wchar_t *msg)
 
 int usage(void)
 {
-    klog(L"");
-    klog(L"wxw [command] [options...]\n");
-    klog(L"     help     <command>");
-    klog(L"     folder   <name>");
-    klog(L"");
+    klog("");
+    klog("wc [command] [args...]");
+    klog("");
+    klog("    commands:");
+    klog("");
+    klog("     help       <command>");
+    klog("     folder     <name>");
+    klog("     recycle    <action>");
+    klog("     screenshot [targetfile]");
+    klog("");
     return 0;
 }
 
-int help(wchar_t *command)
+// 000   000  00000000  000      00000000   
+// 000   000  000       000      000   000  
+// 000000000  0000000   000      00000000   
+// 000   000  000       000      000        
+// 000   000  00000000  0000000  000        
+
+int help(char *command)
 {
-	if (cmp(command, L"folder"))
+	if (cmp(command, "folder"))
 	{
-        klog(L"");
-        klog(L"folder names:");
-        klog(L"");
-        klog(L"       AppData");
-        klog(L"       Desktop");
-        klog(L"       Documents");
-        klog(L"       Downloads");
-        klog(L"       Fonts");
-        klog(L"       Program");
-        klog(L"       ProgramX86");
-        klog(L"       Startup");
-        klog(L"");
+        klog("");
+        klog("wc folder <name>");
+        klog("");
+        klog("Prints the path of specific folders. Recognized names are:");
+        klog("");
+        klog("      AppData");
+        klog("      Desktop");
+        klog("      Documents");
+        klog("      Downloads");
+        klog("      Fonts");
+        klog("      Program");
+        klog("      ProgramX86");
+        klog("      Startup");
+        klog("");
 	}
+    else if (cmp(command, "screenshot"))
+    {
+        klog("");
+        klog("wc screenshot [targetfile]");
+        klog("");
+        klog("      targetfile defaults to './screenshot.png'");
+        klog("");
+        klog("Takes a screenshot of the main monitor and saves it as a png file.");
+        klog("");
+    }
+    else if (cmp(command, "recycle"))
+    {
+        klog("");
+        klog("wc recycle <action>");
+        klog("");
+        klog("      actions:");
+        klog("");
+        klog("          list      list files in thrash bin");
+        klog("          name      prints name of thrash bin");
+        klog("          empty     empties the thrash bin");
+        klog("");
+    }
+    
     return 0;
 }
 
@@ -163,7 +195,7 @@ int help(wchar_t *command)
 // 000       000   000  000      000   000  000       000   000  
 // 000        0000000   0000000  0000000    00000000  000   000  
 
-int folder(wchar_t *id)
+int folder(char *id)
 {
     int result = 0;
     PWSTR path = NULL;
@@ -171,51 +203,118 @@ int folder(wchar_t *id)
     
     // doesn't work :( FOLDERID_RecycleBinFolder 
     
-    if      (cmp(id, L"AppData"))    { hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData,  0, NULL, &path); }
-    else if (cmp(id, L"Desktop"))    { hr = SHGetKnownFolderPath(FOLDERID_Desktop,         0, NULL, &path); }
-    else if (cmp(id, L"Documents"))  { hr = SHGetKnownFolderPath(FOLDERID_Documents,       0, NULL, &path); }
-    else if (cmp(id, L"Downloads"))  { hr = SHGetKnownFolderPath(FOLDERID_Downloads,       0, NULL, &path); }
-    else if (cmp(id, L"Fonts"))      { hr = SHGetKnownFolderPath(FOLDERID_Fonts,           0, NULL, &path); }
-    else if (cmp(id, L"Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
-    else if (cmp(id, L"ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
-    else if (cmp(id, L"Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
-    else if (cmp(id, L"Recycle")) 
-    {
-        LPSHELLFOLDER pDesktop       = NULL;
-        LPITEMIDLIST  pidlRecycleBin = NULL;
-
-        hr = SHGetDesktopFolder(&pDesktop);
-        wprintf(L"SHGetDesktopFolder %d\n", hr);
-        
-        hr = SHGetFolderLocation(NULL, CSIDL_BITBUCKET, NULL, 0, &pidlRecycleBin);
-        wprintf(L"SHGetFolderLocation %d\n", hr);
-        
-        // hr = pDesktop->BindToObject(pidlRecycleBin, NULL, IID_IShellFolder, (LPVOID *)&m_pRecycleBin);
-        // wprintf(L"BindToObject %d\n", hr);    
-        
-        // STRRET strRet;
-        // hr = pDesktop->GetDisplayNameOf(pidlRecycleBin, SHGDN_NORMAL, &strRet);
-        // wprintf(L"GetDisplayNameOf %d\n", hr);
-    }
+    if      (cmp(id, "AppData"))    { hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData,  0, NULL, &path); }
+    else if (cmp(id, "Desktop"))    { hr = SHGetKnownFolderPath(FOLDERID_Desktop,         0, NULL, &path); }
+    else if (cmp(id, "Documents"))  { hr = SHGetKnownFolderPath(FOLDERID_Documents,       0, NULL, &path); }
+    else if (cmp(id, "Downloads"))  { hr = SHGetKnownFolderPath(FOLDERID_Downloads,       0, NULL, &path); }
+    else if (cmp(id, "Fonts"))      { hr = SHGetKnownFolderPath(FOLDERID_Fonts,           0, NULL, &path); }
+    else if (cmp(id, "Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
+    else if (cmp(id, "ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
+    else if (cmp(id, "Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
     else
     {
-        wprintf(L"ERROR: invalid folder name '%ls'\n", id);
-        result = 1;
+        printf("ERROR: invalid folder name '%s'\n", id);
+        return 1;
     }
 
     if (SUCCEEDED(hr) && path) 
     {
-        wprintf(L"folder %ls\n", path);
+        wprintf(L"%ls\n", path);
     }
     else
     {
-        wprintf(L"ERROR: can't get folder '%ls' %ls\n", id, path);
+        printf("ERROR: can't get folder '%s'\n", id);
         result = 1;
     }
 
     CoTaskMemFree(path);
     
     return result;
+}
+
+int recycle(char* action)
+{
+    LPSHELLFOLDER pDesktop       = NULL;
+    LPITEMIDLIST  pidlRecycleBin = NULL;
+
+    SHGetDesktopFolder(&pDesktop);
+    SHGetSpecialFolderLocation (NULL, CSIDL_BITBUCKET, &pidlRecycleBin);
+    
+    LPSHELLFOLDER pRecycleBin;
+    pDesktop->BindToObject(pidlRecycleBin, NULL, IID_IShellFolder, (LPVOID *)&pRecycleBin);
+
+    if (cmp(action, "name"))
+    {
+        STRRET strRet;
+        if (SUCCEEDED(pDesktop->GetDisplayNameOf(pidlRecycleBin, SHGDN_NORMAL, &strRet)))
+        {
+            wprintf(L"%ls\n", strRet.pOleStr);
+        }
+    }
+    if (cmp(action, "list"))
+    {
+        IEnumIDList *penumFiles;
+        
+        if (SUCCEEDED(pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
+        {
+            LPITEMIDLIST pidl = NULL;
+            while (penumFiles->Next(1, &pidl, NULL) != S_FALSE)
+            {
+                STRRET strRet;
+                if (SUCCEEDED(pDesktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, &strRet)))
+                {
+                    wprintf(L"%ls\n", strRet.pOleStr);
+                }
+            }
+        }
+    }
+    if (cmp(action, "empty"))
+    {
+        SHEmptyRecycleBinA(NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI);
+    }
+    return 0;
+}
+
+// 000   000  000  000   000  00     00   0000000   000  000   000  
+// 000 0 000  000  0000  000  000   000  000   000  000  0000  000  
+// 000000000  000  000 0 000  000000000  000000000  000  000 0 000  
+// 000   000  000  000  0000  000 0 000  000   000  000  000  0000  
+// 00     00  000  000   000  000   000  000   000  000  000   000  
+
+int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, __in_opt LPSTR lpCmdLine, __in int nShowCmd )
+{
+    int argc    = __argc;
+    char** argv = __argv;
+
+    if (argc < 2)
+    {
+        return usage();
+    }
+    
+    char* cmd = argv[1];
+    
+    if (cmp(cmd, "help"))
+    {
+        if (argc == 2) return usage();
+        else           return help(argv[2]);
+    }
+    if (cmp(cmd, "folder"))
+    {
+        if (argc == 2) return help(cmd);
+        else           return folder(argv[2]);
+    }
+    if (cmp(cmd, "screenshot"))
+    {
+        if (argc == 2) return screenshot();
+        else           return screenshot(argv[2]);
+    }
+    if (cmp(cmd, "recycle"))
+    {
+        if (argc == 2) return help(cmd);
+        else           return recycle(argv[2]);
+    }
+    
+    return 0;
 }
 
 
