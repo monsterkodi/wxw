@@ -134,6 +134,32 @@ HRESULT screenshot(char *targetfile="screenshot.png")
 // 000  000  0000  000       000   000  
 // 000  000   000  000        0000000   
 
+void winInfo(HWND hWnd, wchar_t* title=L"")
+{
+    wprintf(L"%llx ", (unsigned __int64)hWnd);
+
+    RECT rect; 
+
+    GetClientRect(hWnd, &rect);
+    LONG width = rect.right;
+    LONG height = rect.bottom;
+
+    GetWindowRect(hWnd, &rect);
+    LONG x = rect.left;
+    LONG y = rect.top;
+
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+
+    wprintf(L"%lu ", pid);
+
+    wprintf(L"%d %d %d %d ", x, y, width, height);
+
+    wprintf(L"%ls", title);
+
+    wprintf(L"\n");
+}
+
 static BOOL CALLBACK infoAll(HWND hWnd, LPARAM lparam) 
 {
     int length = GetWindowTextLengthW(hWnd);
@@ -142,23 +168,7 @@ static BOOL CALLBACK infoAll(HWND hWnd, LPARAM lparam)
 
     if (IsWindowVisible(hWnd) && length != 0)
     {
-        wprintf(L"%llx ", (unsigned __int64)hWnd);
-
-        RECT rect; 
-
-        GetClientRect(hWnd, &rect);
-        LONG width = rect.right;
-        LONG height = rect.bottom;
-
-        GetWindowRect(hWnd, &rect);
-        LONG x = rect.left;
-        LONG y = rect.top;
-
-        wprintf(L"%d %d %d %d ", x, y, width, height);
-
-        wprintf(L"%ls", title);
-
-        wprintf(L"\n");
+        winInfo(hWnd, title);
     }
     return true;
 }
@@ -173,7 +183,7 @@ HRESULT info(char *id="all")
     }
     else if (cmp(id, "foreground"))
     {
-        // GetWindowThreadProcessId();
+        winInfo(GetForegroundWindow());
     }
     else 
     {
