@@ -136,7 +136,6 @@ int screenshot(char *targetfile="screenshot.png")
 
 int folder(char *id)
 {
-    int result = 0;
     PWSTR path = NULL;
     HRESULT hr = S_OK; 
     
@@ -148,11 +147,10 @@ int folder(char *id)
     else if (cmp(id, "Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
     else if (cmp(id, "ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
     else if (cmp(id, "Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
-    else if (cmp(id, "Trash"))      { hr = SHGetKnownFolderPath(FOLDERID_RecycleBinFolder, 0, NULL, &path); }// doesn't work :( 
     else
     {
         printf("ERROR: invalid folder name '%s'\n", id);
-        return 1;
+        return S_FALSE;
     }
 
     if (SUCCEEDED(hr) && path) 
@@ -162,12 +160,12 @@ int folder(char *id)
     else
     {
         printf("ERROR: can't get folder '%s'\n", id);
-        result = 1;
+        hr = S_FALSE;
     }
 
     CoTaskMemFree(path);
     
-    return result;
+    return hr;
 }
 
 // 000000000  00000000    0000000    0000000  000   000  
@@ -176,8 +174,9 @@ int folder(char *id)
 //    000     000   000  000   000       000  000   000  
 //    000     000   000  000   000  0000000   000   000  
 
-int trash(char* action)
+HRESULT trash(char* action)
 {
+    HRESULT hr = S_OK;
     LPSHELLFOLDER pDesktop       = NULL;
     LPITEMIDLIST  pidlRecycleBin = NULL;
     LPITEMIDLIST  pidl           = NULL;
@@ -191,7 +190,7 @@ int trash(char* action)
     if (cmp(action, "name"))
     {
         STRRET strRet;
-        if (SUCCEEDED(pDesktop->GetDisplayNameOf(pidlRecycleBin, SHGDN_NORMAL, &strRet)))
+        if (SUCCEEDED(hr = pDesktop->GetDisplayNameOf(pidlRecycleBin, SHGDN_NORMAL, &strRet)))
         {
             wprintf(L"%ls\n", strRet.pOleStr);
         }
@@ -200,12 +199,12 @@ int trash(char* action)
     {
         IEnumIDList *penumFiles;
         
-        if (SUCCEEDED(pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
+        if (SUCCEEDED(hr = pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
         {
             while (penumFiles->Next(1, &pidl, NULL) != S_FALSE)
             {
                 STRRET strRet;
-                if (SUCCEEDED(pDesktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, &strRet)))
+                if (SUCCEEDED(hr = pDesktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, &strRet)))
                 {
                     wprintf(L"%ls\n", strRet.pOleStr);
                 }
@@ -216,7 +215,7 @@ int trash(char* action)
     {
         IEnumIDList *penumFiles;
         
-        if (SUCCEEDED(pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
+        if (SUCCEEDED(hr = pRecycleBin->EnumObjects(NULL, SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &penumFiles)))
         {
             int num = 0;
             while (penumFiles->Next(1, &pidl, NULL) != S_FALSE) num++;
@@ -225,47 +224,52 @@ int trash(char* action)
     }
     else if (cmp(action, "empty"))
     {
-        SHEmptyRecycleBinA(NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI);
+        hr = SHEmptyRecycleBinA(NULL, NULL, SHERB_NOCONFIRMATION | SHERB_NOPROGRESSUI);
     }
-    else
+    else if (SUCCEEDED(hr = CoInitialize(NULL)))
     {
-        IShellItem* shellItem;
-        PCWSTR path = wstr(action);
-        wprintf(L"trash path: %ls\n", path);
-        HRESULT hr = S_OK;
-        hr = CoInitialize(NULL);
-        
-        // check https://github.com/sindresorhus/recycle-bin/blob/master/recycle-bin.c
-        // ILCreateFromPath
-        
-        hr = SHCreateItemFromParsingName(path, NULL, IID_IShellItem, (void**)& shellItem);
-        if (SUCCEEDED(hr))
-        {
-            CComPtr<IFileOperation> pfo;
-            hr = pfo.CoCreateInstance(CLSID_FileOperation);
+        IFileOperation* op;
 
-            if (SUCCEEDED(hr))
+        if (SUCCEEDED(hr = CoCreateInstance(CLSID_FileOperation, NULL, CLSCTX_ALL, IID_IFileOperation, (void**)& op)))
+        {
+            if (SUCCEEDED(hr = op->SetOperationFlags(FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE | FOF_NOERRORUI | FOF_NOCONFIRMATION | FOFX_EARLYFAILURE)))
             {
-                if (SUCCEEDED(pfo->DeleteItem(shellItem, NULL)))
+                PCWSTR path = wstr(action);
+                
+                int len = GetFullPathName(path, 0, NULL, NULL);
+
+                if (len)
                 {
-                    if (SUCCEEDED(pfo->PerformOperations()))
+                    wchar_t* buf = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
+
+                    GetFullPathName(path, len, buf, NULL);
+
+                    LPITEMIDLIST idlist = ILCreateFromPathW(buf);
+                    IShellItem* item;
+                    if (SUCCEEDED(hr = SHCreateShellItem(NULL, NULL, idlist, &item)))
                     {
-                        printf("trashed: %s\n", action);
+                        if (SUCCEEDED(hr = op->DeleteItems((IUnknown*)item)))
+                        {
+                            hr = op->PerformOperations();
+                        }
                     }
+                    else
+                    {
+                        cerr << "can't find " << action << endl;
+                    }
+                    ILFree(idlist);
+                    free(buf);
                 }
+                else
+                {
+                    hr = S_FALSE;
+                }
+                delete path;
             }
         }
-        else
-        {
-            printf("cant parse: %s\n", action);
-        }
-        delete path;
-        // LPSHFILEOPSTRUCTA op;
-        // op.wFunc = FO_MOVE;
-        // op.pFrom = 
-        // SHFileOperationA();
+        op->Release();
     }
-    return 0;
+    return hr;
 }
 
 
@@ -275,7 +279,7 @@ int trash(char* action)
 // 000   000       000  000   000  000   000  000       
 //  0000000   0000000   000   000   0000000   00000000  
 
-int usage(void)
+HRESULT usage(void)
 {
     klog("");
     klog("wc [command] [args...]");
@@ -287,7 +291,7 @@ int usage(void)
     klog("     trash      <action>");
     klog("     screenshot [targetfile]");
     klog("");
-    return 0;
+    return S_OK;
 }
 
 // 000   000  00000000  000      00000000   
@@ -296,7 +300,7 @@ int usage(void)
 // 000   000  000       000      000        
 // 000   000  00000000  0000000  000        
 
-int help(char *command)
+HRESULT help(char *command)
 {
     if (cmp(command, "folder"))
     {
@@ -339,7 +343,7 @@ int help(char *command)
         klog("");
     }
     
-    return 0;
+    return S_OK;
 }
 
 // 000   000  000  000   000  00     00   0000000   000  000   000  
@@ -352,6 +356,8 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
 {
     int argc    = __argc;
     char** argv = __argv;
+
+    HRESULT hr = S_OK;
 
     if (argc < 2)
     {
@@ -368,20 +374,25 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     else if (cmp(cmd, "folder"))
     {
         if (argc == 2) return help(cmd);
-        else           return folder(argv[2]);
+        else           hr = folder(argv[2]);
     }
     else if (cmp(cmd, "screenshot"))
     {
         if (argc == 2) return screenshot();
-        else           return screenshot(argv[2]);
+        else           hr = screenshot(argv[2]);
     }
     else if (cmp(cmd, "trash"))
     {
         if (argc == 2) return help(cmd);
-        else           return trash(argv[2]);
+        else           hr = trash(argv[2]);
     }
     
-    return 0;
+    if (!SUCCEEDED(hr))
+    {
+        cerr << "command failed" << endl;
+    }
+
+    return hr;
 }
 
 
