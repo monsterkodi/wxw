@@ -93,7 +93,7 @@ bool save_png_memory(HBITMAP hbitmap, std::vector<BYTE>& data)
 //      000  000       000   000  000       000       000  0000       000  000   000  000   000     000     
 // 0000000    0000000  000   000  00000000  00000000  000   000  0000000   000   000   0000000      000     
 
-int screenshot(char *targetfile="screenshot.png")
+HRESULT screenshot(char *targetfile="screenshot.png")
 {
     CoInitialize(NULL);
 
@@ -102,8 +102,8 @@ int screenshot(char *targetfile="screenshot.png")
     Gdiplus::GdiplusStartup(&token, &tmp, NULL);
 
     RECT rc; rc.left = 0; rc.right = 0;
-    rc.right  = GetSystemMetrics(SM_CXSCREEN); // SM_CXVIRTUALSCREEN
-    rc.bottom = GetSystemMetrics(SM_CYSCREEN); // SM_CYVIRTUALSCREEN
+    rc.right  = GetSystemMetrics(SM_CXSCREEN); 
+    rc.bottom = GetSystemMetrics(SM_CYSCREEN); 
         
     auto hdc = GetDC(0);
     auto memdc = CreateCompatibleDC(hdc);
@@ -125,16 +125,99 @@ int screenshot(char *targetfile="screenshot.png")
     Gdiplus::GdiplusShutdown(token);
     CoUninitialize();
     
-    return 0;
+    return S_OK;
 }
-
+
+// 000  000   000  00000000   0000000   
+// 000  0000  000  000       000   000  
+// 000  000 0 000  000000    000   000  
+// 000  000  0000  000       000   000  
+// 000  000   000  000        0000000   
+
+static BOOL CALLBACK infoAll(HWND hWnd, LPARAM lparam) 
+{
+    int length = GetWindowTextLengthW(hWnd);
+    wchar_t* title = new wchar_t[length + 1];
+    GetWindowText(hWnd, title, length + 1);
+
+    if (IsWindowVisible(hWnd) && length != 0)
+    {
+        wprintf(L"%llx ", (unsigned __int64)hWnd);
+
+        RECT rect; 
+
+        GetClientRect(hWnd, &rect);
+        LONG width = rect.right;
+        LONG height = rect.bottom;
+
+        GetWindowRect(hWnd, &rect);
+        LONG x = rect.left;
+        LONG y = rect.top;
+
+        wprintf(L"%d %d %d %d ", x, y, width, height);
+
+        wprintf(L"%ls", title);
+
+        wprintf(L"\n");
+    }
+    return true;
+}
+
+HRESULT info(char *id="all")
+{
+    HRESULT hr = S_OK;
+    
+    if (cmp(id, "all"))
+    {
+        EnumWindows(infoAll, NULL);
+    }
+    else if (cmp(id, "foreground"))
+    {
+        // GetWindowThreadProcessId();
+    }
+    else 
+    {
+        cerr << "unknown info argument " << id << endl;
+        hr = S_FALSE;
+    }
+
+    return hr;
+}
+
+//  0000000   0000000  00000000   00000000  00000000  000   000  
+// 000       000       000   000  000       000       0000  000  
+// 0000000   000       0000000    0000000   0000000   000 0 000  
+//      000  000       000   000  000       000       000  0000  
+// 0000000    0000000  000   000  00000000  00000000  000   000  
+
+HRESULT screen(char *id="size")
+{
+    HRESULT hr = S_OK;
+    
+    if (cmp(id, "size"))
+    {
+        cout << GetSystemMetrics(SM_CXSCREEN) << " " << GetSystemMetrics(SM_CYSCREEN) << endl;
+    }
+    else if (cmp(id, "user"))
+    {
+        cout << GetSystemMetrics(SM_CXFULLSCREEN) << " " << GetSystemMetrics(SM_CYFULLSCREEN) << endl;
+    }
+    else 
+    {
+        cerr << "unknown screen argument " << id << endl;
+        hr = S_FALSE;
+    }
+
+    return hr;
+}
+
 // 00000000   0000000   000      0000000    00000000  00000000   
 // 000       000   000  000      000   000  000       000   000  
 // 000000    000   000  000      000   000  0000000   0000000    
 // 000       000   000  000      000   000  000       000   000  
 // 000        0000000   0000000  0000000    00000000  000   000  
 
-int folder(char *id)
+HRESULT folder(char *id)
 {
     PWSTR path = NULL;
     HRESULT hr = S_OK; 
@@ -149,7 +232,7 @@ int folder(char *id)
     else if (cmp(id, "Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
     else
     {
-        printf("ERROR: invalid folder name '%s'\n", id);
+        cerr << "ERROR: invalid folder name " << id << endl;
         return S_FALSE;
     }
 
@@ -159,7 +242,7 @@ int folder(char *id)
     }
     else
     {
-        printf("ERROR: can't get folder '%s'\n", id);
+        cerr << "ERROR: can't get folder " << id << endl; 
         hr = S_FALSE;
     }
 
@@ -192,7 +275,7 @@ HRESULT trash(char* action)
         STRRET strRet;
         if (SUCCEEDED(hr = pDesktop->GetDisplayNameOf(pidlRecycleBin, SHGDN_NORMAL, &strRet)))
         {
-            wprintf(L"%ls\n", strRet.pOleStr);
+            cout << strRet.cStr << endl;
         }
     }
     else if (cmp(action, "list"))
@@ -206,7 +289,7 @@ HRESULT trash(char* action)
                 STRRET strRet;
                 if (SUCCEEDED(hr = pDesktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, &strRet)))
                 {
-                    wprintf(L"%ls\n", strRet.pOleStr);
+                    cout << strRet.cStr << endl;
                 }
             }
         }
@@ -219,7 +302,7 @@ HRESULT trash(char* action)
         {
             int num = 0;
             while (penumFiles->Next(1, &pidl, NULL) != S_FALSE) num++;
-            printf("%d\n", num);
+            cout << num << endl;
         }
     }
     else if (cmp(action, "empty"))
@@ -287,8 +370,10 @@ HRESULT usage(void)
     klog("    commands:");
     klog("");
     klog("     help       <command>");
+    klog("     info       [pid|path|title]");
     klog("     folder     <name>");
     klog("     trash      <action>");
+    klog("     screen     [size|user]");
     klog("     screenshot [targetfile]");
     klog("");
     return S_OK;
@@ -302,12 +387,17 @@ HRESULT usage(void)
 
 HRESULT help(char *command)
 {
+    klog("");
+    
+    if (cmp(command, "info"))
+    {
+        klog("wc info [pid|path|title]");
+    }
     if (cmp(command, "folder"))
     {
-        klog("");
         klog("wc folder <name>");
         klog("");
-        klog("Prints the path of specific folders. Recognized names are:");
+        klog("Print the path of specific folders, recognized names are:");
         klog("");
         klog("      AppData");
         klog("      Desktop");
@@ -317,32 +407,39 @@ HRESULT help(char *command)
         klog("      Program");
         klog("      ProgramX86");
         klog("      Startup");
+    }
+    else if (cmp(command, "screen"))
+    {
+        klog("wc screen [size|user]");
         klog("");
+        klog("      size        print size of screen in pixels");
+        klog("      user        print size of screen without taskbar in pixels");
     }
     else if (cmp(command, "screenshot"))
     {
-        klog("");
         klog("wc screenshot [targetfile]");
         klog("");
         klog("      targetfile defaults to './screenshot.png'");
         klog("");
-        klog("Takes a screenshot of the main monitor and saves it as a png file.");
-        klog("");
+        klog("Take a screenshot of the main monitor and save it as a png file.");
     }
     else if (cmp(command, "trash"))
     {
-        klog("");
         klog("wc trash <action>");
         klog("");
         klog("      actions:");
         klog("");
-        klog("          list      prints names of files in thrash bin");
-        klog("          count     prints number of files in thrash bin");
-        klog("          name      prints name of thrash bin");
-        klog("          empty     empties the thrash bin");
-        klog("");
+        klog("          list      print names of files in thrash bin");
+        klog("          count     print number of files in thrash bin");
+        klog("          name      print name of thrash bin");
+        klog("          empty     empty the thrash bin");
+    }
+    else
+    {
+        printf("no help available for %s", command);
     }
     
+    klog("");
     return S_OK;
 }
 
@@ -371,6 +468,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
         if (argc == 2) return usage();
         else           return help(argv[2]);
     }
+    else if (cmp(cmd, "info"))
+    {
+        if (argc == 2) hr = info();
+        else           hr = info(argv[2]);
+    }
     else if (cmp(cmd, "folder"))
     {
         if (argc == 2) return help(cmd);
@@ -381,10 +483,19 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
         if (argc == 2) return screenshot();
         else           hr = screenshot(argv[2]);
     }
+    else if (cmp(cmd, "screen"))
+    {
+        if (argc == 2) return screen("size");
+        else           hr = screen(argv[2]);
+    }
     else if (cmp(cmd, "trash"))
     {
         if (argc == 2) return help(cmd);
         else           hr = trash(argv[2]);
+    }
+    else
+    {
+        cerr << "unknown command " << cmd << endl;
     }
     
     if (!SUCCEEDED(hr))
