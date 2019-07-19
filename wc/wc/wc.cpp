@@ -4,6 +4,7 @@
 #include <string.h>
 #include <tchar.h>
 #include <math.h>
+#include <strsafe.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -25,21 +26,21 @@ using namespace std;
 int wcmp(wchar_t *a, char *b)
 {
     size_t size = strlen(b);
-    std::wstring wc(size+1, L' ');
+    wstring wc(size+1, L' ');
     size_t conv;
     mbstowcs_s(&conv, &wc[0], size+1, b, size);
     
     return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
 } 
 
-LPCWSTR wstr(char *s)
+wchar_t* wstr(char *s)
 {
     size_t size = strlen(s);
     wchar_t *ws = new wchar_t[size+1]; 
     size_t conv;
     mbstowcs_s(&conv, ws, size+1, s, size);
     
-    return (LPCWSTR)ws;
+    return ws;
 }
 
 int cmp(char *a, char *b)
@@ -60,17 +61,17 @@ int klog(char *msg)
 // 000        000  0000  000   000  
 // 000        000   000   0000000   
 
-bool save_png_memory(HBITMAP hbitmap, std::vector<BYTE>& data)
+bool save_png_memory(HBITMAP hbitmap, vector<BYTE>& data)
 {
-    Gdiplus::Bitmap bmp(hbitmap, nullptr);
+    Bitmap bmp(hbitmap, NULL);
 
-    IStream* istream = nullptr;
+    IStream* istream = NULL;
     CreateStreamOnHGlobal(NULL, TRUE, &istream);
 
     CLSID clsid_png;
     CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsid_png);
-    Gdiplus::Status status = bmp.Save(istream, &clsid_png);
-    if (status != Gdiplus::Status::Ok)
+    Status status = bmp.Save(istream, &clsid_png);
+    if (status != Status::Ok)
         return false;
 
     HGLOBAL hg = NULL;
@@ -98,8 +99,8 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     CoInitialize(NULL);
 
     ULONG_PTR token;
-    Gdiplus::GdiplusStartupInput tmp;
-    Gdiplus::GdiplusStartup(&token, &tmp, NULL);
+    GdiplusStartupInput tmp;
+    GdiplusStartup(&token, &tmp, NULL);
 
     RECT rc; rc.left = 0; rc.right = 0;
     rc.right  = GetSystemMetrics(SM_CXSCREEN); 
@@ -114,18 +115,151 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     DeleteDC(memdc);
     ReleaseDC(0, hdc);
 
-    std::vector<BYTE> data;
+    vector<BYTE> data;
     if (save_png_memory(hbitmap, data))
     {
-        std::ofstream fout(targetfile, std::ios::binary);
+        ofstream fout(targetfile, ios::binary);
         fout.write((char*)data.data(), data.size());
     }
     DeleteObject(hbitmap);
 
-    Gdiplus::GdiplusShutdown(token);
+    GdiplusShutdown(token);
     CoUninitialize();
     
     return S_OK;
+}
+
+// 000000000  000  000000000  000      00000000  
+//    000     000     000     000      000       
+//    000     000     000     000      0000000   
+//    000     000     000     000      000       
+//    000     000     000     0000000  00000000  
+
+wchar_t* winTitle(HWND hWnd)
+{
+	int length = GetWindowTextLengthW(hWnd);
+	if (length <= 0)
+	{
+		return NULL;
+	}
+	wchar_t* title = new wchar_t[length + 1];
+	GetWindowText(hWnd, title, length + 1);
+	return title;
+}
+
+// 00     00   0000000   000000000   0000000  000   000  000   000  000  000   000  
+// 000   000  000   000     000     000       000   000  000 0 000  000  0000  000  
+// 000000000  000000000     000     000       000000000  000000000  000  000 0 000  
+// 000 0 000  000   000     000     000       000   000  000   000  000  000  0000  
+// 000   000  000   000     000      0000000  000   000  00     00  000  000   000  
+
+bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, wchar_t* title, char* id)
+{
+	bool found = false;
+
+	if (!id) return false;
+
+	wchar_t* wid = wstr(id);
+    wchar_t buf[65];
+    
+	StringCbPrintfW(buf, 64, L"%ld", pid);
+	if (lstrcmpi(wid, buf) == 0)
+    {
+		found = true;
+    }
+    
+	StringCbPrintfW(buf, 64, L"%llx", hWnd);
+	if (lstrcmpi(wid, buf) == 0)
+    {
+		found = true;
+    }
+    
+	if (path && wstring(path).find(wid) != wstring::npos)
+    {
+		found = true;
+    }
+
+    if (title && wstring(title).find(wid) != wstring::npos)
+    {
+		found = true;
+    }
+    
+	delete wid;
+	return found;
+}
+
+// 000   000  000  000   000  000  000   000  00000000   0000000   
+// 000 0 000  000  0000  000  000  0000  000  000       000   000  
+// 000000000  000  000 0 000  000  000 0 000  000000    000   000  
+// 000   000  000  000  0000  000  000  0000  000       000   000  
+// 00     00  000  000   000  000  000   000  000        0000000   
+
+HRESULT winInfo(HWND hWnd, wchar_t* title=NULL, char* id=NULL)
+{
+    RECT rect; 
+
+    GetWindowRect(hWnd, &rect);
+	LONG width  = rect.right - rect.left;
+	LONG height = rect.bottom - rect.top;
+    LONG x = rect.left;
+    LONG y = rect.top;
+
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+	DWORD pathSize = 10000;
+	wchar_t path[10000];
+	path[0] = 0;
+
+	QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
+    
+	wchar_t* ftitle = NULL;
+	if (!title)
+	{
+		ftitle = winTitle(hWnd);
+		title  = ftitle;
+	}
+
+	if (id == NULL || cmp(id, "all") || matchWin(hWnd, pid, path, title, id))
+	{
+		if (path)
+		{
+			wprintf(L"path    %ls\n", path);
+		}
+		if (title)
+		{
+			wprintf(L"title   %ls\n", title);
+		}
+		wprintf(L"hwnd    %llx\n", (unsigned __int64)hWnd);
+		wprintf(L"pid     %lu\n", pid);
+		wprintf(L"x       %d\n", x);
+		wprintf(L"y       %d\n", y);
+		wprintf(L"width   %d\n", width);
+		wprintf(L"height  %d\n", height);
+
+		wprintf(L"\n");
+	}
+	delete ftitle;
+	return S_OK;
+}
+
+// 000  000   000  00000000   0000000    0000000   000      000      
+// 000  0000  000  000       000   000  000   000  000      000      
+// 000  000 0 000  000000    000   000  000000000  000      000      
+// 000  000  0000  000       000   000  000   000  000      000      
+// 000  000   000  000        0000000   000   000  0000000  0000000  
+
+static BOOL CALLBACK infoAll(HWND hWnd, LPARAM lparam) 
+{
+	wchar_t* title = winTitle(hWnd);
+    if (IsWindowVisible(hWnd) && title)
+    {
+        winInfo(hWnd, title, (char*)lparam);
+		delete title;
+    }
+    return true;
 }
 
 // 000  000   000  00000000   0000000   
@@ -134,64 +268,51 @@ HRESULT screenshot(char *targetfile="screenshot.png")
 // 000  000  0000  000       000   000  
 // 000  000   000  000        0000000   
 
-void winInfo(HWND hWnd, wchar_t* title=L"")
-{
-    wprintf(L"%llx ", (unsigned __int64)hWnd);
-
-    RECT rect; 
-
-    GetClientRect(hWnd, &rect);
-    LONG width = rect.right;
-    LONG height = rect.bottom;
-
-    GetWindowRect(hWnd, &rect);
-    LONG x = rect.left;
-    LONG y = rect.top;
-
-    DWORD pid;
-    GetWindowThreadProcessId(hWnd, &pid);
-
-    wprintf(L"%lu ", pid);
-
-    wprintf(L"%d %d %d %d ", x, y, width, height);
-
-    wprintf(L"%ls", title);
-
-    wprintf(L"\n");
-}
-
-static BOOL CALLBACK infoAll(HWND hWnd, LPARAM lparam) 
-{
-    int length = GetWindowTextLengthW(hWnd);
-    wchar_t* title = new wchar_t[length + 1];
-    GetWindowText(hWnd, title, length + 1);
-
-    if (IsWindowVisible(hWnd) && length != 0)
-    {
-        winInfo(hWnd, title);
-    }
-    return true;
-}
-
 HRESULT info(char *id="all")
 {
     HRESULT hr = S_OK;
     
-    if (cmp(id, "all"))
+    if (cmp(id, "foreground"))
     {
-        EnumWindows(infoAll, NULL);
-    }
-    else if (cmp(id, "foreground"))
-    {
-        winInfo(GetForegroundWindow());
+        hr = winInfo(GetForegroundWindow());
     }
     else 
     {
-        cerr << "unknown info argument " << id << endl;
-        hr = S_FALSE;
+		if (!EnumWindows(infoAll, (LPARAM)id))
+		{
+			hr = S_FALSE;
+		}
     }
 
     return hr;
+}
+
+static BOOL CALLBACK raiseWin(HWND hWnd, LPARAM id)
+{
+	DWORD pid;
+	GetWindowThreadProcessId(hWnd, &pid);
+
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+	DWORD pathSize = 10000;
+	wchar_t path[10000];
+	path[0] = 0;
+
+	QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
+	if (matchWin(hWnd, pid, path, NULL, (char*)id))
+	{
+		SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	}
+	return true;
+}
+
+HRESULT raise(char *pidOrPath)
+{
+	if (!EnumWindows(raiseWin, (LPARAM)pidOrPath))
+	{
+		return S_FALSE;
+	}
+	return S_OK;
 }
 
 //  0000000   0000000  00000000   00000000  00000000  000   000  
@@ -207,7 +328,13 @@ HRESULT screen(char *id="size")
     if (cmp(id, "size"))
     {
         cout << GetSystemMetrics(SM_CXSCREEN) << " " << GetSystemMetrics(SM_CYSCREEN) << endl;
-    }
+
+		cout << GetSystemMetrics(SM_CXBORDER) << " " << GetSystemMetrics(SM_CYBORDER) << endl;
+		cout << GetSystemMetrics(SM_CXMIN) << " " << GetSystemMetrics(SM_CYMIN) << endl;
+		cout << GetSystemMetrics(SM_CXSIZE) << " " << GetSystemMetrics(SM_CYSIZE) << endl;
+		cout << GetSystemMetrics(SM_CXFRAME) << " " << GetSystemMetrics(SM_CYFRAME) << endl;
+		cout << GetSystemMetrics(SM_CXDLGFRAME) << " " << GetSystemMetrics(SM_CYDLGFRAME) << endl;
+	}
     else if (cmp(id, "user"))
     {
         cout << GetSystemMetrics(SM_CXFULLSCREEN) << " " << GetSystemMetrics(SM_CYFULLSCREEN) << endl;
@@ -365,7 +492,6 @@ HRESULT trash(char* action)
     return hr;
 }
 
-
 // 000   000   0000000   0000000    0000000   00000000  
 // 000   000  000       000   000  000        000       
 // 000   000  0000000   000000000  000  0000  0000000   
@@ -379,10 +505,11 @@ HRESULT usage(void)
     klog("");
     klog("    commands:");
     klog("");
-    klog("     help       <command>");
     klog("     info       [pid|path|title]");
-    klog("     folder     <name>");
+	klog("     raise      [pid|path]");
+    klog("     help       <command>");
     klog("     trash      <action>");
+    klog("     folder     <name>");
     klog("     screen     [size|user]");
     klog("     screenshot [targetfile]");
     klog("");
@@ -403,7 +530,7 @@ HRESULT help(char *command)
     {
         klog("wc info [pid|path|title]");
     }
-    if (cmp(command, "folder"))
+    else if (cmp(command, "folder"))
     {
         klog("wc folder <name>");
         klog("");
@@ -475,32 +602,37 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     
     if (cmp(cmd, "help"))
     {
-        if (argc == 2) return usage();
-        else           return help(argv[2]);
+        if (argc == 2) hr = usage();
+        else           hr = help(argv[2]);
     }
     else if (cmp(cmd, "info"))
     {
         if (argc == 2) hr = info();
         else           hr = info(argv[2]);
     }
-    else if (cmp(cmd, "folder"))
+	else if (cmp(cmd, "raise"))
+	{
+		if (argc == 2) hr = help(cmd);
+		else           hr = raise(argv[2]);
+	}
+	else if (cmp(cmd, "folder"))
     {
-        if (argc == 2) return help(cmd);
+        if (argc == 2) hr = help(cmd);
         else           hr = folder(argv[2]);
     }
     else if (cmp(cmd, "screenshot"))
     {
-        if (argc == 2) return screenshot();
+        if (argc == 2) hr = screenshot();
         else           hr = screenshot(argv[2]);
     }
     else if (cmp(cmd, "screen"))
     {
-        if (argc == 2) return screen("size");
+        if (argc == 2) hr = screen("size");
         else           hr = screen(argv[2]);
     }
     else if (cmp(cmd, "trash"))
     {
-        if (argc == 2) return help(cmd);
+        if (argc == 2) hr = help(cmd);
         else           hr = trash(argv[2]);
     }
     else
