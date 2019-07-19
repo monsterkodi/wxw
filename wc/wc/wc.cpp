@@ -295,9 +295,7 @@ HRESULT info(char *id="all")
 static BOOL CALLBACK raiseWin(HWND hWnd, LPARAM id)
 {
     if (!IsWindowVisible(hWnd)) return true;
-    wchar_t* title = winTitle(hWnd);
-    if (!title) return true;
-
+    
 	DWORD pid;
 	GetWindowThreadProcessId(hWnd, &pid);
 
@@ -319,13 +317,54 @@ static BOOL CALLBACK raiseWin(HWND hWnd, LPARAM id)
 	return true;
 }
 
-HRESULT raise(char *pidOrPath)
+HRESULT raise(char *id)
 {
-	if (!EnumWindows(raiseWin, (LPARAM)pidOrPath))
+    if (!EnumWindows(raiseWin, (LPARAM)id))
 	{
 		return S_FALSE;
 	}
 	return S_OK;
+}
+
+
+// 00000000   0000000    0000000  000   000   0000000  
+// 000       000   000  000       000   000  000       
+// 000000    000   000  000       000   000  0000000   
+// 000       000   000  000       000   000       000  
+// 000        0000000    0000000   0000000   0000000   
+
+static BOOL CALLBACK focusWin(HWND hWnd, LPARAM id)
+{
+    if (!IsWindowVisible(hWnd)) return true;
+    
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+    DWORD pathSize = 10000;
+    wchar_t path[10000];
+    path[0] = 0;
+
+    if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
+    { 
+        if (matchWin(hWnd, pid, path, NULL, (char*)id))
+        {
+            SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+            SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+            SetForegroundWindow(hWnd);
+        }
+    }
+    return true;
+}
+
+HRESULT focus(char *id)
+{
+    if (!EnumWindows(focusWin, (LPARAM)id))
+    {
+        return S_FALSE;
+    }
+    return S_OK;
 }
 
 //  0000000   0000000  00000000   00000000  00000000  000   000  
@@ -518,8 +557,9 @@ HRESULT usage(void)
     klog("");
     klog("    commands:");
     klog("");
-    klog("     info       [pid|path|title]");
-	klog("     raise      [pid|path]");
+    klog("     info       [pid|path|hwnd|title]");
+    klog("     raise      [pid|path|hwnd]");
+    klog("     focus      [pid|path|hwnd]");
     klog("     help       <command>");
     klog("     trash      <action>");
     klog("     folder     <name>");
@@ -541,7 +581,24 @@ HRESULT help(char *command)
     
     if (cmp(command, "info"))
     {
-        klog("wc info [pid|path|title]");
+        klog("wc info [pid|path|hwnd|title]");
+        klog("");
+        klog("      Print information about windows");
+        klog("");
+    }
+    else if (cmp(command, "raise"))
+    {
+        klog("wc raise [pid|path|hwnd]");
+        klog("");
+        klog("      Raise windows belonging to a process or application");
+        klog("");
+    }
+    else if (cmp(command, "focus"))
+    {
+        klog("wc raise [pid|path|hwnd]");
+        klog("");
+        klog("      Raise windows belonging to a process or application");
+        klog("");
     }
     else if (cmp(command, "folder"))
     {
@@ -628,6 +685,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
 		if (argc == 2) hr = help(cmd);
 		else           hr = raise(argv[2]);
 	}
+    else if (cmp(cmd, "focus"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = focus(argv[2]);
+    }
 	else if (cmp(cmd, "folder"))
     {
         if (argc == 2) hr = help(cmd);
