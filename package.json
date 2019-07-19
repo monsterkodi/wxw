@@ -1,6 +1,6 @@
 {
   "name": "wxw",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "moves my windows",
   "main": "js/wxw.js",
   "scripts": {

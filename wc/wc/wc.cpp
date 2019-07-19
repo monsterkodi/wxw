@@ -326,7 +326,6 @@ HRESULT raise(char *id)
 	return S_OK;
 }
 
-
 // 00000000   0000000    0000000  000   000   0000000  
 // 000       000   000  000       000   000  000       
 // 000000    000   000  000       000   000  0000000   
@@ -363,6 +362,62 @@ HRESULT focus(char *id)
     if (!EnumWindows(focusWin, (LPARAM)id))
     {
         return S_FALSE;
+    }
+    return S_OK;
+}
+
+// 0000000     0000000   000   000  000   000  0000000     0000000  
+// 000   000  000   000  000   000  0000  000  000   000  000       
+// 0000000    000   000  000   000  000 0 000  000   000  0000000   
+// 000   000  000   000  000   000  000  0000  000   000       000  
+// 0000000     0000000    0000000   000   000  0000000    0000000   
+
+static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
+{
+    if (!IsWindowVisible(hWnd)) return true;
+    
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+    DWORD pathSize = 10000;
+    wchar_t path[10000];
+    path[0] = 0;
+
+    char* id = (char*)((void**)param)[0];
+    vector<HWND> * wins = (vector<HWND>*) ((void**)param)[1];
+
+    if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
+    { 
+        if (matchWin(hWnd, pid, path, NULL, (char*)id))
+        {
+            wins->push_back(hWnd);
+        }
+    }
+    return true;
+}
+
+HRESULT matchingWindows(char* id, vector<HWND>* wins)
+{
+    void* param[2];
+    param[0] = (void*)id;
+    param[1] = (void*)wins;
+    if (!EnumWindows(matchWindow, (LPARAM)&param))
+    {
+        return S_FALSE;
+    }
+    return S_OK;
+}
+
+HRESULT bounds(char *id, char *x, char *y, char *w, char *h)
+{
+    vector<HWND> wins;
+    matchingWindows(id, &wins);
+    for (HWND hWnd : wins)
+    {
+        cout << "bounds " << hWnd << " " << x << y << w << h << endl;
+        SetWindowPos(hWnd, NULL, atoi(x), atoi(y), atoi(w), atoi(h), SWP_NOZORDER);
     }
     return S_OK;
 }
@@ -558,11 +613,12 @@ HRESULT usage(void)
     klog("    commands:");
     klog("");
     klog("     info       [pid|path|hwnd|title]");
-    klog("     raise      [pid|path|hwnd]");
-    klog("     focus      [pid|path|hwnd]");
-    klog("     help       <command>");
-    klog("     trash      <action>");
-    klog("     folder     <name>");
+    klog("     raise       pid|path|hwnd");
+    klog("     focus       pid|path|hwnd");
+    klog("     bounds      pid|path|hwnd x y w h");
+    klog("     help        command");
+    klog("     trash       action");
+    klog("     folder      name");
     klog("     screen     [size|user]");
     klog("     screenshot [targetfile]");
     klog("");
@@ -588,21 +644,21 @@ HRESULT help(char *command)
     }
     else if (cmp(command, "raise"))
     {
-        klog("wc raise [pid|path|hwnd]");
+        klog("wc raise pid|path|hwnd");
         klog("");
         klog("      Raise windows belonging to a process or application");
         klog("");
     }
     else if (cmp(command, "focus"))
     {
-        klog("wc raise [pid|path|hwnd]");
+        klog("wc raise pid|path|hwnd");
         klog("");
         klog("      Raise windows belonging to a process or application");
         klog("");
     }
     else if (cmp(command, "folder"))
     {
-        klog("wc folder <name>");
+        klog("wc folder name");
         klog("");
         klog("Print the path of specific folders, recognized names are:");
         klog("");
@@ -632,7 +688,7 @@ HRESULT help(char *command)
     }
     else if (cmp(command, "trash"))
     {
-        klog("wc trash <action>");
+        klog("wc trash action");
         klog("");
         klog("      actions:");
         klog("");
@@ -689,6 +745,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     {
         if (argc == 2) hr = help(cmd);
         else           hr = focus(argv[2]);
+    }
+    else if (cmp(cmd, "bounds"))
+    {
+        if (argc < 7)  hr = help(cmd);
+        else           hr = bounds(argv[2], argv[3], argv[4], argv[5], argv[6]);
     }
 	else if (cmp(cmd, "folder"))
     {
