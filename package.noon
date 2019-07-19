@@ -1,5 +1,5 @@
 name            wxw
-version         0.25.0
+version         0.26.0
 description     moves my windows
 main            js/wxw.js
 scripts

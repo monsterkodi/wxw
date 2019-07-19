@@ -160,60 +160,55 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 // 000   000  000  000  0000  000  000  0000  000       000   000  
 // 00     00  000  000   000  000  000   000  000        0000000   
 
-HRESULT winInfo(HWND hWnd, wchar_t* title=NULL, char* id=NULL)
-{
-    RECT rect; 
-
-    GetWindowRect(hWnd, &rect);
-	LONG width  = rect.right - rect.left;
-	LONG height = rect.bottom - rect.top;
-    LONG x = rect.left;
-    LONG y = rect.top;
+HRESULT winInfo(HWND hWnd, char* id=NULL)
+{    
+    wchar_t* title = winTitle(hWnd);
+    if (wcmp(title, "Program Manager"))
+    {
+        delete title;
+        return S_OK;
+    }
 
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
-
-	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-
-	DWORD pathSize = 10000;
-	wchar_t path[10000];
-	path[0] = 0;
-
-	QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
     
-	wchar_t* ftitle = NULL;
-	if (!title)
-	{
-		ftitle = winTitle(hWnd);
-		title  = ftitle;
-	}
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
-    if (wcmp(title, "Program Manager"))
-    {
-        delete ftitle;
-        return S_OK;
-    }
+    DWORD pathSize = 10000;
+    wchar_t path[10000];
+    path[0] = 0;
+
+    QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
     
     if (id == NULL || matchWin(hWnd, pid, path, title, id))
 	{
-		if (path)
-		{
-            wprintf(L"  path    %ls\n", path);
-		}
-		if (title)
-		{
-            wprintf(L"  title   %ls\n", title);
-		}
-        wprintf(L"  hwnd    %llx\n", (unsigned __int64)hWnd);
-        wprintf(L"  pid     %lu\n", pid);
-        wprintf(L"  x       %d\n", x);
-        wprintf(L"  y       %d\n", y);
-        wprintf(L"  width   %d\n", width);
-        wprintf(L"  height  %d\n", height);
-
-		wprintf(L"\n");
+        WINDOWPLACEMENT placement;
+        GetWindowPlacement(hWnd, &placement);    
+        
+        wchar_t* status = L"normal";
+        if      (placement.showCmd == SW_SHOWMINIMIZED) status = L"minimized";
+        else if (placement.showCmd == SW_SHOWMAXIMIZED) status = L"maximized";
+                
+        RECT rect; 
+    
+        GetWindowRect(hWnd, &rect);
+        LONG width  = rect.right - rect.left;
+        LONG height = rect.bottom - rect.top;
+        LONG x = rect.left;
+        LONG y = rect.top;
+        
+        wprintf(L".\n");
+        if (path)  wprintf(L"    path    %ls\n", path); 
+        if (title) wprintf(L"    title   %ls\n", title);
+        wprintf(L"    hwnd    %llx\n", (unsigned __int64)hWnd);
+        wprintf(L"    pid     %lu\n", pid);
+        wprintf(L"    x       %d\n", x);
+        wprintf(L"    y       %d\n", y);
+        wprintf(L"    width   %d\n", width);
+        wprintf(L"    height  %d\n", height);
+        wprintf(L"    status  %ls\n", status);
 	}
-	delete ftitle;
+    delete title;
 	return S_OK;
 }
 
@@ -237,7 +232,7 @@ HRESULT info(char *id="all")
         if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
         for (HWND hWnd : wins)
         {
-            winInfo(hWnd, NULL, id);
+            winInfo(hWnd, id);
         }
     }
 
