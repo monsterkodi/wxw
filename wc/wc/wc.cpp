@@ -12,7 +12,6 @@
 #include <KnownFolders.h>
 #include <ShlObj.h>
 #include <Shobjidl.h>
-#include <atlbase.h>
 
 using namespace Gdiplus;
 using namespace std;
@@ -272,7 +271,7 @@ HRESULT info(char *id="all")
 {
     HRESULT hr = S_OK;
     
-    if (cmp(id, "foreground"))
+    if (cmp(id, "foreground") || cmp(id, "frontmost") || cmp(id, "topmost") || cmp(id, "top") ||  cmp(id, "front"))
     {
         hr = winInfo(GetForegroundWindow());
     }
@@ -287,8 +286,18 @@ HRESULT info(char *id="all")
     return hr;
 }
 
+// 00000000    0000000   000   0000000  00000000  
+// 000   000  000   000  000  000       000       
+// 0000000    000000000  000  0000000   0000000   
+// 000   000  000   000  000       000  000       
+// 000   000  000   000  000  0000000   00000000  
+
 static BOOL CALLBACK raiseWin(HWND hWnd, LPARAM id)
 {
+    if (!IsWindowVisible(hWnd)) return true;
+    wchar_t* title = winTitle(hWnd);
+    if (!title) return true;
+
 	DWORD pid;
 	GetWindowThreadProcessId(hWnd, &pid);
 
@@ -298,11 +307,15 @@ static BOOL CALLBACK raiseWin(HWND hWnd, LPARAM id)
 	wchar_t path[10000];
 	path[0] = 0;
 
-	QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
-	if (matchWin(hWnd, pid, path, NULL, (char*)id))
-	{
-		SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-	}
+	if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
+    { 
+	    if (matchWin(hWnd, pid, path, NULL, (char*)id))
+	    {
+            // typical windows WTF :-)
+            SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+            SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+	    }
+    }
 	return true;
 }
 
