@@ -54,6 +54,85 @@ int klog(char *msg)
     return 0;
 }
 
+// 00     00   0000000   000000000   0000000  000   000  000  000   000   0000000   
+// 000   000  000   000     000     000       000   000  000  0000  000  000        
+// 000000000  000000000     000     000       000000000  000  000 0 000  000  0000  
+// 000 0 000  000   000     000     000       000   000  000  000  0000  000   000  
+// 000   000  000   000     000      0000000  000   000  000  000   000   0000000   
+
+bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, wchar_t* title, char* id)
+{
+    bool found = false;
+
+    if (!id) return false;
+
+    wchar_t* wid = wstr(id);
+    wchar_t buf[65];
+    
+    StringCbPrintfW(buf, 64, L"%ld", pid);
+    if (lstrcmpi(wid, buf) == 0)
+    {
+        found = true;
+    }
+    
+    StringCbPrintfW(buf, 64, L"%llx", hWnd);
+    if (lstrcmpi(wid, buf) == 0)
+    {
+        found = true;
+    }
+    
+    if (path && wstring(path).find(wid) != wstring::npos)
+    {
+        found = true;
+    }
+
+    if (title && wstring(title).find(wid) != wstring::npos)
+    {
+        found = true;
+    }
+    
+    delete wid;
+    return found;
+}
+
+static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
+{
+    if (!IsWindowVisible(hWnd)) return true;
+    
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+    DWORD pathSize = 10000;
+    wchar_t path[10000];
+    path[0] = 0;
+
+    char* id = (char*)((void**)param)[0];
+    vector<HWND> * wins = (vector<HWND>*) ((void**)param)[1];
+
+    if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
+    { 
+        if (matchWin(hWnd, pid, path, NULL, (char*)id))
+        {
+            wins->push_back(hWnd);
+        }
+    }
+    return true;
+}
+
+HRESULT matchingWindows(char* id, vector<HWND>* wins)
+{
+    void* param[2];
+    param[0] = (void*)id;
+    param[1] = (void*)wins;
+    if (!EnumWindows(matchWindow, (LPARAM)&param))
+    {
+        return S_FALSE;
+    }
+    return S_OK;
+}
+
 // 00000000   000   000   0000000   
 // 000   000  0000  000  000        
 // 00000000   000 0 000  000  0000  
@@ -146,47 +225,6 @@ wchar_t* winTitle(HWND hWnd)
 	return title;
 }
 
-// 00     00   0000000   000000000   0000000  000   000  000   000  000  000   000  
-// 000   000  000   000     000     000       000   000  000 0 000  000  0000  000  
-// 000000000  000000000     000     000       000000000  000000000  000  000 0 000  
-// 000 0 000  000   000     000     000       000   000  000   000  000  000  0000  
-// 000   000  000   000     000      0000000  000   000  00     00  000  000   000  
-
-bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, wchar_t* title, char* id)
-{
-	bool found = false;
-
-	if (!id) return false;
-
-	wchar_t* wid = wstr(id);
-    wchar_t buf[65];
-    
-	StringCbPrintfW(buf, 64, L"%ld", pid);
-	if (lstrcmpi(wid, buf) == 0)
-    {
-		found = true;
-    }
-    
-	StringCbPrintfW(buf, 64, L"%llx", hWnd);
-	if (lstrcmpi(wid, buf) == 0)
-    {
-		found = true;
-    }
-    
-	if (path && wstring(path).find(wid) != wstring::npos)
-    {
-		found = true;
-    }
-
-    if (title && wstring(title).find(wid) != wstring::npos)
-    {
-		found = true;
-    }
-    
-	delete wid;
-	return found;
-}
-
 // 000   000  000  000   000  000  000   000  00000000   0000000   
 // 000 0 000  000  0000  000  000  0000  000  000       000   000  
 // 000000000  000  000 0 000  000  000 0 000  000000    000   000  
@@ -244,23 +282,6 @@ HRESULT winInfo(HWND hWnd, wchar_t* title=NULL, char* id=NULL)
 	return S_OK;
 }
 
-// 000  000   000  00000000   0000000    0000000   000      000      
-// 000  0000  000  000       000   000  000   000  000      000      
-// 000  000 0 000  000000    000   000  000000000  000      000      
-// 000  000  0000  000       000   000  000   000  000      000      
-// 000  000   000  000        0000000   000   000  0000000  0000000  
-
-static BOOL CALLBACK infoAll(HWND hWnd, LPARAM lparam) 
-{
-	wchar_t* title = winTitle(hWnd);
-    if (IsWindowVisible(hWnd) && title)
-    {
-        winInfo(hWnd, title, (char*)lparam);
-		delete title;
-    }
-    return true;
-}
-
 // 000  000   000  00000000   0000000   
 // 000  0000  000  000       000   000  
 // 000  000 0 000  000000    000   000  
@@ -277,10 +298,12 @@ HRESULT info(char *id="all")
     }
     else 
     {
-		if (!EnumWindows(infoAll, (LPARAM)id))
-		{
-			hr = S_FALSE;
-		}
+        vector<HWND> wins;
+        if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+        for (HWND hWnd : wins)
+        {
+            winInfo(hWnd, NULL, id);
+        }
     }
 
     return hr;
@@ -292,38 +315,18 @@ HRESULT info(char *id="all")
 // 000   000  000   000  000       000  000       
 // 000   000  000   000  000  0000000   00000000  
 
-static BOOL CALLBACK raiseWin(HWND hWnd, LPARAM id)
-{
-    if (!IsWindowVisible(hWnd)) return true;
-    
-	DWORD pid;
-	GetWindowThreadProcessId(hWnd, &pid);
-
-	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-
-	DWORD pathSize = 10000;
-	wchar_t path[10000];
-	path[0] = 0;
-
-	if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
-    { 
-	    if (matchWin(hWnd, pid, path, NULL, (char*)id))
-	    {
-            // typical windows WTF :-)
-            SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-            SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-	    }
-    }
-	return true;
-}
-
 HRESULT raise(char *id)
 {
-    if (!EnumWindows(raiseWin, (LPARAM)id))
-	{
-		return S_FALSE;
-	}
-	return S_OK;
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    for (HWND hWnd : wins)
+    {
+        ShowWindow(hWnd, SW_RESTORE);
+        // typical windows WTF :-)
+        SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    }
+    return S_OK;    
 }
 
 // 00000000   0000000    0000000  000   000   0000000  
@@ -332,38 +335,17 @@ HRESULT raise(char *id)
 // 000       000   000  000       000   000       000  
 // 000        0000000    0000000   0000000   0000000   
 
-static BOOL CALLBACK focusWin(HWND hWnd, LPARAM id)
-{
-    if (!IsWindowVisible(hWnd)) return true;
-    
-    DWORD pid;
-    GetWindowThreadProcessId(hWnd, &pid);
-
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-
-    DWORD pathSize = 10000;
-    wchar_t path[10000];
-    path[0] = 0;
-
-    if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
-    { 
-        if (matchWin(hWnd, pid, path, NULL, (char*)id))
-        {
-            SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-            SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-            SetForegroundWindow(hWnd);
-        }
-    }
-    return true;
-}
-
 HRESULT focus(char *id)
 {
-    if (!EnumWindows(focusWin, (LPARAM)id))
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    for (HWND hWnd : wins)
     {
-        return S_FALSE;
+        SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+        SetForegroundWindow(hWnd);
     }
-    return S_OK;
+    return S_OK;    
 }
 
 // 0000000     0000000   000   000  000   000  0000000     0000000  
@@ -372,51 +354,12 @@ HRESULT focus(char *id)
 // 000   000  000   000  000   000  000  0000  000   000       000  
 // 0000000     0000000    0000000   000   000  0000000    0000000   
 
-static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
-{
-    if (!IsWindowVisible(hWnd)) return true;
-    
-    DWORD pid;
-    GetWindowThreadProcessId(hWnd, &pid);
-
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-
-    DWORD pathSize = 10000;
-    wchar_t path[10000];
-    path[0] = 0;
-
-    char* id = (char*)((void**)param)[0];
-    vector<HWND> * wins = (vector<HWND>*) ((void**)param)[1];
-
-    if (QueryFullProcessImageNameW(hProcess, 0, path, &pathSize))
-    { 
-        if (matchWin(hWnd, pid, path, NULL, (char*)id))
-        {
-            wins->push_back(hWnd);
-        }
-    }
-    return true;
-}
-
-HRESULT matchingWindows(char* id, vector<HWND>* wins)
-{
-    void* param[2];
-    param[0] = (void*)id;
-    param[1] = (void*)wins;
-    if (!EnumWindows(matchWindow, (LPARAM)&param))
-    {
-        return S_FALSE;
-    }
-    return S_OK;
-}
-
 HRESULT bounds(char *id, char *x, char *y, char *w, char *h)
 {
     vector<HWND> wins;
-    matchingWindows(id, &wins);
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
     for (HWND hWnd : wins)
     {
-        cout << "bounds " << hWnd << " " << x << y << w << h << endl;
         SetWindowPos(hWnd, NULL, atoi(x), atoi(y), atoi(w), atoi(h), SWP_NOZORDER);
     }
     return S_OK;
