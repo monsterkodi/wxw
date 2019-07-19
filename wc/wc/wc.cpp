@@ -263,18 +263,18 @@ HRESULT winInfo(HWND hWnd, wchar_t* title=NULL, char* id=NULL)
 	{
 		if (path)
 		{
-			wprintf(L"path    %ls\n", path);
+            wprintf(L"  path    %ls\n", path);
 		}
 		if (title)
 		{
-			wprintf(L"title   %ls\n", title);
+            wprintf(L"  title   %ls\n", title);
 		}
-		wprintf(L"hwnd    %llx\n", (unsigned __int64)hWnd);
-		wprintf(L"pid     %lu\n", pid);
-		wprintf(L"x       %d\n", x);
-		wprintf(L"y       %d\n", y);
-		wprintf(L"width   %d\n", width);
-		wprintf(L"height  %d\n", height);
+        wprintf(L"  hwnd    %llx\n", (unsigned __int64)hWnd);
+        wprintf(L"  pid     %lu\n", pid);
+        wprintf(L"  x       %d\n", x);
+        wprintf(L"  y       %d\n", y);
+        wprintf(L"  width   %d\n", width);
+        wprintf(L"  height  %d\n", height);
 
 		wprintf(L"\n");
 	}
@@ -300,6 +300,7 @@ HRESULT info(char *id="all")
     {
         vector<HWND> wins;
         if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+        cout << "info " << id << " " << wins.size() << endl;
         for (HWND hWnd : wins)
         {
             winInfo(hWnd, NULL, id);
@@ -362,6 +363,20 @@ HRESULT bounds(char *id, char *x, char *y, char *w, char *h)
     {
         SetWindowPos(hWnd, NULL, atoi(x), atoi(y), atoi(w), atoi(h), SWP_NOZORDER);
     }
+    return S_OK;
+}
+
+// 00     00   0000000   000   000   0000000  00000000  
+// 000   000  000   000  000   000  000       000       
+// 000000000  000   000  000   000  0000000   0000000   
+// 000 0 000  000   000  000   000       000  000       
+// 000   000   0000000    0000000   0000000   00000000  
+
+HRESULT mouse()
+{
+    POINT p;
+    GetCursorPos(&p);
+    cout << p.x << " " << p.y << endl; 
     return S_OK;
 }
 
@@ -562,6 +577,7 @@ HRESULT usage(void)
     klog("     help        command");
     klog("     trash       action");
     klog("     folder      name");
+    klog("     mouse");
     klog("     screen     [size|user]");
     klog("     screenshot [targetfile]");
     klog("");
@@ -708,6 +724,10 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     {
         if (argc == 2) hr = screen("size");
         else           hr = screen(argv[2]);
+    }
+    else if (cmp(cmd, "mouse"))
+    {
+        hr = mouse();
     }
     else if (cmp(cmd, "trash"))
     {
