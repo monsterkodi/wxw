@@ -32,6 +32,11 @@ int wcmp(wchar_t *a, char *b)
     return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
 } 
 
+int cmp(char *a, char *b)
+{
+    return _strcmpi(a, b) == 0;
+} 
+
 wchar_t* wstr(char *s)
 {
     size_t size = strlen(s);
@@ -42,16 +47,26 @@ wchar_t* wstr(char *s)
     return ws;
 }
 
-int cmp(char *a, char *b)
-{
-    return _strcmpi(a, b) == 0;
-} 
-
 int klog(char *msg)
 {
     printf(msg);
     printf("\n");
     return 0;
+}
+
+// 000000000  000  000000000  000      00000000  
+//    000     000     000     000      000       
+//    000     000     000     000      0000000   
+//    000     000     000     000      000       
+//    000     000     000     0000000  00000000  
+
+wchar_t* winTitle(HWND hWnd)
+{
+    int length = GetWindowTextLengthW(hWnd);
+    if (length <= 0) return NULL; 
+    wchar_t* title = new wchar_t[length + 1];
+    GetWindowText(hWnd, title, length + 1);
+    return title;
 }
 
 // 00     00   0000000   000000000   0000000  000   000  000  000   000   0000000   
@@ -65,6 +80,8 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, wchar_t* title, char* id)
     bool found = false;
 
     if (!id) return false;
+    
+    if (cmp(id, "all")) return true;
 
     wchar_t* wid = wstr(id);
     wchar_t buf[65];
@@ -99,6 +116,10 @@ static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
 {
     if (!IsWindowVisible(hWnd)) return true;
     
+    wchar_t* title = winTitle(hWnd);
+    if (!title) return true;
+    delete title;
+    
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
 
@@ -131,98 +152,6 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
         return S_FALSE;
     }
     return S_OK;
-}
-
-// 00000000   000   000   0000000   
-// 000   000  0000  000  000        
-// 00000000   000 0 000  000  0000  
-// 000        000  0000  000   000  
-// 000        000   000   0000000   
-
-bool save_png_memory(HBITMAP hbitmap, vector<BYTE>& data)
-{
-    Bitmap bmp(hbitmap, NULL);
-
-    IStream* istream = NULL;
-    CreateStreamOnHGlobal(NULL, TRUE, &istream);
-
-    CLSID clsid_png;
-    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsid_png);
-    Status status = bmp.Save(istream, &clsid_png);
-    if (status != Status::Ok)
-        return false;
-
-    HGLOBAL hg = NULL;
-    GetHGlobalFromStream(istream, &hg);
-
-    SIZE_T bufsize = GlobalSize(hg);
-    data.resize(bufsize);
-
-    LPVOID pimage = GlobalLock(hg);
-    memcpy(&data[0], pimage, bufsize);
-    GlobalUnlock(hg);
-
-    istream->Release();
-    return true;
-}
-
-//  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
-// 000       000       000   000  000       000       0000  000  000       000   000  000   000     000     
-// 0000000   000       0000000    0000000   0000000   000 0 000  0000000   000000000  000   000     000     
-//      000  000       000   000  000       000       000  0000       000  000   000  000   000     000     
-// 0000000    0000000  000   000  00000000  00000000  000   000  0000000   000   000   0000000      000     
-
-HRESULT screenshot(char *targetfile="screenshot.png")
-{
-    CoInitialize(NULL);
-
-    ULONG_PTR token;
-    GdiplusStartupInput tmp;
-    GdiplusStartup(&token, &tmp, NULL);
-
-    RECT rc; rc.left = 0; rc.right = 0;
-    rc.right  = GetSystemMetrics(SM_CXSCREEN); 
-    rc.bottom = GetSystemMetrics(SM_CYSCREEN); 
-        
-    auto hdc = GetDC(0);
-    auto memdc = CreateCompatibleDC(hdc);
-    auto hbitmap = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
-    auto oldbmp = SelectObject(memdc, hbitmap);
-    BitBlt(memdc, 0, 0, rc.right, rc.bottom, hdc, 0, 0, SRCCOPY);
-    SelectObject(memdc, oldbmp);
-    DeleteDC(memdc);
-    ReleaseDC(0, hdc);
-
-    vector<BYTE> data;
-    if (save_png_memory(hbitmap, data))
-    {
-        ofstream fout(targetfile, ios::binary);
-        fout.write((char*)data.data(), data.size());
-    }
-    DeleteObject(hbitmap);
-
-    GdiplusShutdown(token);
-    CoUninitialize();
-    
-    return S_OK;
-}
-
-// 000000000  000  000000000  000      00000000  
-//    000     000     000     000      000       
-//    000     000     000     000      0000000   
-//    000     000     000     000      000       
-//    000     000     000     0000000  00000000  
-
-wchar_t* winTitle(HWND hWnd)
-{
-	int length = GetWindowTextLengthW(hWnd);
-	if (length <= 0)
-	{
-		return NULL;
-	}
-	wchar_t* title = new wchar_t[length + 1];
-	GetWindowText(hWnd, title, length + 1);
-	return title;
 }
 
 // 000   000  000  000   000  000  000   000  00000000   0000000   
@@ -259,7 +188,13 @@ HRESULT winInfo(HWND hWnd, wchar_t* title=NULL, char* id=NULL)
 		title  = ftitle;
 	}
 
-	if (id == NULL || cmp(id, "all") || matchWin(hWnd, pid, path, title, id))
+    if (wcmp(title, "Program Manager"))
+    {
+        delete ftitle;
+        return S_OK;
+    }
+    
+    if (id == NULL || matchWin(hWnd, pid, path, title, id))
 	{
 		if (path)
 		{
@@ -300,7 +235,6 @@ HRESULT info(char *id="all")
     {
         vector<HWND> wins;
         if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
-        cout << "info " << id << " " << wins.size() << endl;
         for (HWND hWnd : wins)
         {
             winInfo(hWnd, NULL, id);
@@ -557,6 +491,81 @@ HRESULT trash(char* action)
     return hr;
 }
 
+
+// 00000000   000   000   0000000   
+// 000   000  0000  000  000        
+// 00000000   000 0 000  000  0000  
+// 000        000  0000  000   000  
+// 000        000   000   0000000   
+
+bool save_png_memory(HBITMAP hbitmap, vector<BYTE>& data)
+{
+    Bitmap bmp(hbitmap, NULL);
+
+    IStream* istream = NULL;
+    CreateStreamOnHGlobal(NULL, TRUE, &istream);
+
+    CLSID clsid_png;
+    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsid_png);
+    Status status = bmp.Save(istream, &clsid_png);
+    if (status != Status::Ok)
+        return false;
+
+    HGLOBAL hg = NULL;
+    GetHGlobalFromStream(istream, &hg);
+
+    SIZE_T bufsize = GlobalSize(hg);
+    data.resize(bufsize);
+
+    LPVOID pimage = GlobalLock(hg);
+    memcpy(&data[0], pimage, bufsize);
+    GlobalUnlock(hg);
+
+    istream->Release();
+    return true;
+}
+
+//  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
+// 000       000       000   000  000       000       0000  000  000       000   000  000   000     000     
+// 0000000   000       0000000    0000000   0000000   000 0 000  0000000   000000000  000   000     000     
+//      000  000       000   000  000       000       000  0000       000  000   000  000   000     000     
+// 0000000    0000000  000   000  00000000  00000000  000   000  0000000   000   000   0000000      000     
+
+HRESULT screenshot(char *targetfile="screenshot.png")
+{
+    CoInitialize(NULL);
+
+    ULONG_PTR token;
+    GdiplusStartupInput tmp;
+    GdiplusStartup(&token, &tmp, NULL);
+
+    RECT rc; rc.left = 0; rc.right = 0;
+    rc.right  = GetSystemMetrics(SM_CXSCREEN); 
+    rc.bottom = GetSystemMetrics(SM_CYSCREEN); 
+        
+    auto hdc = GetDC(0);
+    auto memdc = CreateCompatibleDC(hdc);
+    auto hbitmap = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
+    auto oldbmp = SelectObject(memdc, hbitmap);
+    BitBlt(memdc, 0, 0, rc.right, rc.bottom, hdc, 0, 0, SRCCOPY);
+    SelectObject(memdc, oldbmp);
+    DeleteDC(memdc);
+    ReleaseDC(0, hdc);
+
+    vector<BYTE> data;
+    if (save_png_memory(hbitmap, data))
+    {
+        ofstream fout(targetfile, ios::binary);
+        fout.write((char*)data.data(), data.size());
+    }
+    DeleteObject(hbitmap);
+
+    GdiplusShutdown(token);
+    CoUninitialize();
+    
+    return S_OK;
+}
+
 // 000   000   0000000   0000000    0000000   00000000  
 // 000   000  000       000   000  000        000       
 // 000   000  0000000   000000000  000  0000  0000000   
@@ -629,6 +638,12 @@ HRESULT help(char *command)
         klog("      Program");
         klog("      ProgramX86");
         klog("      Startup");
+    }
+    else if (cmp(command, "mouse"))
+    {
+        klog("wc mouse");
+        klog("");
+        klog("      Print current mouse position");
     }
     else if (cmp(command, "screen"))
     {
@@ -746,5 +761,3 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
 
     return hr;
 }
-
-
