@@ -1,15 +1,40 @@
 #!/usr/bin/env node
+
 childp = require('child_process');
 path   = require('path');
-childp.execFile(path.join(__dirname, "wc.exe"), process.argv.slice(2), {cwd:process.cwd(), shell:true }, (error, stdout, stderr) => 
-{ 
-    if (error)
+
+while (process.argv[2][0] == '-')
+{
+    process.argv[2] = process.argv[2].slice(1);
+}
+
+if (process.argv[2].length == 1)
+{
+    switch (process.argv[2])
     {
-        console.error(error);
+        case 'h': process.argv[2] = "help";   break;
+        case 'i': process.argv[2] = "info";   break;
+        case 'b': process.argv[2] = "bounds"; break;
     }
-    else
-    {
-        console.log(stdout); 
-        console.error(stderr); 
-    }
-});
+}
+
+if (process.argv[2] == 'version')
+{
+    pkg = require(path.join(__dirname, "..", "package.json"));
+    console.log(pkg.version);
+}
+else
+{
+    childp.execFile(path.join(__dirname, "wc.exe"), process.argv.slice(2), {cwd:process.cwd(), shell:true }, (error, stdout, stderr) => 
+    { 
+        if (error)
+        {
+            process.stderr.write(error);
+        }
+        else
+        {
+            if (stdout.length) process.stdout.write(stdout); 
+            if (stderr.length) process.stderr.write(stderr); 
+        }
+    });
+}
