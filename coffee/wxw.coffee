@@ -12,7 +12,7 @@ if not module.parent?.filename? or module.parent.filename.endsWith 'default_app.
 
 else
     
-    wc = require 'wc'
+    wc = require './wc'
     
     module.exports =
         
