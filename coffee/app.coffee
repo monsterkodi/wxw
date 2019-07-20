@@ -8,7 +8,7 @@
 
 { post, prefs, about, slash, childp, karg, klog, _ } = require 'kxk'
 
-wxw      = require './wxw'
+wc       = require './wc'
 pkg      = require '../package.json'
 electron = require 'electron'
 
@@ -36,27 +36,11 @@ post.on 'winlog', (text) -> klog ">>> " + text
 action = (act) ->
     
     switch act
-        when 'minimize'   then minimizeWindow()
-        when 'screenzoom' then require('./screenzoom').start()
+        when 'maximize'   then wc 'maximize' 'top'
+        when 'minimize'   then wc 'minimize' 'top'
+        when 'close'      then wc 'close'    'top'
+        when 'screenzoom' then require('./zoom').start()
         else moveWindow act
-        
-# 00     00  000  000   000  000  00     00  000  0000000  00000000  
-# 000   000  000  0000  000  000  000   000  000     000   000       
-# 000000000  000  000 0 000  000  000000000  000    000    0000000   
-# 000 0 000  000  000  0000  000  000 0 000  000   000     000       
-# 000   000  000  000   000  000  000   000  000  0000000  00000000  
-
-minimizeWindow = ->
-
-    ensureFocusWindow = ->
-        
-        if not user.GetForegroundWindow()
-            error 'no focus window!'
-        
-    if hWnd = user.GetForegroundWindow()
-        SW_MINIMIZE = 6
-        user.ShowWindow hWnd, SW_MINIMIZE
-        setTimeout ensureFocusWindow, 50
         
 # 00     00   0000000   000   000  00000000  
 # 000   000  000   000  000   000  000       
@@ -66,13 +50,12 @@ minimizeWindow = ->
 
 moveWindow = (dir) ->
     
-    screen = wxw.screen 'user'
+    screen = wc 'screen' 'user'
     
     ar = w:screen.width, h:screen.height
     
-    if info = wxw.info 'top'
+    if info = wc('info' 'top')[0]
         
-        klog 'moveWindow' info
         base = slash.base info.path
         if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'kachel' 'space' 'ruler']
             b = 0    # sane window border
@@ -106,10 +89,7 @@ moveWindow = (dir) ->
                 when 'down'  then h  = ar.h/2+d; y = ar.h/2-b
                 when 'up'    then w  = ar.w+d;   x = -b
         
-        # SWP_NOZORDER = 0x4
-        # user.RestoreWindow hWnd
-        # user.SetWindowPos hWnd, null, x, y, w, h, SWP_NOZORDER
-        wxw.bounds info.hwnd, x, y, w, h
+        wc 'bounds' info.hwnd, x, y, w, h
         
 #  0000000   0000000     0000000   000   000  000000000  
 # 000   000  000   000  000   000  000   000     000     
@@ -125,7 +105,7 @@ showAbout = ->
         size: 300
         pkg: pkg
 
-app.on 'window-all-closed', (event) -> event.preventDefault()
+app.on 'window-all-closed' (event) -> event.preventDefault()
         
 # 00000000   00000000   0000000   0000000    000   000
 # 000   000  000       000   000  000   000   000 000 
@@ -136,8 +116,8 @@ app.on 'window-all-closed', (event) -> event.preventDefault()
 app.on 'ready', ->
     
     tray = new electron.Tray "#{__dirname}/../img/menu.png"
-    tray.on 'click', showAbout
-    tray.on 'double-click', -> app.exit 0; process.exit 0
+    tray.on 'click' showAbout
+    tray.on 'double-click' -> app.exit 0; process.exit 0
     
     tray.setContextMenu Menu.buildFromTemplate [
         label: "Quit"
@@ -161,9 +141,10 @@ app.on 'ready', ->
         top:        'ctrl+alt+5'
         bot:        'ctrl+alt+6'
         minimize:   'ctrl+alt+m'
+        close:      'ctrl+w'
         screenzoom: 'alt+z'
         
-    prefs.init defaults:keys #separator:sep
+    prefs.init defaults:keys
     
     # if not slash.isFile prefs.store.file
         # prefs.save()
@@ -172,5 +153,6 @@ app.on 'ready', ->
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
   
 if args.debug
-    require('./screenzoom').start debug:true
+    require('./zoom').start debug:true
+    
     

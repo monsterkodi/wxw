@@ -6,27 +6,24 @@
 00     00   0000000
 ###
 
-{ childp, slash, noon } = require 'kxk'
+{ childp, slash, noon, klog, kstr } = require 'kxk'
 
-wc = (cmd='help', id='') ->
+wc = ->
     
-    out = childp.execSync slash.join(__dirname, '..' 'bin' 'wc.exe')+" #{cmd} #{id}", 'utf8'
+    wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
     
-    switch cmd
-        when 'mouse' 
-            s = out.split ' '
-            x: parseInt s[0]
-            y: parseInt s[1]
-        when 'info'
+    try
+        args = (kstr(s) for s in [].slice.call arguments, 0).join " "
+        out = childp.execSync wcexe+" #{args}" encoding:'utf8' shell:true
+    catch err
+        error err
+        return ''
+    
+    switch kstr(arguments[0])
+        when 'mouse' 'info' 'screen'
             noon.parse out
-        when 'screen'
-            s = out.split ' '
-            x:      0
-            y:      0
-            width:  parseInt s[0]
-            height: parseInt s[1]
         else
-            klog "wc #{cmd} #{id}: " out
+            # klog "wc #{args}: " out
             out
 
 module.exports = wc

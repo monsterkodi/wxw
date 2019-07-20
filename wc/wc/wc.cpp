@@ -144,6 +144,17 @@ static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
 
 HRESULT matchingWindows(char* id, vector<HWND>* wins)
 {
+    if (cmp(id, "foreground") || cmp(id, "frontmost") || cmp(id, "topmost") || cmp(id, "top") ||  cmp(id, "front"))
+    {
+        wins->push_back(GetForegroundWindow());
+        return S_OK;
+    }
+    else if (cmp(id, "taskbar"))
+    {
+        wins->push_back(FindWindow(L"Shell_TrayWnd", L""));
+        return S_OK;
+    }
+
     void* param[2];
     param[0] = (void*)id;
     param[1] = (void*)wins;
@@ -231,25 +242,85 @@ HRESULT info(char *id="all")
 {
     HRESULT hr = S_OK;
     
-    if (cmp(id, "foreground") || cmp(id, "frontmost") || cmp(id, "topmost") || cmp(id, "top") ||  cmp(id, "front"))
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+
+    for (HWND hWnd : wins)
     {
-        hr = winInfo(GetForegroundWindow());
-    }
-    else if (cmp(id, "taskbar"))
-    {
-        hr = winInfo(FindWindow(L"Shell_TrayWnd", L""));
-    }
-    else 
-    {
-        vector<HWND> wins;
-        if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
-        for (HWND hWnd : wins)
-        {
-            winInfo(hWnd, id);
-        }
+        winInfo(hWnd);
     }
 
     return hr;
+}
+
+// 00     00  000  000   000  00     00   0000000   000   000  
+// 000   000  000  0000  000  000   000  000   000   000 000   
+// 000000000  000  000 0 000  000000000  000000000    00000    
+// 000 0 000  000  000  0000  000 0 000  000   000   000 000   
+// 000   000  000  000   000  000   000  000   000  000   000  
+
+HRESULT minimize(char *id)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    for (HWND hWnd : wins)
+    {
+        ShowWindow(hWnd, SW_MINIMIZE);
+    }
+    return S_OK;    
+}
+
+HRESULT maximize(char *id)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    for (HWND hWnd : wins)
+    {
+        ShowWindow(hWnd, SW_MAXIMIZE);
+    }
+    return S_OK;    
+}
+
+HRESULT restore(char *id)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    for (HWND hWnd : wins)
+    {
+        ShowWindow(hWnd, SW_RESTORE);
+    }
+    return S_OK;    
+}
+
+//  0000000  000       0000000    0000000  00000000  
+// 000       000      000   000  000       000       
+// 000       000      000   000  0000000   0000000   
+// 000       000      000   000       000  000       
+//  0000000  0000000   0000000   0000000   00000000  
+
+HRESULT close(char *id)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+        
+    if (wins.size() >= 1)
+    {
+        HWND hWnd = wins[0];
+
+        ShowWindow(hWnd, SW_RESTORE);
+        SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        
+        keybd_event(VK_MENU, 0, 0, NULL);     // fake ALT press to enable foreground switch
+        SetForegroundWindow(hWnd);            // ... no wonder windows is so bad
+        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+        
+        keybd_event(VK_MENU, 0, 0, NULL);
+        keybd_event(VK_F4,   0, 0, NULL);
+        keybd_event(VK_F4,   0, KEYEVENTF_KEYUP, NULL);
+        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+    }
+    return S_OK;    
 }
 
 // 00000000    0000000   000   0000000  00000000  
@@ -329,7 +400,8 @@ HRESULT mouse()
 {
     POINT p;
     GetCursorPos(&p);
-    cout << p.x << " " << p.y << endl; 
+    cout << "x   " << p.x << endl; 
+    cout << "y   " << p.y << endl;
     return S_OK;
 }
 
@@ -345,7 +417,8 @@ HRESULT screen(char *id="size")
     
     if (cmp(id, "size"))
     {
-        cout << GetSystemMetrics(SM_CXSCREEN) << " " << GetSystemMetrics(SM_CYSCREEN) << endl;
+        cout << "width   " << GetSystemMetrics(SM_CXSCREEN) << endl; 
+        cout << "height  " << GetSystemMetrics(SM_CYSCREEN) << endl;
 
         // cout << GetSystemMetrics(SM_CXBORDER) << " " << GetSystemMetrics(SM_CYBORDER) << endl;
         // cout << GetSystemMetrics(SM_CXMIN) << " " << GetSystemMetrics(SM_CYMIN) << endl;
@@ -356,8 +429,10 @@ HRESULT screen(char *id="size")
     else if (cmp(id, "user"))
     {
         RECT rect;
-        hr = SystemParametersInfoW(SPI_GETWORKAREA, 0, &rect, 0);
-        cout << rect.right-rect.left << " " << rect.bottom-rect.top << endl;
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rect, 0);
+        // cout << rect.right-rect.left << " " << rect.bottom-rect.top << endl;
+        cout << "width   " << rect.right-rect.left << endl; 
+        cout << "height  " << rect.bottom-rect.top << endl;
     }
     else 
     {
@@ -672,16 +747,32 @@ HRESULT usage(void)
     klog("");
     klog("    commands:");
     klog("");
-    klog("     info       [pid|path|hwnd|title]");
-    klog("     raise       pid|path|hwnd");
-    klog("     focus       pid|path|hwnd");
-    klog("     bounds      pid|path|hwnd x y w h");
-    klog("     help        command");
-    klog("     trash       action");
-    klog("     folder      name");
-    klog("     mouse");
-    klog("     screen     [size|user]");
-    klog("     screenshot [targetfile]");
+    klog("         info       [id|title]");
+    klog("         raise       id");
+    klog("         minimize    id");
+    klog("         maximize    id");
+    klog("         restore     id");
+    klog("         focus       id");
+    klog("         close       id");
+    klog("         bounds      id x y w h");
+    klog("         help        command");
+    klog("         trash       action");
+    klog("         folder      name");
+    klog("         mouse");
+    klog("         screen     [size|user]");
+    klog("         screenshot [targetfile]");
+    klog("");
+    klog("    id:");
+    klog("");
+    klog("         process id");
+    klog("         executable path");
+    klog("         window handle");
+    klog("         nickname");
+    klog("");    
+    klog("    nickname:");
+    klog("");    
+    klog("         top|topmost|front|frontmost|foreground");
+    klog("         taskbar");
     klog("");
     return S_OK;
 }
@@ -698,23 +789,51 @@ HRESULT help(char *command)
     
     if (cmp(command, "info"))
     {
-        klog("wc info [pid|path|hwnd|title]");
+        klog("wc info [pid|path|hwnd|nick|title]");
         klog("");
         klog("      Print information about windows");
         klog("");
     }
     else if (cmp(command, "raise"))
     {
-        klog("wc raise pid|path|hwnd");
+        klog("wc raise pid|path|hwnd|nick");
         klog("");
-        klog("      Raise windows belonging to a process or application");
+        klog("      Raise window(s)");
+        klog("");
+    }
+    else if (cmp(command, "minimize"))
+    {
+        klog("wc minimize pid|path|hwnd|nick");
+        klog("");
+        klog("      Minimize window(s)");
+        klog("");
+    }
+    else if (cmp(command, "maximize"))
+    {
+        klog("wc maximize pid|path|hwnd|nick");
+        klog("");
+        klog("      Maximize window(s)");
+        klog("");
+    }
+    else if (cmp(command, "restore"))
+    {
+        klog("wc restore pid|path|hwnd|nick");
+        klog("");
+        klog("      Restore window(s)");
         klog("");
     }
     else if (cmp(command, "focus"))
     {
-        klog("wc raise pid|path|hwnd");
+        klog("wc focus pid|path|hwnd|nick");
         klog("");
-        klog("      Raise windows belonging to a process or application");
+        klog("      Focus window(s)");
+        klog("");
+    }
+    else if (cmp(command, "close"))
+    {
+        klog("wc close pid|path|hwnd|nick");
+        klog("");
+        klog("      Close window(s)");
         klog("");
     }
     else if (cmp(command, "folder"))
@@ -808,10 +927,30 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
 		if (argc == 2) hr = help(cmd);
 		else           hr = raise(argv[2]);
 	}
+    else if (cmp(cmd, "minimize"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = minimize(argv[2]);
+    }
+    else if (cmp(cmd, "maximize"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = maximize(argv[2]);
+    }
+    else if (cmp(cmd, "restore"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = restore(argv[2]);
+    }
     else if (cmp(cmd, "focus"))
     {
         if (argc == 2) hr = help(cmd);
         else           hr = focus(argv[2]);
+    }
+    else if (cmp(cmd, "close"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = close(argv[2]);
     }
     else if (cmp(cmd, "bounds"))
     {
