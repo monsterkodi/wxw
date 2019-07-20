@@ -743,7 +743,7 @@ HRESULT taskbar(char* id)
 HRESULT usage(void)
 {
     klog("");
-    klog("wc [command] [args...]");
+    klog("wxw [command] [args...]");
     klog("");
     klog("    commands:");
     klog("");
@@ -759,6 +759,7 @@ HRESULT usage(void)
     klog("         trash       action");
     klog("         folder      name");
     klog("         mouse");
+    klog("         taskbar    [hide|show]");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
     klog("");
@@ -789,56 +790,63 @@ HRESULT help(char *command)
     
     if (cmp(command, "info"))
     {
-        klog("wc info [pid|path|hwnd|nick|title]");
+        klog("wxw info [pid|path|hwnd|nick|title]");
         klog("");
         klog("      Print information about windows");
         klog("");
     }
     else if (cmp(command, "raise"))
     {
-        klog("wc raise pid|path|hwnd|nick");
+        klog("wxw raise pid|path|hwnd|nick");
         klog("");
         klog("      Raise window(s)");
         klog("");
     }
     else if (cmp(command, "minimize"))
     {
-        klog("wc minimize pid|path|hwnd|nick");
+        klog("wxw minimize pid|path|hwnd|nick");
         klog("");
         klog("      Minimize window(s)");
         klog("");
     }
     else if (cmp(command, "maximize"))
     {
-        klog("wc maximize pid|path|hwnd|nick");
+        klog("wxw maximize pid|path|hwnd|nick");
         klog("");
         klog("      Maximize window(s)");
         klog("");
     }
     else if (cmp(command, "restore"))
     {
-        klog("wc restore pid|path|hwnd|nick");
+        klog("wxw restore pid|path|hwnd|nick");
         klog("");
         klog("      Restore window(s)");
         klog("");
     }
     else if (cmp(command, "focus"))
     {
-        klog("wc focus pid|path|hwnd|nick");
+        klog("wxw focus pid|path|hwnd|nick");
         klog("");
         klog("      Focus window(s)");
         klog("");
     }
     else if (cmp(command, "close"))
     {
-        klog("wc close pid|path|hwnd|nick");
+        klog("wxw close pid|path|hwnd|nick");
         klog("");
         klog("      Close window(s)");
         klog("");
     }
+    else if (cmp(command, "taskbar"))
+    {
+        klog("wxw taskbar hide|show");
+        klog("");
+        klog("      Show or hide the taskbar");
+        klog("");
+    }
     else if (cmp(command, "folder"))
     {
-        klog("wc folder name");
+        klog("wxw folder name");
         klog("");
         klog("Print the path of specific folders, recognized names are:");
         klog("");
@@ -853,20 +861,20 @@ HRESULT help(char *command)
     }
     else if (cmp(command, "mouse"))
     {
-        klog("wc mouse");
+        klog("wxw mouse");
         klog("");
         klog("      Print current mouse position");
     }
     else if (cmp(command, "screen"))
     {
-        klog("wc screen [size|user]");
+        klog("wxw screen [size|user]");
         klog("");
         klog("      size        print size of screen in pixels");
         klog("      user        print size of screen without taskbar in pixels");
     }
     else if (cmp(command, "screenshot"))
     {
-        klog("wc screenshot [targetfile]");
+        klog("wxw screenshot [targetfile]");
         klog("");
         klog("      targetfile defaults to './screenshot.png'");
         klog("");
@@ -874,7 +882,7 @@ HRESULT help(char *command)
     }
     else if (cmp(command, "trash"))
     {
-        klog("wc trash action");
+        klog("wxw trash action");
         klog("");
         klog("      actions:");
         klog("");

@@ -19,7 +19,7 @@ wc = ->
         error err
         return ''
     
-    switch kstr(arguments[0])
+    switch kstr arguments[0]
         when 'info' 'screen' 'mouse' 'trash'
             noon.parse out
         else
