@@ -12,6 +12,8 @@ if not module.parent?.filename? or module.parent.filename.endsWith 'default_app.
 
 else
     
+    wc = require 'wc'
+    
     module.exports =
         
         user:       require './user'
@@ -27,3 +29,12 @@ else
         active:     require('./user').GetForegroundWindow
         frontinfo:  -> require('./wininfo')(require('./user').GetForegroundWindow())
         
+        mouse:           -> wc 'mouse'
+        info:       (id) -> wc 'info'   id
+        raise:      (id) -> wc 'raise'  id
+        focus:      (id) -> wc 'focus'  id
+        trash:      (id) -> wc 'trash'  id
+        folder:     (id) -> wc 'folder' id
+        screen:     (id) -> wc 'screen' id
+        screenshot: (fp) -> wc 'screenshot' fp
+        bounds:     (id, x, y, w, h) -> wc 'bounds' id, x, y, w, h
