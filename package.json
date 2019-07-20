@@ -1,6 +1,6 @@
 {
   "name": "wxw",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "moves my windows",
   "keywords": [
     "windows",
@@ -11,7 +11,7 @@
     "win": "bash ./bin/buildwin.sh"
   },
   "bin": {
-    "wc": "./bin/wc.exe"
+    "wxw": "./bin/wc.exe"
   },
   "files": [
     "bin/wc.exe",
