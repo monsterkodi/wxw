@@ -141,7 +141,7 @@ app.on 'ready', ->
         top:        'ctrl+alt+5'
         bot:        'ctrl+alt+6'
         minimize:   'ctrl+alt+m'
-        close:      'ctrl+w'
+        close:      'ctrl+alt+w'
         screenzoom: 'alt+z'
         
     prefs.init defaults:keys

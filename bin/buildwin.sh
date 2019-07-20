@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
-cd `dirname $0`/..
+
+DIR=`dirname $0`
+BIN=$DIR/../node_modules/.bin
+cd $DIR/..
+
+npm install
 
 if rm -rf wxw-win32-x64; then
 
-    konrad
-    
-    node_modules/.bin/electron-rebuild
-    
-    IGNORE="/(.*\.dmg$|Icon$|coffee$|.*md$|styl$|package\.noon$|.*\.lock$|three/examples)"
-    node_modules/electron-packager/cli.js . --overwrite --icon=img/app.ico --ignore $IGNORE
-    
-    rm -rf wxw-win32-x64/resources/app/inno
-fi    
+    if $BIN/konrad; then
+
+        $BIN/electron-rebuild
+
+        IGNORE="/(.*\.dmg$|Icon$|.*\.lock$)"
+            
+        $BIN/electron-packager . --overwrite --icon=img/app.ico --ignore $IGNORE
+
+        start wxw-win32-x64/wxw.exe
+    fi
+fi
