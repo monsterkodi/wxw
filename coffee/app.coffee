@@ -8,6 +8,7 @@
 
 { post, prefs, about, slash, childp, karg, klog, _ } = require 'kxk'
 
+wxw      = require './wxw'
 pkg      = require '../package.json'
 electron = require 'electron'
 
@@ -65,18 +66,21 @@ minimizeWindow = ->
 
 moveWindow = (dir) ->
     
-    ar = rect.workarea()
+    screen = wxw.screen 'user'
+    
+    ar = w:screen.width, h:screen.height
+    
+    if info = wxw.info 'top'
         
-    if hWnd = user.GetForegroundWindow()
-        
-        info = wininfo hWnd
+        klog 'moveWindow' info
         base = slash.base info.path
-        if base in ['electron', 'ko', 'konrad', 'clippo', 'klog', 'kaligraf', 'kalk', 'uniko', 'knot', 'Hyper']
+        if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'kachel' 'space' 'ruler']
             b = 0    # sane window border
         else
-            b = 10.9 # transparent window border
+            # b = 10.9 # transparent window border
+            b = 11   # transparent window border
         
-        wr = rect.window hWnd
+        wr = x:info.x, y:info.y, w:info.width, h:info.height
         d = 2*b
         [x,y,w,h] = switch dir
             when 'left'     then [-b,         0,        ar.w/2+d, ar.h+b]
@@ -102,9 +106,10 @@ moveWindow = (dir) ->
                 when 'down'  then h  = ar.h/2+d; y = ar.h/2-b
                 when 'up'    then w  = ar.w+d;   x = -b
         
-        SWP_NOZORDER = 0x4
-        user.RestoreWindow hWnd
-        user.SetWindowPos hWnd, null, x, y, w, h, SWP_NOZORDER
+        # SWP_NOZORDER = 0x4
+        # user.RestoreWindow hWnd
+        # user.SetWindowPos hWnd, null, x, y, w, h, SWP_NOZORDER
+        wxw.bounds info.hwnd, x, y, w, h
         
 #  0000000   0000000     0000000   000   000  000000000  
 # 000   000  000   000  000   000  000   000     000     
@@ -158,10 +163,10 @@ app.on 'ready', ->
         minimize:   'ctrl+alt+m'
         screenzoom: 'alt+z'
         
-    prefs.init keys
+    prefs.init defaults:keys #separator:sep
     
-    if not slash.isFile prefs.store.file
-        prefs.save()
+    # if not slash.isFile prefs.store.file
+        # prefs.save()
 
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)

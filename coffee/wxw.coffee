@@ -15,20 +15,6 @@ else
     wc = require './wc'
     
     module.exports =
-        
-        user:       require './user'
-        advapi:     require './advapi'
-        kernel:     require './kernel'
-        shell:      require './shell'
-        rect:       require './rect'
-        struct:     require './struct'
-        zorder:     require './zorder'
-        winlist:    require './winlist'
-        wininfo:    require './wininfo'
-        foreground: require './foreground'
-        active:     require('./user').GetForegroundWindow
-        frontinfo:  -> require('./wininfo')(require('./user').GetForegroundWindow())
-        
         mouse:           -> wc 'mouse'
         info:       (id) -> wc 'info'   id
         raise:      (id) -> wc 'raise'  id

@@ -4,11 +4,10 @@
 #      000  000       000   000  000       000       000  0000   000     000   000  000   000  000 0 000  
 # 0000000    0000000  000   000  00000000  00000000  000   000  0000000   0000000    0000000   000   000  
 
-{ childp, post, karg, slash, drag, prefs, clamp, pos, error, log, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, prefs, clamp, kpos, $ } = require 'kxk'
 
-rect     = require './rect'
 electron = require 'electron'
-robot    = require 'robotjs' 
+wxw = require './wxw'
 
 zoomWin  = null
 
@@ -61,7 +60,8 @@ createWindow = (opt) ->
         show:            true
         fullscreen:      not opt.debug
         webPreferences:
-            webSecurity: false
+            nodeIntegration: true
+            webSecurity:     false
             
     zoomWin = win
     
@@ -145,7 +145,7 @@ init = ->
 #    000     000   000  000   000  000   000  0000000   000        0000000   000   000  000   000  
 
 scale  = 1.0
-offset = pos(0,0)
+offset = kpos 0 0
 
 transform = ->
     a =$ 'image'
@@ -174,16 +174,19 @@ onWheel = (event) ->
     scaleFactor =(1 - event.deltaY / 400.0)
     newScale = clamp 1, 20, scale * scaleFactor
     
-    mp = pos(event).minus pos(vw, vh).times 0.5
+    mp = kpos(event).minus kpos(vw, vh).times 0.5
     
-    oldPos = offset.plus pos(mp).times 1/scale
-    newPos = offset.plus pos(mp).times 1/newScale
+    oldPos = offset.plus kpos(mp).times 1/scale
+    newPos = offset.plus kpos(mp).times 1/newScale
     offset.add newPos.minus oldPos
     
     scale *= scaleFactor
     transform()
     
-robotPos = -> pos(robot.getMousePos()).div(pos(robot.getScreenSize().width,robot.getScreenSize().height)).mul pos(vw,vh)
+robotPos = -> 
+
+    kpos wxw.mouse()
+    # pos(robot.getMousePos()).div(pos(robot.getScreenSize().width,robot.getScreenSize().height)).mul pos(vw,vh)
 
 borderTimer = null
 onMouseMove = (event) ->
@@ -213,7 +216,7 @@ borderScroll = ->
     scroll = false
     border = 200
     
-    direction = pos(vw,vh).times(0.5).to(mousePos).mul(pos(1/vw,1/vh)).times(-1)
+    direction = kpos(vw,vh).times(0.5).to(mousePos).mul(kpos(1/vw,1/vh)).times(-1)
     
     if mousePos.x < border
         scrollSpeed = (border-mousePos.x)/border

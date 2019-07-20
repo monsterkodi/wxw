@@ -181,14 +181,13 @@ HRESULT winInfo(HWND hWnd, char* id=NULL)
     QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
     
     if (id == NULL || matchWin(hWnd, pid, path, title, id))
-	{
-        WINDOWPLACEMENT placement;
-        GetWindowPlacement(hWnd, &placement);    
-        
+    {        
         wchar_t* status = L"normal";
-        if      (placement.showCmd == SW_SHOWMINIMIZED) status = L"minimized";
-        else if (placement.showCmd == SW_SHOWMAXIMIZED) status = L"maximized";
-                
+        LONG style = GetWindowLongW(hWnd, GWL_STYLE);
+        if    (!(style & WS_VISIBLE)) { status = L"hidden"; }
+        else if (style & WS_MINIMIZE) { status = L"minimized"; }
+        else if (style & WS_MAXIMIZE) { status = L"maximized"; }
+        
         RECT rect; 
     
         GetWindowRect(hWnd, &rect);
@@ -196,6 +195,15 @@ HRESULT winInfo(HWND hWnd, char* id=NULL)
         LONG height = rect.bottom - rect.top;
         LONG x = rect.left;
         LONG y = rect.top;
+        
+        int zindex = 0;
+        HWND prevWnd = hWnd;
+        HWND nextWnd;
+        while (nextWnd = GetWindow(prevWnd, GW_HWNDPREV))
+        {
+            prevWnd = nextWnd;
+            zindex += 1;
+        }
         
         wprintf(L".\n");
         if (path)  wprintf(L"    path    %ls\n", path); 
@@ -206,6 +214,7 @@ HRESULT winInfo(HWND hWnd, char* id=NULL)
         wprintf(L"    y       %d\n", y);
         wprintf(L"    width   %d\n", width);
         wprintf(L"    height  %d\n", height);
+        wprintf(L"    zindex  %d\n", zindex);
         wprintf(L"    status  %ls\n", status);
 	}
     delete title;
@@ -225,6 +234,10 @@ HRESULT info(char *id="all")
     if (cmp(id, "foreground") || cmp(id, "frontmost") || cmp(id, "topmost") || cmp(id, "top") ||  cmp(id, "front"))
     {
         hr = winInfo(GetForegroundWindow());
+    }
+    else if (cmp(id, "taskbar"))
+    {
+        hr = winInfo(FindWindow(L"Shell_TrayWnd", L""));
     }
     else 
     {
@@ -255,6 +268,17 @@ HRESULT raise(char *id)
         // typical windows WTF :-)
         SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        
+        // VK_MENU     = 0x12 # ALT key
+        // KEYDOWN     = 1
+        // KEYUP       = 3
+//         
+        // if win.minimized
+            // user.RestoreWindow win.hwnd
+//         
+        // user.keybd_event VK_MENU, 0, KEYDOWN, null # fake ALT press to enable foreground switch
+        // user.SetForegroundWindow win.hwnd          # ... no wonder windows is so bad
+        // user.keybd_event VK_MENU, 0, KEYUP, null
     }
     return S_OK;    
 }
@@ -323,15 +347,17 @@ HRESULT screen(char *id="size")
     {
         cout << GetSystemMetrics(SM_CXSCREEN) << " " << GetSystemMetrics(SM_CYSCREEN) << endl;
 
-		cout << GetSystemMetrics(SM_CXBORDER) << " " << GetSystemMetrics(SM_CYBORDER) << endl;
-		cout << GetSystemMetrics(SM_CXMIN) << " " << GetSystemMetrics(SM_CYMIN) << endl;
-		cout << GetSystemMetrics(SM_CXSIZE) << " " << GetSystemMetrics(SM_CYSIZE) << endl;
-		cout << GetSystemMetrics(SM_CXFRAME) << " " << GetSystemMetrics(SM_CYFRAME) << endl;
-		cout << GetSystemMetrics(SM_CXDLGFRAME) << " " << GetSystemMetrics(SM_CYDLGFRAME) << endl;
+        // cout << GetSystemMetrics(SM_CXBORDER) << " " << GetSystemMetrics(SM_CYBORDER) << endl;
+        // cout << GetSystemMetrics(SM_CXMIN) << " " << GetSystemMetrics(SM_CYMIN) << endl;
+        // cout << GetSystemMetrics(SM_CXSIZE) << " " << GetSystemMetrics(SM_CYSIZE) << endl;
+        // cout << GetSystemMetrics(SM_CXFRAME) << " " << GetSystemMetrics(SM_CYFRAME) << endl;
+        // cout << GetSystemMetrics(SM_CXDLGFRAME) << " " << GetSystemMetrics(SM_CYDLGFRAME) << endl;
 	}
     else if (cmp(id, "user"))
     {
-        cout << GetSystemMetrics(SM_CXFULLSCREEN) << " " << GetSystemMetrics(SM_CYFULLSCREEN) << endl;
+        RECT rect;
+        hr = SystemParametersInfoW(SPI_GETWORKAREA, 0, &rect, 0);
+        cout << rect.right-rect.left << " " << rect.bottom-rect.top << endl;
     }
     else 
     {
@@ -561,6 +587,78 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     return S_OK;
 }
 
+// 000000000   0000000    0000000  000   000  0000000     0000000   00000000   
+//    000     000   000  000       000  000   000   000  000   000  000   000  
+//    000     000000000  0000000   0000000    0000000    000000000  0000000    
+//    000     000   000       000  000  000   000   000  000   000  000   000  
+//    000     000   000  0000000   000   000  0000000    000   000  000   000  
+
+HRESULT taskbar(char* id)
+{
+    BOOL bShowTaskBar = true;
+    
+    if (cmp(id, "hide"))
+    {
+        bShowTaskBar = false;
+    }
+
+    static int nTaskBarPosition = 0;
+
+	RECT rcWorkArea;
+	RECT rcTaskBar;
+
+	HWND hTaskBar = FindWindow(L"Shell_TrayWnd", L"");
+	GetWindowRect(hTaskBar, &rcTaskBar);
+
+	if (hTaskBar)
+	{
+		SystemParametersInfo(SPI_GETWORKAREA,0,(LPVOID)&rcWorkArea,0);
+		int nWidth  = ::GetSystemMetrics(SM_CXSCREEN);
+		int nHeight = ::GetSystemMetrics(SM_CYSCREEN);
+		
+		if (bShowTaskBar)
+		{
+			switch(nTaskBarPosition)
+			{
+				case 0:
+                    rcWorkArea.bottom -= rcTaskBar.bottom - rcTaskBar.top;
+                    break;
+                case 1:
+					rcWorkArea.left += rcTaskBar.right - rcTaskBar.left;
+					break;
+				case 2:
+					rcWorkArea.right -= rcTaskBar.right - rcTaskBar.left;
+					break;
+				case 3:
+					rcWorkArea.top += rcTaskBar.bottom - rcTaskBar.top;
+					break;
+			}
+			SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&rcWorkArea,0);
+			ShowWindow(hTaskBar, SW_SHOW);
+		}
+		else
+		{
+			if      (rcWorkArea.left!=0) nTaskBarPosition = 1;
+			else if (rcWorkArea.top!=0)  nTaskBarPosition = 3;
+			else if ((rcWorkArea.right-rcWorkArea.left)<nWidth)  nTaskBarPosition = 2;
+			else if ((rcWorkArea.bottom-rcWorkArea.top)<nHeight) nTaskBarPosition = 0;
+
+			rcWorkArea.left   = 0;
+			rcWorkArea.top    = 0;
+			rcWorkArea.bottom = nHeight;
+			rcWorkArea.right  = nWidth;
+			SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&rcWorkArea,0);
+			ShowWindow(hTaskBar, SW_HIDE);
+		}
+	}
+    else
+    {
+        return S_FALSE;
+    }
+
+    return S_OK;
+}
+
 // 000   000   0000000   0000000    0000000   00000000  
 // 000   000  000       000   000  000        000       
 // 000   000  0000000   000000000  000  0000  0000000   
@@ -724,6 +822,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     {
         if (argc == 2) hr = help(cmd);
         else           hr = folder(argv[2]);
+    }
+    else if (cmp(cmd, "taskbar"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = taskbar(argv[2]);
     }
     else if (cmp(cmd, "screenshot"))
     {
