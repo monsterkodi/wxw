@@ -1,5 +1,5 @@
 
-<p align="center"><img src="img/about.png"></p>
+<p align="center"><img src="img/about.png" width=256 height=256></p>
 
 **wxw** is a collection of tools for the windows operating system.
 
@@ -58,7 +58,7 @@ console.log wxw('info', 'top')
 #   {
 #     path: 'C:\\msys64\\usr\\bin\\mintty.exe',
 #     title: '/c/Users/kodi/s/wxw',
-#     hwnd: '8f04c6',<-- use this id to control individual windows
+#     hwnd: '8f04c6',<-- use this to control a single window
 #     pid: 12384,
 #     x: 15,
 #     y: 314,
