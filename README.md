@@ -58,7 +58,7 @@ console.log wxw('info', 'top')
 #   {
 #     path: 'C:\\msys64\\usr\\bin\\mintty.exe',
 #     title: '/c/Users/kodi/s/wxw',
-#     hwnd: '8f04c6',<-- use this to control a single window
+#     hwnd: '8f04c6',  ◂◂◂ use this to control a single window
 #     pid: 12384,
 #     x: 15,
 #     y: 314,
