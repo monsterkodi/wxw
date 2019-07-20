@@ -20,10 +20,9 @@ wc = ->
         return ''
     
     switch kstr(arguments[0])
-        when 'mouse' 'info' 'screen'
+        when 'info' 'screen' 'mouse'
             noon.parse out
         else
-            # klog "wc #{args}: " out
             out
 
 module.exports = wc

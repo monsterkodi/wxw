@@ -1,7 +1,12 @@
 .gitignore
 Icon?
-package.noon
 screenshot.png
 coffee/app.coffee
+coffee/zoom.coffee
+js/app.js
+js/zoom.js
+bin/inno.iss
 inno
+img
+wc
 *-x64

@@ -37,8 +37,6 @@ createWindow = (opt) ->
     vw = electron.screen.getPrimaryDisplay().workAreaSize.width
     vh = electron.screen.getPrimaryDisplay().workAreaSize.height
     
-    # klog "#{vw} #{vh}"
-    
     win = new electron.BrowserWindow
         backgroundColor: '#00000000'
         transparent:     true
@@ -58,8 +56,6 @@ createWindow = (opt) ->
             webSecurity:     false
             
     pngFile = slash.fileUrl screenshotPath()
-    
-    klog 'pngFile' pngFile
     
     html = """
         <head>

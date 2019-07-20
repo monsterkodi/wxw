@@ -1,10 +1,17 @@
 {
   "name": "wxw",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "moves my windows",
+  "keywords": [
+    "windows",
+    "toolkit"
+  ],
   "main": "js/wxw.js",
   "scripts": {
     "win": "bash ./bin/buildwin.sh"
+  },
+  "bin": {
+    "wc": "./bin/wc"
   },
   "repository": {
     "type": "git",
