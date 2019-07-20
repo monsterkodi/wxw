@@ -6,12 +6,7 @@
 00     00  000   000  00     00        000   000  000        000        
 ###
 
-{ post, prefs, about, slash, childp, karg, error, log, _ } = require 'kxk'
-
-user     = require './user'
-wininfo  = require './wininfo'
-rect     = require './rect'
-ref      = require 'ref'
+{ post, prefs, about, slash, childp, karg, klog, _ } = require 'kxk'
 
 pkg      = require '../package.json'
 electron = require 'electron'
@@ -26,9 +21,10 @@ wxw
 
 version  #{pkg.version}
 """
+
 # args.debug = true
 
-post.on 'winlog', (text) -> log ">>> " + text
+post.on 'winlog', (text) -> klog ">>> " + text
 
 #  0000000    0000000  000000000  000   0000000   000   000  
 # 000   000  000          000     000  000   000  0000  000  
@@ -54,7 +50,7 @@ minimizeWindow = ->
     ensureFocusWindow = ->
         
         if not user.GetForegroundWindow()
-            log 'no focus window!'
+            error 'no focus window!'
         
     if hWnd = user.GetForegroundWindow()
         SW_MINIMIZE = 6
