@@ -20,7 +20,7 @@ wc = ->
         return ''
     
     switch kstr(arguments[0])
-        when 'info' 'screen' 'mouse'
+        when 'info' 'screen' 'mouse' 'trash'
             noon.parse out
         else
             out
