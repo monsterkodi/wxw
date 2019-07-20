@@ -1,5 +1,5 @@
 name            wxw
-version         1.7.2
+version         1.7.3
 description     moves my windows
 keywords
                 windows
@@ -9,12 +9,13 @@ scripts
                 win  bash ./bin/buildwin.sh
 files
                 bin/wc.exe
+                bin/wxw
                 js/wc.js
                 js/wxw.js
 repository      github:monsterkodi/wxw
 author          monsterkodi
 license         Unlicense
-bin             ./bin/wc.exe
+bin             ./bin/wxw
 preferGlobal    true
 dependencies
                 kxk  ^0.329.0
