@@ -34,7 +34,7 @@ else
     { 
         if (error)
         {
-            process.stderr.write(error);
+            process.stderr.write(String(error));
         }
         else
         {
