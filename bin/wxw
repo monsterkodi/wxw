@@ -30,16 +30,5 @@ if (process.argv[2] == 'version')
 }
 else
 {
-    childp.execFile(path.join(__dirname, "wc.exe"), process.argv.slice(2), {cwd:process.cwd(), shell:true }, (error, stdout, stderr) => 
-    { 
-        if (error)
-        {
-            process.stderr.write(String(error));
-        }
-        else
-        {
-            if (stdout.length) process.stdout.write(stdout); 
-            if (stderr.length) process.stderr.write(stderr); 
-        }
-    });
+    childp.spawn(path.join(__dirname, "wc.exe"), process.argv.slice(2), {cwd:process.cwd(), shell:true, detached:true, stdio:'inherit'});
 }

@@ -21,9 +21,14 @@ wc = ->
             escape 1
             escape 2
         
-        args = (kstr(s) for s in argv).join " "
         wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
-        out = childp.execSync wcexe+" #{args}" encoding:'utf8' shell:true
+        
+        if argv[0] in ['launch']
+            childp.spawn wcexe, argv, encoding:'utf8' shell:true detached:true stdio:'inherit'
+            out = ''
+        else
+            args = (kstr(s) for s in argv).join " "
+            out = childp.execSync wcexe+" #{args}" encoding:'utf8' shell:true
     catch err
         error err
         return ''
