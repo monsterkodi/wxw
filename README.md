@@ -32,6 +32,7 @@ wxw [command] [args...]
          taskbar     hide|show
          screen     [size|user]
          screenshot [targetfile]
+         icon        path [targetfile]
 
     id:
 

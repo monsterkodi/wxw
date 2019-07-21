@@ -757,31 +757,18 @@ HRESULT trash(char* action)
 // 000        000  0000  000   000  
 // 000        000   000   0000000   
 
-bool save_png_memory(HBITMAP hbitmap, vector<BYTE>& data)
+bool saveBitmap(Bitmap* bitmap, const char* targetfile)
+{
+    CLSID clsID;
+    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
+    bitmap->Save(s2ws(targetfile).c_str(), &clsID);
+    return true;
+}
+
+bool saveBitmap(HBITMAP hbitmap, const char* targetfile)
 {
     Bitmap bmp(hbitmap, NULL);
-        
-    IStream* istream = NULL;
-    CreateStreamOnHGlobal(NULL, TRUE, &istream);
-
-    CLSID clsid_png;
-    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsid_png);
-    Status status = bmp.Save(istream, &clsid_png);
-    if (status != Status::Ok)
-        return false;
-
-    HGLOBAL hg = NULL;
-    GetHGlobalFromStream(istream, &hg);
-
-    SIZE_T bufsize = GlobalSize(hg);
-    data.resize(bufsize);
-
-    LPVOID pimage = GlobalLock(hg);
-    memcpy(&data[0], pimage, bufsize);
-    GlobalUnlock(hg);
-
-    istream->Release();
-    return true;
+    return saveBitmap(&bmp, targetfile);
 }
 
 //  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
@@ -811,12 +798,8 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     DeleteDC(memdc);
     ReleaseDC(0, hdc);
 
-    vector<BYTE> data;
-    if (save_png_memory(hbitmap, data))
-    {
-        ofstream fout(targetfile, ios::binary);
-        fout.write((char*)data.data(), data.size());
-    }
+    saveBitmap(hbitmap, targetfile);
+
     DeleteObject(hbitmap);
 
     GdiplusShutdown(token);
@@ -842,7 +825,7 @@ HBITMAP iconToBitmap(HICON hIcon, int x, int y)
 
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth = x;
-    bmi.bmiHeader.biHeight = y;
+    bmi.bmiHeader.biHeight = -y;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biBitCount = 32;
     bmi.bmiHeader.biCompression = BI_RGB;
@@ -858,7 +841,6 @@ HBITMAP iconToBitmap(HICON hIcon, int x, int y)
 
     DeleteDC(hMemDC);
     ReleaseDC(NULL, hDC);
-    DestroyIcon(hIcon);
     return hBitmap;
 }
 
@@ -895,12 +877,7 @@ bool saveIcon (HICON hIcon, char* pngfile)
 
     s = bmp->UnlockBits(&target_info);
 
-    CLSID clsID;
-    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
-    
-    wchar_t* wfile = wstr(pngfile);
-    bmp->Save(wfile, &clsID);
-    delete wfile;
+    saveBitmap(bmp, pngfile);
         
     DestroyIcon(hIcon);
     DeleteObject(hBitmap);
