@@ -8,8 +8,10 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <codecvt>
 #include <shellscalingapi.h>
 #include <KnownFolders.h>
+#include <shlwapi.h>
 #include <ShlObj.h>
 #include <Shobjidl.h>
 
@@ -22,7 +24,12 @@ using namespace std;
 // 000       000 0 000  000        
 //  0000000  000   000  000        
 
-int wcmp(wchar_t *a, char *b)
+int wwcmp(const wchar_t* a, const wchar_t* b)
+{
+    return lstrcmpiW(a, b) == 0;
+}
+
+int wcmp(const wchar_t *a, const char *b)
 {
     size_t size = strlen(b);
     wstring wc(size+1, L' ');
@@ -32,7 +39,7 @@ int wcmp(wchar_t *a, char *b)
     return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
 } 
 
-int cmp(char *a, char *b)
+int cmp(const char *a, const char *b)
 {
     return _strcmpi(a, b) == 0;
 } 
@@ -47,11 +54,34 @@ wchar_t* wstr(char *s)
     return ws;
 }
 
+wstring s2ws(const string& str)
+{
+    using convert_typeX = codecvt_utf8<wchar_t>;
+    wstring_convert<convert_typeX, wchar_t> converterX;
+
+    return converterX.from_bytes(str);
+}
+
+string ws2s(const wstring& wstr)
+{
+    using convert_typeX = codecvt_utf8<wchar_t>;
+    wstring_convert<convert_typeX, wchar_t> converterX;
+
+    return converterX.to_bytes(wstr);
+}
+
 int klog(char *msg)
 {
     printf(msg);
     printf("\n");
     return 0;
+}
+
+bool FileExists(LPCTSTR szPath)
+{
+    DWORD dwAttrib = GetFileAttributes(szPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 // 000000000  000  000000000  000      00000000  
@@ -125,8 +155,8 @@ static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
 
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
-    DWORD pathSize = 10000;
-    wchar_t path[10000];
+    DWORD pathSize = MAX_PATH;
+    wchar_t path[MAX_PATH];
     path[0] = 0;
 
     char* id = (char*)((void**)param)[0];
@@ -144,6 +174,7 @@ static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
 
 HRESULT matchingWindows(char* id, vector<HWND>* wins)
 {
+    wins->clear();
     if (cmp(id, "foreground") || cmp(id, "frontmost") || cmp(id, "topmost") || cmp(id, "top") ||  cmp(id, "front"))
     {
         wins->push_back(GetForegroundWindow());
@@ -366,11 +397,140 @@ HRESULT focus(char *id)
     if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
     for (HWND hWnd : wins)
     {
+        ShowWindow(hWnd, SW_RESTORE);
         SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         SetForegroundWindow(hWnd);
     }
     return S_OK;    
+}
+
+// 00000000  000  000   000  0000000    00000000  000  000      00000000  
+// 000       000  0000  000  000   000  000       000  000      000       
+// 000000    000  000 0 000  000   000  000000    000  000      0000000   
+// 000       000  000  0000  000   000  000       000  000      000       
+// 000       000  000   000  0000000    000       000  0000000  00000000  
+
+bool FindFile(const wstring& directory, const wstring& filename, wstring& result)
+{
+    wstring tmp = directory + L"\\*";
+    WIN32_FIND_DATAW file;
+    HANDLE search_handle = FindFirstFileW(tmp.c_str(), &file);
+    if (search_handle != INVALID_HANDLE_VALUE)
+    {
+        vector<wstring> directories;
+
+        do
+        {
+            if (file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                if ((!lstrcmpW(file.cFileName, L".")) || (!lstrcmpW(file.cFileName, L".."))) continue;
+            }
+
+            tmp = directory + L"\\" + wstring(file.cFileName);
+
+            if (wwcmp(filename.c_str(), file.cFileName))
+            {
+                result = tmp;
+                return true;
+            }
+
+            if (file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            { 
+                directories.push_back(tmp);
+            }
+
+        } while (FindNextFileW(search_handle, &file));
+
+        FindClose(search_handle);
+
+        for (vector<wstring>::iterator iter = directories.begin(), end = directories.end(); iter != end; ++iter)
+        { 
+            if (FindFile(*iter, filename, result))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// 000       0000000   000   000  000   000   0000000  000   000  
+// 000      000   000  000   000  0000  000  000       000   000  
+// 000      000000000  000   000  000 0 000  000       000000000  
+// 000      000   000  000   000  000  0000  000       000   000  
+// 0000000  000   000   0000000   000   000   0000000  000   000  
+
+HRESULT launch(char *path)
+{
+    vector<HWND> wins;
+    char normpath[MAX_PATH];
+    GetFullPathNameA(path, MAX_PATH, normpath, NULL);
+    
+    if (!FileExists((LPCTSTR)normpath) && PathIsRelativeA(path))
+    {
+        char fname[_MAX_FNAME];
+        
+        _splitpath_s(path,NULL, 0, NULL, 0, fname, _MAX_FNAME, NULL, 0);
+    
+        char file[MAX_PATH];
+        sprintf_s(file, "%s.exe", fname);
+        
+        matchingWindows(file, &wins);
+
+        if (wins.size() <= 0)
+        {
+            LPSTR lpFilePart;
+            wstring wpath = s2ws(file);
+            wstring found;
+
+            if (SearchPathA(NULL, file, ".exe", MAX_PATH, normpath, &lpFilePart))
+            {
+                cout << "found in PATH " << normpath << endl;
+            }
+            else if (FindFile(L"C:\\Program Files", wpath, found))
+            { 
+                GetFullPathNameA(ws2s(found).c_str(), MAX_PATH, normpath, NULL);
+            }
+            else if (FindFile(L"C:\\Program Files (x86)", wpath, found))
+            {
+                GetFullPathNameA(ws2s(found).c_str(), MAX_PATH, normpath, NULL);
+            }
+            else
+            {
+                cerr << "can't find " << path << endl;
+            }
+        }
+        else
+        {
+            strcpy_s(normpath, file);
+        }
+    }
+
+    if (SUCCEEDED(matchingWindows(normpath, &wins))) 
+    {
+        if (wins.size())
+        {
+            for (HWND hWnd : wins)
+            {
+                ShowWindow(hWnd, SW_RESTORE);
+                SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                SetForegroundWindow(hWnd);
+            }
+            return S_OK;        
+        }
+    }
+    
+    STARTUPINFOA info={sizeof(info)};
+    PROCESS_INFORMATION processInfo;
+    
+    if (!CreateProcessA(normpath, NULL, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo))
+    {
+        return S_FALSE;
+    }
+    cout << normpath << endl;
+    return S_OK;
 }
 
 // 0000000     0000000   000   000  000   000  0000000     0000000  
@@ -507,7 +667,7 @@ HRESULT trash(char* action)
         STRRET strRet;
         if (SUCCEEDED(hr = pDesktop->GetDisplayNameOf(pidlRecycleBin, SHGDN_NORMAL, &strRet)))
         {
-            cout << strRet.cStr << endl;
+            wcout << strRet.pOleStr << endl;
         }
     }
     else if (cmp(action, "list"))
@@ -521,7 +681,7 @@ HRESULT trash(char* action)
                 STRRET strRet;
                 if (SUCCEEDED(hr = pDesktop->GetDisplayNameOf(pidl, SHGDN_NORMAL, &strRet)))
                 {
-                    cout << strRet.cStr << endl;
+                    wcout << strRet.pOleStr << endl;
                 }
             }
         }
@@ -755,11 +915,12 @@ HRESULT usage(void)
     klog("         focus       id");
     klog("         close       id");
     klog("         bounds      id x y w h");
-    klog("         help        command");
-    klog("         trash       action");
-    klog("         folder      name");
+    klog("         launch      path");
     klog("         mouse");
-    klog("         taskbar    [hide|show]");
+    klog("         help        command");
+    klog("         folder      name");
+    klog("         trash       count|empty");
+    klog("         taskbar     hide|show");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
     klog("");
@@ -837,6 +998,16 @@ HRESULT help(char *command)
         klog("      Close window(s)");
         klog("");
     }
+    else if (cmp(command, "launch"))
+    {
+        klog("wxw launch path");
+        klog("");
+        klog("      Start application if it is not running.");
+        klog("      Activate windows if application is running.");
+        klog("");
+        klog("      Search PATH and Program File folders if local path doesn't exist.");
+        klog("");
+    }
     else if (cmp(command, "taskbar"))
     {
         klog("wxw taskbar hide|show");
@@ -869,8 +1040,8 @@ HRESULT help(char *command)
     {
         klog("wxw screen [size|user]");
         klog("");
-        klog("      size        print size of screen in pixels");
-        klog("      user        print size of screen without taskbar in pixels");
+        klog("      size        Print size of screen in pixels");
+        klog("      user        Print size of screen without taskbar");
     }
     else if (cmp(command, "screenshot"))
     {
@@ -886,10 +1057,10 @@ HRESULT help(char *command)
         klog("");
         klog("      actions:");
         klog("");
-        klog("          list      print names of files in thrash bin");
-        klog("          count     print number of files in thrash bin");
-        klog("          name      print name of thrash bin");
-        klog("          empty     empty the thrash bin");
+        klog("          list      Print names of files in thrash bin");
+        klog("          count     Print number of files in thrash bin");
+        klog("          name      Print name of thrash bin");
+        klog("          empty     Empty the thrash bin");
     }
     else
     {
@@ -954,6 +1125,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     {
         if (argc == 2) hr = help(cmd);
         else           hr = focus(argv[2]);
+    }
+    else if (cmp(cmd, "launch"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = launch(argv[2]);
     }
     else if (cmp(cmd, "close"))
     {

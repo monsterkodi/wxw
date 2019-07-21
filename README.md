@@ -24,11 +24,12 @@ wxw [command] [args...]
          focus       id
          close       id
          bounds      id x y w h
-         help        command
-         trash       action
-         folder      name
+         launch      path
          mouse
-         taskbar    [hide|show]
+         help        command
+         folder      name
+         trash       empty|count
+         taskbar     hide|show
          screen     [size|user]
          screenshot [targetfile]
 
@@ -70,6 +71,7 @@ console.log wxw('info', 'top')
 # ]
 
 wxw('minimize', '8f04c6')
-wxw('close',    '8f04c6')
+wxw('launch',   'firefox')
+wxw('trash',    'empty')
 
 ```

@@ -146,12 +146,13 @@ app.on 'ready', ->
         
     prefs.init defaults:keys
     
-    # if not slash.isFile prefs.store.file
-        # prefs.save()
-
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
   
+if app.requestSingleInstanceLock? 
+    if !app.requestSingleInstanceLock()
+        app.quit()
+        
 if args.debug
     require('./zoom').start debug:true
     
