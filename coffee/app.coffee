@@ -38,6 +38,7 @@ action = (act) ->
     switch act
         when 'maximize'   then wc 'maximize' 'top'
         when 'minimize'   then wc 'minimize' 'top'
+        when 'taskbar'    then wc 'taskbar'  'toggle'
         when 'close'      then wc 'close'    'top'
         when 'screenzoom' then require('./zoom').start()
         else moveWindow act
@@ -142,6 +143,7 @@ app.on 'ready', ->
         bot:        'ctrl+alt+6'
         minimize:   'ctrl+alt+m'
         close:      'ctrl+alt+w'
+        taskbar:    'ctrl+alt+t'
         screenzoom: 'alt+z'
         
     prefs.init defaults:keys

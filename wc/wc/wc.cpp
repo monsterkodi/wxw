@@ -913,8 +913,6 @@ HRESULT icon(char* id, char* targetfile=NULL)
         sprintf_s(pngfile, "%s.png", fname);
     }
     
-    //cout << id << " " << pngfile << endl;
-
     SHFILEINFOA shfi;
     if (SHGetFileInfoA( normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
     {
@@ -924,21 +922,21 @@ HRESULT icon(char* id, char* targetfile=NULL)
             IMAGEINFO iinfo = { 0 };
             int count = 0;
             imageList->GetImageCount(&count);
-            //cout << "count " << count << " index " << shfi.iIcon << endl;
+
             if (shfi.iIcon < count)
             {
                 HICON hIcon;
                 if (SUCCEEDED(hr = imageList->GetIcon(shfi.iIcon, ILD_TRANSPARENT, &hIcon)))
                 {
                     saveIcon(hIcon, pngfile);
-                    //cout << "saved " << pngfile << endl;
+                    cout << "Saved " << pngfile << endl;
                 }
             }
         }
         else if (shfi.hIcon)
         {
             saveIcon(shfi.hIcon, pngfile);
-            //cout << "fallback " << pngfile << endl;
+            cout << "saved " << pngfile << endl;
         }
     }
     
@@ -961,6 +959,12 @@ HRESULT taskbar(char* id)
     if (cmp(id, "hide"))
     {
         bShowTaskBar = false;
+    }
+    else if (cmp(id, "toggle"))
+    {
+        HWND hWnd = FindWindow(L"Shell_TrayWnd", L"");
+        LONG style = GetWindowLongW(hWnd, GWL_STYLE);
+        bShowTaskBar = !(style & WS_VISIBLE);
     }
 
     static int nTaskBarPosition = 0;
@@ -1046,7 +1050,7 @@ HRESULT usage(void)
     klog("         help        command");
     klog("         folder      name");
     klog("         trash       count|empty");
-    klog("         taskbar     hide|show");
+    klog("         taskbar     hide|show|toggle");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
     klog("         icon        path [targetfile]");
@@ -1137,7 +1141,7 @@ HRESULT help(char *command)
     }
     else if (cmp(command, "taskbar"))
     {
-        klog("wxw taskbar hide|show");
+        klog("wxw taskbar hide|show|toggle");
         klog("");
         klog("      Show or hide the taskbar");
         klog("");
