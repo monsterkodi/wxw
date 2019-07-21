@@ -14,13 +14,14 @@
 #include <shlwapi.h>
 #include <ShlObj.h>
 #include <Shobjidl.h>
-//#include <CommCtrl.h>
-//#include <shellapi.h>
-// #include <gdiplusheaders.h>
 #include <commoncontrols.h>
 
 using namespace Gdiplus;
 using namespace std;
+
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 //  0000000  00     00  00000000   
 // 000       000   000  000   000  
@@ -475,7 +476,7 @@ HRESULT launch(char *path)
     {
         char fname[_MAX_FNAME];
         
-        _splitpath_s(path,NULL, 0, NULL, 0, fname, _MAX_FNAME, NULL, 0);
+        _splitpath_s(path, NULL, 0, NULL, 0, fname, _MAX_FNAME, NULL, 0);
     
         char file[MAX_PATH];
         sprintf_s(file, "%s.exe", fname);
@@ -864,7 +865,7 @@ bool saveIcon (HICON hIcon, char* pngfile)
     BITMAP source_info = { 0 };
     GetObject(hBitmap, sizeof(source_info), &source_info);
 
-    Gdiplus::Status s = Gdiplus::Ok;
+    Status s = Ok;
 
     Bitmap* bmp = new Bitmap(w, h, PixelFormat32bppARGB);
 
@@ -908,30 +909,36 @@ HRESULT icon(char* id, char* targetfile=NULL)
     else
     {
         char fname[_MAX_FNAME];
-        _splitpath_s(normpath,NULL, 0, NULL, 0, fname, _MAX_FNAME, NULL, 0);
+        _splitpath_s(normpath, NULL, 0, NULL, 0, fname, _MAX_FNAME, NULL, 0);
         sprintf_s(pngfile, "%s.png", fname);
     }
     
-    cout << "icon " << normpath << " " << pngfile << endl;
-    
-    // if (HMODULE hModule = GetModuleHandleA(normpath))
-    // {
-        // cout << "hModule " << hModule << endl;
-    // }
-    
+    //cout << id << " " << pngfile << endl;
+
     SHFILEINFOA shfi;
     if (SHGetFileInfoA( normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
     {
-        cout << "icon " << shfi.iIcon << " " << shfi.hIcon << endl;
-
         IImageList *imageList;
-        if (SUCCEEDED(hr = SHGetImageList(SHIL_JUMBO, IID_IImageList,(void**)&imageList)))
-       {
-            HICON hIcon;
-            if (SUCCEEDED(hr = imageList->GetIcon(shfi.iIcon, ILD_TRANSPARENT, &hIcon)))
+        if (SUCCEEDED(hr = SHGetImageList(SHIL_JUMBO, IID_IImageList, (void**)&imageList)))
+        {
+            IMAGEINFO iinfo = { 0 };
+            int count = 0;
+            imageList->GetImageCount(&count);
+            //cout << "count " << count << " index " << shfi.iIcon << endl;
+            if (shfi.iIcon < count)
             {
-                saveIcon(hIcon, pngfile);
+                HICON hIcon;
+                if (SUCCEEDED(hr = imageList->GetIcon(shfi.iIcon, ILD_TRANSPARENT, &hIcon)))
+                {
+                    saveIcon(hIcon, pngfile);
+                    //cout << "saved " << pngfile << endl;
+                }
             }
+        }
+        else if (shfi.hIcon)
+        {
+            saveIcon(shfi.hIcon, pngfile);
+            //cout << "fallback " << pngfile << endl;
         }
     }
     
