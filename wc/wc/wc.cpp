@@ -14,6 +14,10 @@
 #include <shlwapi.h>
 #include <ShlObj.h>
 #include <Shobjidl.h>
+//#include <CommCtrl.h>
+//#include <shellapi.h>
+// #include <gdiplusheaders.h>
+#include <commoncontrols.h>
 
 using namespace Gdiplus;
 using namespace std;
@@ -747,7 +751,6 @@ HRESULT trash(char* action)
     return hr;
 }
 
-
 // 00000000   000   000   0000000   
 // 000   000  0000  000  000        
 // 00000000   000 0 000  000  0000  
@@ -757,7 +760,7 @@ HRESULT trash(char* action)
 bool save_png_memory(HBITMAP hbitmap, vector<BYTE>& data)
 {
     Bitmap bmp(hbitmap, NULL);
-
+        
     IStream* istream = NULL;
     CreateStreamOnHGlobal(NULL, TRUE, &istream);
 
@@ -800,8 +803,8 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     rc.bottom = GetSystemMetrics(SM_CYSCREEN); 
         
     auto hdc = GetDC(0);
-    auto memdc = CreateCompatibleDC(hdc);
     auto hbitmap = CreateCompatibleBitmap(hdc, rc.right, rc.bottom);
+    auto memdc = CreateCompatibleDC(hdc);
     auto oldbmp = SelectObject(memdc, hbitmap);
     BitBlt(memdc, 0, 0, rc.right, rc.bottom, hdc, 0, 0, SRCCOPY);
     SelectObject(memdc, oldbmp);
@@ -820,6 +823,145 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     CoUninitialize();
     
     return S_OK;
+}
+
+// 000   0000000   0000000   000   000  
+// 000  000       000   000  0000  000  
+// 000  000       000   000  000 0 000  
+// 000  000       000   000  000  0000  
+// 000   0000000   0000000   000   000  
+
+HBITMAP iconToBitmap(HICON hIcon, int x, int y)
+{
+    HDC hDC = GetDC(0);
+    HDC hMemDC = CreateCompatibleDC(hDC);
+
+    VOID* pvBits;
+    BITMAPINFO bmi;
+    ZeroMemory(&bmi, sizeof(BITMAPINFO));
+
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biWidth = x;
+    bmi.bmiHeader.biHeight = y;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biSizeImage = x * y * 4;
+
+    HBITMAP hBitmap;
+    if (hBitmap = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0))
+    { 
+        HGDIOBJ hOrgBMP = SelectObject(hMemDC, hBitmap);
+        DrawIconEx(hMemDC, 0, 0, hIcon, x, y, 0, NULL, DI_NORMAL);
+        SelectObject(hMemDC, hOrgBMP);
+    }
+
+    DeleteDC(hMemDC);
+    ReleaseDC(NULL, hDC);
+    DestroyIcon(hIcon);
+    return hBitmap;
+}
+
+bool saveIcon (HICON hIcon, char* pngfile) 
+{
+    ICONINFO icon_info = { 0 };
+    GetIconInfo(hIcon, &icon_info);
+
+    BITMAP bm = { 0 };
+    
+    int w=0, h=0;
+
+    if (icon_info.hbmColor && GetObject(icon_info.hbmColor, sizeof(bm), &bm))
+    {
+        w = bm.bmWidth;
+        h = bm.bmHeight;
+    }
+
+    HBITMAP hBitmap = iconToBitmap(hIcon, w, h);
+        
+    BITMAP source_info = { 0 };
+    GetObject(hBitmap, sizeof(source_info), &source_info);
+
+    Gdiplus::Status s = Gdiplus::Ok;
+
+    Bitmap* bmp = new Bitmap(w, h, PixelFormat32bppARGB);
+
+    BitmapData target_info = { 0 };
+    Rect rect(0, 0, w, h);
+
+    s = bmp->LockBits(&rect, ImageLockModeWrite, PixelFormat32bppARGB, &target_info);
+
+    CopyMemory(target_info.Scan0, source_info.bmBits, w * h * 4);
+
+    s = bmp->UnlockBits(&target_info);
+
+    CLSID clsID;
+    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
+    
+    wchar_t* wfile = wstr(pngfile);
+    bmp->Save(wfile, &clsID);
+    delete wfile;
+        
+    DestroyIcon(hIcon);
+    DeleteObject(hBitmap);
+    DeleteObject(bmp);
+        
+    return true;
+}
+        
+HRESULT icon(char* id, char* targetfile=NULL)
+{
+    HRESULT hr = S_OK;
+ 
+    char normpath[MAX_PATH];
+    GetFullPathNameA(id, MAX_PATH, normpath, NULL);
+    
+    CoInitialize(NULL);
+
+    ULONG_PTR token;
+    GdiplusStartupInput tmp;
+    GdiplusStartup(&token, &tmp, NULL);
+    
+    char pngfile[MAX_PATH];
+    
+    if (targetfile && strlen(targetfile))
+    {
+        strcpy_s(pngfile, targetfile);
+    }
+    else
+    {
+        char fname[_MAX_FNAME];
+        _splitpath_s(normpath,NULL, 0, NULL, 0, fname, _MAX_FNAME, NULL, 0);
+        sprintf_s(pngfile, "%s.png", fname);
+    }
+    
+    cout << "icon " << normpath << " " << pngfile << endl;
+    
+    // if (HMODULE hModule = GetModuleHandleA(normpath))
+    // {
+        // cout << "hModule " << hModule << endl;
+    // }
+    
+    SHFILEINFOA shfi;
+    if (SHGetFileInfoA( normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
+    {
+        cout << "icon " << shfi.iIcon << " " << shfi.hIcon << endl;
+
+        IImageList *imageList;
+        if (SUCCEEDED(hr = SHGetImageList(SHIL_JUMBO, IID_IImageList,(void**)&imageList)))
+       {
+            HICON hIcon;
+            if (SUCCEEDED(hr = imageList->GetIcon(shfi.iIcon, ILD_TRANSPARENT, &hIcon)))
+            {
+                saveIcon(hIcon, pngfile);
+            }
+        }
+    }
+    
+    GdiplusShutdown(token);
+    CoUninitialize();
+    
+    return hr;
 }
 
 // 000000000   0000000    0000000  000   000  0000000     0000000   00000000   
@@ -923,6 +1065,7 @@ HRESULT usage(void)
     klog("         taskbar     hide|show");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
+    klog("         icon        path [targetfile]");
     klog("");
     klog("    id:");
     klog("");
@@ -1051,6 +1194,14 @@ HRESULT help(char *command)
         klog("");
         klog("Take a screenshot of the main monitor and save it as a png file.");
     }
+    else if (cmp(command, "icon"))
+    {
+        klog("wxw icon path [targetfile]");
+        klog("");
+        klog("      targetfile defaults to './<file>.png'");
+        klog("");
+        klog("Save icon of file as a png.");
+    }
     else if (cmp(command, "trash"))
     {
         klog("wxw trash action");
@@ -1160,6 +1311,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     {
         if (argc == 2) hr = screen("size");
         else           hr = screen(argv[2]);
+    }
+    else if (cmp(cmd, "icon"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = icon(argv[2], (argc >= 4) ? argv[3] : NULL);
     }
     else if (cmp(cmd, "mouse"))
     {
