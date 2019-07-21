@@ -10,10 +10,19 @@
 
 wc = ->
     
-    wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
-    
     try
-        args = (kstr(s) for s in [].slice.call arguments, 0).join " "
+        argv = [].slice.call arguments, 0
+        
+        if argv[0] == 'icon'
+            
+            escape = (i) ->
+                if i < argv.length and argv[i].indexOf(' ') >= 0 and argv[i][0] != '"' and argv[i][-1] != '"'
+                    argv[i] = '"' + argv[i] + '"'
+            escape 1
+            escape 2
+        
+        args = (kstr(s) for s in argv).join " "
+        wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
         out = childp.execSync wcexe+" #{args}" encoding:'utf8' shell:true
     catch err
         error err

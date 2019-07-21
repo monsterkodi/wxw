@@ -20,7 +20,7 @@ if (process.argv.length > 2)
             case 'v': process.argv[2] = "version"; break;
             case 'l': process.argv[2] = "launch";  break;
         }
-    }
+    }    
 }
 
 if (process.argv[2] == 'version')
