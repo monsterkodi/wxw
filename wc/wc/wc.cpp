@@ -530,7 +530,7 @@ HRESULT launch(char *path)
     STARTUPINFOA info={sizeof(info)};
     PROCESS_INFORMATION processInfo;
     
-    if (!CreateProcessA(normpath, NULL, NULL, NULL, TRUE, 0, NULL, NULL, &info, &processInfo))
+    if (!CreateProcessA(normpath, NULL, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &info, &processInfo))
     {
         return S_FALSE;
     }
