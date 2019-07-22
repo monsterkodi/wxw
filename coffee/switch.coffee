@@ -21,8 +21,8 @@ getApps = ->
     apps
     
 pngPath = (appPath) ->
-    
-    slash.resolve slash.join slash.userData(), 'icons' slash.base(appPath) + ".png"
+    klog 'appPath' appPath, slash.base(appPath)
+    slash.resolve slash.join slash.userData(), 'icons', slash.base(appPath) + ".png"
     
 #  0000000  000000000   0000000   00000000   000000000  
 # 000          000     000   000  000   000     000     
@@ -136,7 +136,7 @@ init = ->
     apps = getApps()
         
     for p in apps
-        a.appendChild elem 'img' class:'app' src:slash.fileUrl pngPath p.path
+        a.appendChild elem 'img' class:'app' src:slash.fileUrl pngPath p
         
     a.focus()
     

@@ -83,11 +83,18 @@ int klog(char *msg)
     return 0;
 }
 
-bool FileExists(LPCTSTR szPath)
+bool FileExists(char* szPath)
 {
-    DWORD dwAttrib = GetFileAttributes(szPath);
+    DWORD dwAttrib = GetFileAttributes((LPCTSTR)szPath);
 
     return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool DirExists(char* szPath)
+{
+    DWORD dwAttrib = GetFileAttributes((LPCTSTR)szPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 // 000000000  000  000000000  000      00000000  
@@ -473,7 +480,7 @@ HRESULT launch(char *path)
     char normpath[MAX_PATH];
     GetFullPathNameA(path, MAX_PATH, normpath, NULL);
     
-    if (!FileExists((LPCTSTR)normpath) && PathIsRelativeA(path))
+    if (!FileExists(normpath) && PathIsRelativeA(path))
     {
         char fname[_MAX_FNAME];
         
@@ -913,7 +920,27 @@ bool saveBitmap(Bitmap* bitmap, const char* targetfile)
 {
     CLSID clsID;
     CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
-    bitmap->Save(s2ws(targetfile).c_str(), &clsID);
+
+    char lname[_MAX_DRIVE + 1];
+    char dname[_MAX_DIR + 1];
+    _splitpath_s(targetfile, lname, _MAX_DRIVE, dname, _MAX_DIR, NULL, 0, NULL, 0);
+    char targetdir[MAX_PATH];
+    sprintf_s(targetdir, "%s%s", lname, dname);
+
+    char normpath[MAX_PATH];
+    GetFullPathNameA(targetdir, MAX_PATH, normpath, NULL);
+
+    if (!DirExists(normpath))
+    {
+        if ((ERROR_SUCCESS != SHCreateDirectoryExA(0, normpath, 0)))
+        { 
+            cerr << "can't create " << normpath << endl;
+            return false;
+        }
+    }
+
+    GetFullPathNameA(targetfile, MAX_PATH, normpath, NULL);
+    bitmap->Save(s2ws(normpath).c_str(), &clsID);
     return true;
 }
 
@@ -1029,13 +1056,13 @@ bool saveIcon (HICON hIcon, char* pngfile)
 
     s = bmp->UnlockBits(&target_info);
 
-    saveBitmap(bmp, pngfile);
+    bool saved = saveBitmap(bmp, pngfile);
         
     DestroyIcon(hIcon);
     DeleteObject(hBitmap);
     DeleteObject(bmp);
         
-    return true;
+    return saved;
 }
         
 HRESULT icon(char* id, char* targetfile=NULL)
@@ -1079,15 +1106,19 @@ HRESULT icon(char* id, char* targetfile=NULL)
                 HICON hIcon;
                 if (SUCCEEDED(hr = imageList->GetIcon(shfi.iIcon, ILD_TRANSPARENT, &hIcon)))
                 {
-                    saveIcon(hIcon, pngfile);
-                    cout << "Saved " << pngfile << endl;
+                    if (saveIcon(hIcon, pngfile))
+                    { 
+                        cout << "Saved " << pngfile << endl;
+                    }
                 }
             }
         }
         else if (shfi.hIcon)
         {
-            saveIcon(shfi.hIcon, pngfile);
-            cout << "saved " << pngfile << endl;
+            if (saveIcon(shfi.hIcon, pngfile))
+            { 
+                cout << "saved " << pngfile << endl;
+            }
         }
     }
     
