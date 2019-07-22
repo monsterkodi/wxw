@@ -15,6 +15,7 @@ electron = require 'electron'
 app      = electron.app
 Menu     = electron.Menu
 tray     = null
+swtch    = null
 
 args = karg """
 wxw
@@ -34,14 +35,14 @@ post.on 'winlog', (text) -> klog ">>> " + text
 # 000   000   0000000     000     000   0000000   000   000  
 
 action = (act) ->
-    
+
     switch act
         when 'maximize'   then wc 'maximize' 'top'
         when 'minimize'   then wc 'minimize' 'top'
         when 'taskbar'    then wc 'taskbar'  'toggle'
         when 'close'      then wc 'close'    'top'
         when 'screenzoom' then require('./zoom').start()
-        when 'appswitch'  then require('./switch').start()
+        when 'appswitch'  then onAppSwitch()
         else moveWindow act
         
 # 00     00   0000000   000   000  00000000  
@@ -92,7 +93,15 @@ moveWindow = (dir) ->
                 when 'up'    then w  = ar.w+d;   x = -b
         
         wc 'bounds' info.hwnd, x, y, w, h
-        
+       
+onAppSwitch = ->
+    
+    if not swtch 
+        swtch = require('./switch').start()
+        return
+    
+    post.toWin swtch.id, 'nextApp'
+
 #  0000000   0000000     0000000   000   000  000000000  
 # 000   000  000   000  000   000  000   000     000     
 # 000000000  0000000    000   000  000   000     000     

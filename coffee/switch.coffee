@@ -4,7 +4,7 @@
 #      000  000   000  000     000     000       000   000  
 # 0000000   00     00  000     000      0000000  000   000  
 
-{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, klog, keyinfo, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, klog, keyinfo, $ } = require 'kxk'
 
 wc = require './wc'
 electron = require 'electron'
@@ -21,11 +21,9 @@ getApps = ->
     
     apps = []
     for info in infos
-        klog info
         if info.title != 'wxw-switch'
             apps.push info.path if info.path not in apps
             
-    # klog 'apps' apps.map (a) -> slash.base a
     apps
     
 # 00000000   000   000   0000000   
@@ -117,8 +115,8 @@ start = (opt={}) ->
                 width:          128px;
                 height:         128px;
                 padding:        10px;
-            }
-            .app:hover {
+            }            
+            .app.highlight {
                 background:     rgb(24,24,24);
             }
         </style>
@@ -143,23 +141,48 @@ start = (opt={}) ->
         win.webContents.openDevTools()
     win
         
-done = -> electron.remote.getCurrentWindow().close()
+# 0000000     0000000   000   000  00000000  
+# 000   000  000   000  0000  000  000       
+# 000   000  000   000  000 0 000  0000000   
+# 000   000  000   000  000  0000  000       
+# 0000000     0000000   000   000  00000000  
 
+done = -> electron.remote.getCurrentWindow().hide()
+
+#  0000000    0000000  000000000  000  000   000  00000000  
+# 000   000  000          000     000  000   000  000       
+# 000000000  000          000     000   000 000   0000000   
+# 000   000  000          000     000     000     000       
+# 000   000   0000000     000     000      0      00000000  
+
+activeApp = null
+
+highlight = (e) ->
+    if e.id
+        activeApp?.classList.remove 'highlight'
+        e.classList.add 'highlight'
+        activeApp = e
+
+activate = ->
+    done()
+    wc 'focus' activeApp.id if activeApp.id
+
+nextApp = -> highlight activeApp.nextSibling
+prevApp = -> highlight activeApp.previousSibling
+quitApp = -> klog 'quitApp' activeApp.id
+    
 # 00     00   0000000   000   000   0000000  00000000  
 # 000   000  000   000  000   000  000       000       
 # 000000000  000   000  000   000  0000000   0000000   
 # 000 0 000  000   000  000   000       000  000       
 # 000   000   0000000    0000000   0000000   00000000  
 
-onMouseMove = (event) -> 
-    
-    klog event.target.id
+onMouseMove = (event) -> highlight event.target
     
 onMouseDown = (event) -> 
-    # klog event.target.id
-    done()
-    wc 'focus' event.target.id if event.target.id
-    
+    activeApp = event.target
+    activate()
+        
 # 000   000  00000000  000   000  
 # 000  000   000        000 000   
 # 0000000    0000000     00000    
@@ -171,14 +194,29 @@ onKeyDown = (event) ->
     { mod, key, char, combo } = keyinfo.forEvent event
     
     switch key
-        when 'esc' then done()
+        when 'esc'   then done()
+        when 'right' then nextApp()
+        when 'left'  then prevApp()
+        when 'q'     then quitApp()
+        when 'enter' 'return' 'space' then activate()
         else klog 'onKeyDown' combo
-
-# 000  000   000  000  000000000    
-# 000  0000  000  000     000       
-# 000  000 0 000  000     000       
-# 000  000  0000  000     000       
-# 000  000   000  000     000     
+        
+    switch combo
+        when 'ctrl+shift+tab' then prevApp()
+        when 'alt+ctrl+q'     then electron.remote.app.quit()
+        
+onKeyUp = (event) ->         
+    
+    { mod, key, char, combo } = keyinfo.forEvent event
+    # klog "up #{mod}, #{key}, #{char}, #{combo}"
+    if empty combo
+        activate()
+        
+# 000  000   000  000  000000000    000   000  000  000   000  
+# 000  0000  000  000     000       000 0 000  000  0000  000  
+# 000  000 0 000  000     000       000000000  000  000 0 000  
+# 000  000  0000  000     000       000   000  000  000  0000  
+# 000  000   000  000     000       00     00  000  000   000  
 
 initWin = ->
     
@@ -189,13 +227,35 @@ initWin = ->
     a.onmousemove = onMouseMove
     a.onmousedown = onMouseDown
     a.onkeydown   = onKeyDown
+    a.onkeyup     = onKeyUp
     
     # if not win.debug
         # a.onblur = done
     
-    apps = getApps()
+    loadApps()
         
-    for p in apps
+    post.on 'nextApp' -> 
+        
+        if win.isVisible()
+            nextApp()
+        else
+            a =$ '.apps'
+            a.innerHTML = ''
+            win.show()
+            loadApps()
+    
+# 000       0000000    0000000   0000000         0000000   00000000   00000000    0000000  
+# 000      000   000  000   000  000   000      000   000  000   000  000   000  000       
+# 000      000   000  000000000  000   000      000000000  00000000   00000000   0000000   
+# 000      000   000  000   000  000   000      000   000  000        000             000  
+# 0000000   0000000   000   000  0000000        000   000  000        000        0000000   
+
+loadApps = ->
+    
+    a =$ '.apps'
+    a.innerHTML = ''
+    
+    for p in getApps()
         a.appendChild elem 'img',
             id: p
             class:'app' 
@@ -203,6 +263,8 @@ initWin = ->
         
     a.focus()
     
+    highlight a.firstChild.nextSibling ? a.firstChild
+            
 module.exports = 
     start:start
     initWin:initWin
