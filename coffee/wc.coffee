@@ -13,14 +13,10 @@ wc = ->
     try
         argv = [].slice.call arguments, 0
         
-        if argv[0] == 'icon'
+        for i in [1...argv.length]
+            if argv[i][0] != '"' and argv[i].indexOf?(' ') >= 0 and argv[i][-1] != '"'
+                argv[i] = '"' + argv[i] + '"'
             
-            escape = (i) ->
-                if i < argv.length and argv[i].indexOf(' ') >= 0 and argv[i][0] != '"' and argv[i][-1] != '"'
-                    argv[i] = '"' + argv[i] + '"'
-            escape 1
-            escape 2
-        
         wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
         
         if argv[0] in ['launch']

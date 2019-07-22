@@ -9,6 +9,8 @@
 wc = require './wc'
 electron = require 'electron'
 
+taskbar = false
+
 screenshotPath = ->
     slash.resolve slash.join prefs.get('screenhotFolder', slash.resolve "~/Desktop"), 'screenshot.png'
     
@@ -33,9 +35,16 @@ start = (opt={}) ->
 # 00     00  000  000   000  0000000     0000000   00     00  
 
 createWindow = (opt) ->
-    
-    vw = electron.screen.getPrimaryDisplay().workAreaSize.width
-    vh = electron.screen.getPrimaryDisplay().workAreaSize.height
+        
+    info = wc('info' 'taskbar')[0]
+    if info.status != 'hidden'
+        wc 'taskbar' 'hide'
+        taskbar = true
+    else
+        taskbar = false
+        
+    # ss = wc 'screen' 'size'
+    ss = electron.screen.getPrimaryDisplay().workAreaSize
     
     win = new electron.BrowserWindow
         backgroundColor: '#00000000'
@@ -43,8 +52,8 @@ createWindow = (opt) ->
         preloadWindow:   true
         x:               0 
         y:               0 
-        width:           vw
-        height:          vh
+        width:           ss.width
+        height:          ss.height
         hasShadow:       false
         resizable:       false
         frame:           false
@@ -69,8 +78,8 @@ createWindow = (opt) ->
                 position:       absolute;
                 left:           0;
                 top:            0;
-                width:          #{vw}px;
-                height:         #{vh}px;
+                width:          #{ss.width}px;
+                height:         #{ss.height}px;
             }
         </style>
         </head>
@@ -97,17 +106,25 @@ createWindow = (opt) ->
     else
         win.maximize()
     win
-        
+
+# 0000000     0000000   000   000  00000000  
+# 000   000  000   000  0000  000  000       
+# 000   000  000   000  000 0 000  0000000   
+# 000   000  000   000  000  0000  000       
+# 0000000     0000000   000   000  00000000  
+
+done = -> 
+    win = electron.remote.getCurrentWindow()
+    win.close()
+    if taskbar
+        wc 'taskbar' 'show'
+    if win.debug then electron.remote.app.exit 0
+    
 # 000  000   000  000  000000000    
 # 000  0000  000  000     000       
 # 000  000 0 000  000     000       
 # 000  000  0000  000     000       
 # 000  000   000  000     000     
-
-done = -> 
-    win = electron.remote.getCurrentWindow()
-    win.close()
-    if win.debug then electron.remote.app.exit 0
         
 init = ->
     
@@ -157,6 +174,7 @@ transform = ->
     a.style.transform = "scaleX(#{scale}) scaleY(#{scale}) translateX(#{offset.x}px) translateY(#{offset.y}px)"
 
 onDblClick = (event) -> 
+    
     scale = 1 
     transform()
     
@@ -212,6 +230,9 @@ borderScroll = ->
     
     scroll = false
     border = 200
+    
+    vw = electron.remote.screen.getPrimaryDisplay().workAreaSize.width
+    vh = electron.remote.screen.getPrimaryDisplay().workAreaSize.height
     
     direction = kpos(vw,vh).times(0.5).to(mousePos).mul(kpos(1/vw,1/vh)).times(-1)
     

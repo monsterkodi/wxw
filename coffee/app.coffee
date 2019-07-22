@@ -41,6 +41,7 @@ action = (act) ->
         when 'taskbar'    then wc 'taskbar'  'toggle'
         when 'close'      then wc 'close'    'top'
         when 'screenzoom' then require('./zoom').start()
+        when 'appswitch'  then require('./switch').start()
         else moveWindow act
         
 # 00     00   0000000   000   000  00000000  
@@ -144,6 +145,7 @@ app.on 'ready', ->
         minimize:   'ctrl+alt+m'
         close:      'ctrl+alt+w'
         taskbar:    'ctrl+alt+t'
+        appswitch:  'ctrl+tab'
         screenzoom: 'alt+z'
         
     prefs.init defaults:keys
