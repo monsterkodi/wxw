@@ -116,6 +116,9 @@ start = (opt={}) ->
                 height:         128px;
                 padding:        10px;
             }            
+            .app:hover {
+                background:     rgb(20,20,20);
+            }
             .app.highlight {
                 background:     rgb(24,24,24);
             }
@@ -167,8 +170,8 @@ activate = ->
     done()
     wc 'focus' activeApp.id if activeApp.id
 
-nextApp = -> highlight activeApp.nextSibling
-prevApp = -> highlight activeApp.previousSibling
+nextApp = -> highlight activeApp.nextSibling ? $('.apps').firstChild
+prevApp = -> highlight activeApp.previousSibling ? $('.apps').lastChild
 quitApp = -> klog 'quitApp' activeApp.id
     
 # 00     00   0000000   000   000   0000000  00000000  
@@ -224,7 +227,6 @@ initWin = ->
     
     a =$ '.apps'
     
-    a.onmousemove = onMouseMove
     a.onmousedown = onMouseDown
     a.onkeydown   = onKeyDown
     a.onkeyup     = onKeyUp
