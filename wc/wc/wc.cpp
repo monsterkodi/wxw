@@ -85,16 +85,14 @@ int klog(char *msg)
 
 bool FileExists(char* szPath)
 {
-    DWORD dwAttrib = GetFileAttributes((LPCTSTR)szPath);
-
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    DWORD dwAttrib = GetFileAttributesA(szPath);
+    return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 bool DirExists(char* szPath)
 {
-    DWORD dwAttrib = GetFileAttributes((LPCTSTR)szPath);
-
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    DWORD dwAttrib = GetFileAttributesA(szPath);
+    return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
 // 000000000  000  000000000  000      00000000  
@@ -930,6 +928,7 @@ bool saveBitmap(Bitmap* bitmap, const char* targetfile)
     char normpath[MAX_PATH];
     GetFullPathNameA(targetdir, MAX_PATH, normpath, NULL);
 
+    normpath[strlen(normpath) - 1] = 0;
     if (!DirExists(normpath))
     {
         if ((ERROR_SUCCESS != SHCreateDirectoryExA(0, normpath, 0)))
