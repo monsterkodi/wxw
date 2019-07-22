@@ -6,6 +6,7 @@
 #include <math.h>
 #include <strsafe.h>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <codecvt>
@@ -570,6 +571,73 @@ HRESULT mouse()
     return S_OK;
 }
 
+// 000   000  00000000  000   000  
+// 000  000   000        000 000   
+// 0000000    0000000     00000    
+// 000  000   000          000     
+// 000   000  00000000     000     
+
+void keyEvent(const char* key, int type=0)
+{
+    if      (cmp(key, "alt"))   keybd_event(VK_MENU,    0, type, NULL);
+    else if (cmp(key, "shift")) keybd_event(VK_SHIFT,   0, type, NULL);
+    else if (cmp(key, "ctrl"))  keybd_event(VK_CONTROL, 0, type, NULL);
+    else if (cmp(key, "tab"))   keybd_event(VK_TAB,     0, type, NULL);
+    else if (cmp(key, "a"))     keybd_event((BYTE)VkKeyScan('A'), 0x9e, type, NULL);
+    else if (cmp(key, "b"))     keybd_event((BYTE)VkKeyScan('B'), 0xb0, type, NULL);
+    else if (cmp(key, "c"))     keybd_event((BYTE)VkKeyScan('C'), 0xae, type, NULL);
+    else if (cmp(key, "d"))     keybd_event((BYTE)VkKeyScan('D'), 0xa0, type, NULL);
+    else if (cmp(key, "e"))     keybd_event((BYTE)VkKeyScan('E'), 0x92, type, NULL);
+    else if (cmp(key, "f"))     keybd_event((BYTE)VkKeyScan('F'), 0xa1, type, NULL);
+    else if (cmp(key, "g"))     keybd_event((BYTE)VkKeyScan('G'), 0xa2, type, NULL);
+    else if (cmp(key, "h"))     keybd_event((BYTE)VkKeyScan('H'), 0xa3, type, NULL);
+    else if (cmp(key, "i"))     keybd_event((BYTE)VkKeyScan('I'), 0x97, type, NULL);
+    else if (cmp(key, "j"))     keybd_event((BYTE)VkKeyScan('J'), 0xa4, type, NULL);
+    else if (cmp(key, "k"))     keybd_event((BYTE)VkKeyScan('K'), 0xa5, type, NULL);
+    else if (cmp(key, "l"))     keybd_event((BYTE)VkKeyScan('L'), 0xa6, type, NULL);
+    else if (cmp(key, "m"))     keybd_event((BYTE)VkKeyScan('M'), 0xb2, type, NULL);
+    else if (cmp(key, "n"))     keybd_event((BYTE)VkKeyScan('N'), 0xb1, type, NULL);
+    else if (cmp(key, "o"))     keybd_event((BYTE)VkKeyScan('O'), 0x98, type, NULL);
+    else if (cmp(key, "p"))     keybd_event((BYTE)VkKeyScan('P'), 0x99, type, NULL);
+    else if (cmp(key, "q"))     keybd_event((BYTE)VkKeyScan('Q'), 0x90, type, NULL);
+    else if (cmp(key, "r"))     keybd_event((BYTE)VkKeyScan('R'), 0x93, type, NULL);
+    else if (cmp(key, "s"))     keybd_event((BYTE)VkKeyScan('S'), 0x9f, type, NULL);
+    else if (cmp(key, "t"))     keybd_event((BYTE)VkKeyScan('T'), 0x94, type, NULL);
+    else if (cmp(key, "u"))     keybd_event((BYTE)VkKeyScan('U'), 0x96, type, NULL);
+    else if (cmp(key, "v"))     keybd_event((BYTE)VkKeyScan('V'), 0xaf, type, NULL);
+    else if (cmp(key, "w"))     keybd_event((BYTE)VkKeyScan('W'), 0x91, type, NULL);
+    else if (cmp(key, "x"))     keybd_event((BYTE)VkKeyScan('X'), 0xad, type, NULL);
+    else if (cmp(key, "y"))     keybd_event((BYTE)VkKeyScan('Y'), 0x95, type, NULL);
+    else if (cmp(key, "z"))     keybd_event((BYTE)VkKeyScan('Z'), 0xac, type, NULL);
+}
+
+HRESULT key(char* id, char* upDownOrTap)
+{
+    bool tap = cmp(upDownOrTap, "tap");
+    
+    if (tap || cmp(upDownOrTap, "down"))
+    {    
+        istringstream iss(id);
+        string str;    
+        while (getline(iss, str, '+')) 
+        {
+            keyEvent(str.c_str(), 0);
+        }
+    }
+
+    if (tap || cmp(upDownOrTap, "up"))
+    {    
+        istringstream iss(id);
+        string str;    
+        while (getline(iss, str, '+')) 
+        {
+            keyEvent(str.c_str(), KEYEVENTF_KEYUP);
+        }
+    }
+    
+    return S_OK;
+}
+
 // 000000000   0000000    0000000  000   000  0000000     0000000   00000000   
 //    000     000   000  000       000  000   000   000  000   000  000   000  
 //    000     000000000  0000000   0000000    0000000    000000000  0000000    
@@ -582,8 +650,6 @@ bool taskbarIsHidden()
     LONG style = GetWindowLongW(hWnd, GWL_STYLE);
     return !(style & WS_VISIBLE);
 }
-
-
 
 HRESULT taskbar(char* id)
 {
@@ -1054,6 +1120,7 @@ HRESULT usage(void)
     klog("         bounds      id x y w h");
     klog("         launch      path");
     klog("         mouse");
+    klog("         key        [shift+|ctrl+|alt+]key");
     klog("         help        command");
     klog("         folder      name");
     klog("         trash       count|empty");
@@ -1167,6 +1234,12 @@ HRESULT help(char *command)
         klog("      Program");
         klog("      ProgramX86");
         klog("      Startup");
+    }
+    else if (cmp(command, "key"))
+    {
+        klog("wxw key [ctrl+|shift+|alt+]key");
+        klog("");
+        klog("      Simulate key press");
     }
     else if (cmp(command, "mouse"))
     {
@@ -1311,6 +1384,11 @@ int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, 
     {
         if (argc == 2) hr = help(cmd);
         else           hr = icon(argv[2], (argc >= 4) ? argv[3] : NULL);
+    }
+    else if (cmp(cmd, "key"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = key(argv[2], (argc >= 4) ? argv[3] : "tap");
     }
     else if (cmp(cmd, "mouse"))
     {
