@@ -35,31 +35,28 @@ start = (opt={}) ->
 # 00     00  000  000   000  0000000     0000000   00     00  
 
 createWindow = (opt) ->
-        
-    info = wc('info' 'taskbar')[0]
-    if info.status != 'hidden'
-        wc 'taskbar' 'hide'
-        taskbar = true
-    else
-        taskbar = false
-        
-    # ss = wc 'screen' 'size'
-    ss = electron.screen.getPrimaryDisplay().workAreaSize
+                
+    ss = electron.screen.getPrimaryDisplay().size
     
     win = new electron.BrowserWindow
-        backgroundColor: '#00000000'
-        transparent:     true
-        preloadWindow:   true
-        x:               0 
-        y:               0 
-        width:           ss.width
-        height:          ss.height
-        hasShadow:       false
-        resizable:       false
-        frame:           false
-        thickFrame:      false
-        show:            true
-        fullscreen:      not opt.debug
+        backgroundColor:        '#00000000'
+        x:                      0 
+        y:                      0 
+        width:                  ss.width
+        height:                 ss.height
+        minWidth:               ss.width
+        minHeight:              ss.height
+        hasShadow:              false
+        resizable:              false
+        frame:                  false
+        thickFrame:             false
+        fullscreen:             false
+        transparent:            true
+        preloadWindow:          true
+        alwaysOnTop:            true
+        enableLargerThanScreen: true
+        acceptFirstMouse:       true
+        show:                   true
         webPreferences:
             nodeIntegration: true
             webSecurity:     false
@@ -99,12 +96,17 @@ createWindow = (opt) ->
 
     win.debug = opt.debug
     
-    win.on 'ready-to-show' ->
+    win.webContents.on 'dom-ready' ->
+        
+        info = wc('info' 'taskbar')[0]
+        if info.status != 'hidden'
+            post.toWin win.id, 'taskbar' true
+        else
+            post.toWin win.id, 'taskbar' false
         
     if opt.debug
         win.webContents.openDevTools()
-    else
-        win.maximize()
+
     win
 
 # 0000000     0000000   000   000  00000000  
@@ -116,7 +118,7 @@ createWindow = (opt) ->
 done = -> 
     win = electron.remote.getCurrentWindow()
     win.close()
-    if taskbar
+    if window.taskbar
         wc 'taskbar' 'show'
     if win.debug then electron.remote.app.exit 0
     
@@ -127,6 +129,8 @@ done = ->
 # 000  000   000  000     000     
         
 init = ->
+    
+    post.on 'taskbar' (show) -> window.taskbar = show
     
     win = electron.remote.getCurrentWindow()
     
@@ -156,18 +160,18 @@ init = ->
 
 scale  = 1.0
 offset = kpos 0 0
+dragging = false
 
 transform = ->
     
-    vw = electron.remote.screen.getPrimaryDisplay().workAreaSize.width
-    vh = electron.remote.screen.getPrimaryDisplay().workAreaSize.height
+    ss = electron.remote.screen.getPrimaryDisplay().size
     
     a =$ '.screenshot'
 
     scale = clamp 1 20 scale
     
-    ox = vw * (scale-1)/(2*scale)
-    oy = vh * (scale-1)/(2*scale)
+    ox = ss.width  * (scale-1)/(2*scale)
+    oy = ss.height * (scale-1)/(2*scale)
     offset.x = clamp -ox, ox, offset.x
     offset.y = clamp -oy, oy, offset.y
     
@@ -186,14 +190,14 @@ onDblClick = (event) ->
 
 onWheel = (event) ->
     
-    
     scaleFactor = 1 - event.deltaY / 400.0
     newScale = clamp 1 20 scale * scaleFactor
+    if newScale == 1
+        dragging = false
     
-    vw = electron.remote.screen.getPrimaryDisplay().workAreaSize.width
-    vh = electron.remote.screen.getPrimaryDisplay().workAreaSize.height
+    ss = electron.remote.screen.getPrimaryDisplay().size
     
-    mp = kpos(event).minus kpos(vw, vh).times 0.5
+    mp = kpos(event).minus kpos(ss.width, ss.height).times 0.5
     
     oldPos = offset.plus kpos(mp).times 1/scale
     newPos = offset.plus kpos(mp).times 1/newScale
@@ -218,30 +222,34 @@ mapRange = (value, valueRange, targetRange) ->
 scrollSpeed = 0
 doScroll = ->
     transform()
+    startScroll()
+    
+startScroll = ->
     ms = mapRange scrollSpeed, [0 1], [1000/10 1000/30]
     borderTimer = setTimeout borderScroll, ms
-    
+  
 borderScroll = ->
 
     clearTimeout borderTimer
     borderTimer = null
+    
+    return if dragging
     
     mousePos = kpos wc 'mouse'
     
     scroll = false
     border = 200
     
-    vw = electron.remote.screen.getPrimaryDisplay().workAreaSize.width
-    vh = electron.remote.screen.getPrimaryDisplay().workAreaSize.height
+    ss = electron.remote.screen.getPrimaryDisplay().size
     
-    direction = kpos(vw,vh).times(0.5).to(mousePos).mul(kpos(1/vw,1/vh)).times(-1)
+    direction = kpos(ss.width,ss.height).times(0.5).to(mousePos).mul(kpos(1/ss.width,1/ss.height)).times(-1)
     
     if mousePos.x < border
         scrollSpeed = (border-mousePos.x)/border
         offset.add direction.times (1.0+scrollSpeed*30)/scale
         scroll = true
-    else if mousePos.x > vw-border
-        scrollSpeed = (border-(vw-mousePos.x))/border
+    else if mousePos.x > ss.width-border
+        scrollSpeed = (border-(ss.width-mousePos.x))/border
         offset.add direction.times (1.0+scrollSpeed*30)/scale
         scroll = true
         
@@ -249,8 +257,8 @@ borderScroll = ->
         scrollSpeed = (border-mousePos.y)/border
         offset.add direction.times (1.0+scrollSpeed*30)/scale
         scroll = true
-    else if mousePos.y > vh-border
-        scrollSpeed = (border-(vh-mousePos.y))/border
+    else if mousePos.y > ss.height-border
+        scrollSpeed = (border-(ss.height-mousePos.y))/border
         offset.add direction.times (1.0+scrollSpeed*30)/scale
         scroll = true
         
@@ -272,8 +280,10 @@ onDragStart = (drag, event) ->
     else if scale == 1
         done()
         return 'skip'
+        
+    dragging = true
     
-onDragStop = (drag, event) -> 
+onDragStop = (drag, event) -> # dragging = false
 onDragMove = (drag, event) -> 
     
     offset.add drag.delta.times 1/scale
@@ -282,6 +292,5 @@ onDragMove = (drag, event) ->
 module.exports = 
     start:start
     init:init
-    
     
     
