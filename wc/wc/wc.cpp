@@ -159,6 +159,13 @@ static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
     
     wchar_t* title = winTitle(hWnd);
     if (!title) return true;
+
+    if (wcmp(title, "Program Manager"))
+    {
+        delete title;
+        return false;
+    }
+
     delete title;
     
     DWORD pid;
@@ -216,11 +223,11 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 HRESULT winInfo(HWND hWnd, char* id=NULL)
 {    
     wchar_t* title = winTitle(hWnd);
-    if (wcmp(title, "Program Manager"))
-    {
-        delete title;
-        return S_OK;
-    }
+    //if (wcmp(title, "Program Manager"))
+    //{
+    //    delete title;
+    //    return S_OK;
+    //}
 
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
@@ -522,6 +529,7 @@ HRESULT launch(char *path)
     {
         if (wins.size())
         {
+            cout << "matching " << normpath << " " << wins.size() << endl;
             for (HWND hWnd : wins)
             {
                 ShowWindow(hWnd, SW_RESTORE);
@@ -538,6 +546,7 @@ HRESULT launch(char *path)
     
     if (!CreateProcessA(normpath, NULL, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &info, &processInfo))
     {
+        cerr << "can't launch " << normpath << endl;
         return S_FALSE;
     }
     cout << normpath << endl;
