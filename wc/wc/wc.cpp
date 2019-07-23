@@ -223,12 +223,7 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 HRESULT winInfo(HWND hWnd, char* id=NULL)
 {    
     wchar_t* title = winTitle(hWnd);
-    //if (wcmp(title, "Program Manager"))
-    //{
-    //    delete title;
-    //    return S_OK;
-    //}
-
+    
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
     
@@ -1110,6 +1105,11 @@ HRESULT icon(char* id, char* targetfile=NULL)
         sprintf_s(pngfile, "%s.png", fname);
     }
     
+    if (!FileExists(normpath))
+    {
+        cout << "can't find " << normpath << ", icon will be generic." << endl;
+    }
+
     SHFILEINFOA shfi;
     if (SHGetFileInfoA(normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
     {

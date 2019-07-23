@@ -60,11 +60,12 @@ moveWindow = (dir) ->
     if info = wc('info' 'top')[0]
         
         base = slash.base info.path
-        if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'kachel' 'space' 'ruler']
-            b = 0    # sane window border
+        
+        return if base in ['kachel' 'kappo']
+        if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'space' 'ruler']
+            b = 0  # sane window border
         else
-            # b = 10.9 # transparent window border
-            b = 11   # transparent window border
+            b = 10 # transparent window border
         
         wr = x:info.x, y:info.y, w:info.width, h:info.height
         d = 2*b
