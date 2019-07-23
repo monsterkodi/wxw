@@ -16,6 +16,7 @@ fakeIcon = (argv) ->
         mingw32:    'terminal'
         mingw64:    'terminal'
         msys2:      'terminaldark'
+        mintty:     'terminaldark'
         procexp64:  'procexp'
     
     return if argv.length <= 1 
