@@ -1,42 +1,5 @@
 #!/usr/bin/env node
 
-childp = require('child_process');
-path   = require('path');
+wc = require('../js/wc');
 
-if (process.argv.length > 2)
-{
-    while (process.argv[2][0] == '-')
-    {
-        process.argv[2] = process.argv[2].slice(1);
-    }
-    
-    if (process.argv[2].length == 1)
-    {
-        switch (process.argv[2])
-        {
-            case 'h': process.argv[2] = "help";    break;
-            case 'i': process.argv[2] = "info";    break;
-            case 'b': process.argv[2] = "bounds";  break;
-            case 'v': process.argv[2] = "version"; break;
-            case 'l': process.argv[2] = "launch";  break;
-        }
-    }    
-}
-
-if (process.argv[2] == 'version')
-{
-    pkg = require(path.join(__dirname, "..", "package.json"));
-    console.log(pkg.version);
-}
-else
-{
-    args = process.argv.slice(2);
-    for (i = 0; i < args.length; i++)
-    {
-        if (args[i][0] != '"' && args[i].indexOf(' ') >= 0)
-        {
-            args[i] = '"' + args[i] + '"';   
-        }
-    }
-    childp.spawn(path.join(__dirname, "wc.exe"), args, {cwd:process.cwd(), shell:true, detached:true, stdio:'inherit'});
-}
+console.log(wc.exec.apply(null, process.argv.slice(2)));

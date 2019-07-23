@@ -1,6 +1,6 @@
 {
   "name": "wxw",
-  "version": "1.31.0",
+  "version": "1.32.0",
   "description": "moves my windows",
   "keywords": [
     "windows",
@@ -14,7 +14,8 @@
     "bin/wc.exe",
     "bin/wxw",
     "js/wc.js",
-    "js/wxw.js"
+    "js/wxw.js",
+    "icons/*.png"
   ],
   "repository": "github:monsterkodi/wxw",
   "author": "monsterkodi",
