@@ -919,28 +919,39 @@ bool saveBitmap(Bitmap* bitmap, const char* targetfile)
     CLSID clsID;
     CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
 
+	char normpath[MAX_PATH];
     char lname[_MAX_DRIVE + 1];
     char dname[_MAX_DIR + 1];
     _splitpath_s(targetfile, lname, _MAX_DRIVE, dname, _MAX_DIR, NULL, 0, NULL, 0);
     char targetdir[MAX_PATH];
     sprintf_s(targetdir, "%s%s", lname, dname);
 
-    char normpath[MAX_PATH];
-    GetFullPathNameA(targetdir, MAX_PATH, normpath, NULL);
+	if (strlen(targetdir))
+	{ 
+		GetFullPathNameA(targetdir, MAX_PATH, normpath, NULL);
 
-    normpath[strlen(normpath) - 1] = 0;
-    if (!DirExists(normpath))
-    {
-        if ((ERROR_SUCCESS != SHCreateDirectoryExA(0, normpath, 0)))
-        { 
-            cerr << "can't create " << normpath << endl;
-            return false;
-        }
-    }
+		normpath[strlen(normpath) - 1] = 0;
+		if (!DirExists(normpath))
+		{
+			if ((ERROR_SUCCESS != SHCreateDirectoryExA(0, normpath, 0)))
+			{
+				cerr << "can't create " << normpath << endl;
+				return false;
+			}
+		}
+	}
 
     GetFullPathNameA(targetfile, MAX_PATH, normpath, NULL);
-    bitmap->Save(s2ws(normpath).c_str(), &clsID);
-    return true;
+	if (Ok == bitmap->Save(s2ws(normpath).c_str(), &clsID))
+	{
+		cout << "saved " << normpath << endl;
+		return true;
+	}
+	else
+	{
+		cerr << "can't save " << normpath << endl;
+		return false;
+	}
 }
 
 bool saveBitmap(HBITMAP hbitmap, const char* targetfile)
@@ -976,14 +987,14 @@ HRESULT screenshot(char *targetfile="screenshot.png")
     DeleteDC(memdc);
     ReleaseDC(0, hdc);
 
-    saveBitmap(hbitmap, targetfile);
+    bool saved = saveBitmap(hbitmap, targetfile);
 
     DeleteObject(hbitmap);
 
     GdiplusShutdown(token);
     CoUninitialize();
     
-    return S_OK;
+    return saved ? S_OK : S_FALSE;
 }
 
 // 000   0000000   0000000   000   000  
@@ -1091,7 +1102,7 @@ HRESULT icon(char* id, char* targetfile=NULL)
     }
     
     SHFILEINFOA shfi;
-    if (SHGetFileInfoA( normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
+    if (SHGetFileInfoA(normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
     {
         IImageList *imageList;
         if (SUCCEEDED(hr = SHGetImageList(SHIL_JUMBO, IID_IImageList, (void**)&imageList)))
@@ -1105,20 +1116,32 @@ HRESULT icon(char* id, char* targetfile=NULL)
                 HICON hIcon;
                 if (SUCCEEDED(hr = imageList->GetIcon(shfi.iIcon, ILD_TRANSPARENT, &hIcon)))
                 {
-                    if (saveIcon(hIcon, pngfile))
-                    { 
-                        cout << "Saved " << pngfile << endl;
+                    if (!saveIcon(hIcon, pngfile))
+                    {
+                        hr = S_FALSE;
                     }
                 }
+            }
+            else
+            {
+                cerr << "invalid icon index " << shfi.iIcon << " " << count << endl; hr = S_FALSE; 
             }
         }
         else if (shfi.hIcon)
         {
-            if (saveIcon(shfi.hIcon, pngfile))
-            { 
-                cout << "saved " << pngfile << endl;
+            if (!saveIcon(shfi.hIcon, pngfile))
+            {
+                hr = S_FALSE;
             }
         }
+        else
+        {
+            cerr << "can't find icon " << normpath << endl; hr = S_FALSE;            
+        }
+    }
+    else
+    {
+        cerr << "can't get file info " << normpath << endl; hr = S_FALSE;
     }
     
     GdiplusShutdown(token);

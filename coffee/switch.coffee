@@ -4,7 +4,7 @@
 #      000  000   000  000     000     000       000   000  
 # 0000000   00     00  000     000      0000000  000   000  
 
-{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, klog, keyinfo, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, last, klog, keyinfo, $ } = require 'kxk'
 
 wc = require './wc'
 electron = require 'electron'
@@ -15,15 +15,25 @@ electron = require 'electron'
 # 000   000  000          000          000   000  000        000             000  
 #  0000000   00000000     000          000   000  000        000        0000000   
 
+apps = []
 getApps = ->
 
     infos = wc 'info'
     
     apps = []
     for info in infos
-        if info.title != 'wxw-switch'
+        continue if info.title == 'wxw-switch'
+        continue if info.path.endsWith 'ImmersiveControlPanel\SystemSettings.exe'
+        continue if info.path.indexOf('WindowsApps\\microsoft.windowscommunicationsapps') >= 0
+        file = slash.file info.path
+        if file == 'ApplicationFrameHost.exe'
+            name = last info.title.split ' ?- '
+            if name in ['Calendar' 'Mail']
+                apps.push name if name not in apps
+            else if info.title in ['Settings' 'Calculator']
+                apps.push info.title
+        else
             apps.push info.path if info.path not in apps
-            
     apps
     
 # 00000000   000   000   0000000   
@@ -34,7 +44,9 @@ getApps = ->
 
 pngPath = (appPath) ->
     # klog 'appPath' appPath, slash.base(appPath)
-    slash.resolve slash.join slash.userData(), 'icons', slash.base(appPath) + ".png"
+    pth = slash.resolve slash.join slash.userData(), 'icons', slash.base(appPath) + ".png"
+    klog pth
+    pth
     
 #  0000000  000000000   0000000   00000000   000000000  
 # 000          000     000   000  000   000     000     
@@ -42,33 +54,40 @@ pngPath = (appPath) ->
 #      000     000     000   000  000   000     000     
 # 0000000      000     000   000  000   000     000     
 
-start = (opt={}) -> 
-
-    ss = electron.screen.getPrimaryDisplay().workAreaSize
+winRect = (numApps) ->
     
+    ss = electron.screen.getPrimaryDisplay().workAreaSize
     as = 128
     border = 20
+    width = (as+border)*apps.length+border
+    height = as+border*2
+    
+    x:parseInt (ss.width-width)/2
+    y:parseInt (ss.height-height)/2
+    width:width
+    height:height
+
+start = (opt={}) -> 
     
     apps = getApps()
     
     for app in apps
         png = pngPath slash.base app
         if not slash.fileExists png
-            klog 'icon' app, png
+            # klog 'icon' app, png
             wc 'icon' app, png
-    
-    width = (as+border)*apps.length+border
-    height = as+border*2
+        
+    wr = winRect apps.length
             
     win = new electron.BrowserWindow
 
         backgroundColor: '#00000000'
         transparent:     true
         preloadWindow:   true
-        x:               parseInt (ss.width-width)/2
-        y:               parseInt (ss.height-height)/2
-        width:           width
-        height:          height
+        x:               wr.x
+        y:               wr.y
+        width:           wr.width
+        height:          wr.height
         hasShadow:       false
         resizable:       false
         frame:           false
@@ -152,23 +171,44 @@ start = (opt={}) ->
 
 done = -> electron.remote.getCurrentWindow().hide()
 
-#  0000000    0000000  000000000  000  000   000  00000000  
-# 000   000  000          000     000  000   000  000       
-# 000000000  000          000     000   000 000   0000000   
-# 000   000  000          000     000     000     000       
-# 000   000   0000000     000     000      0      00000000  
+#  0000000    0000000  000000000  000  000   000   0000000   000000000  00000000  
+# 000   000  000          000     000  000   000  000   000     000     000       
+# 000000000  000          000     000   000 000   000000000     000     0000000   
+# 000   000  000          000     000     000     000   000     000     000       
+# 000   000   0000000     000     000      0      000   000     000     00000000  
 
 activeApp = null
+activate = ->
+    done()
+    if activeApp.id
+        if activeApp.id in ['Mail' 'Calendar']
+            infos = wc 'info' 'ApplicationFrameHost.exe'
+            for info in infos
+                if info.title.endsWith activeApp.id
+                    wc 'focus' info.hwnd
+                    return
+            childp.spawn 'start', [{Mail:'outlookmail:' Calendar:'outlookcal:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'            
+        else if activeApp.id in ['Calculator' 'Settings']
+            infos = wc 'info' 'ApplicationFrameHost.exe'
+            for info in infos
+                if info.title == activeApp.id
+                    wc 'focus' info.hwnd
+                    return
+            childp.spawn 'start', [{Calculator:'calculator:' Settings:'ms-settings:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'
+        else
+            wc 'focus' activeApp.id 
+
+# 000   000  000   0000000   000   000  000      000   0000000   000   000  000000000  
+# 000   000  000  000        000   000  000      000  000        000   000     000     
+# 000000000  000  000  0000  000000000  000      000  000  0000  000000000     000     
+# 000   000  000  000   000  000   000  000      000  000   000  000   000     000     
+# 000   000  000   0000000   000   000  0000000  000   0000000   000   000     000     
 
 highlight = (e) ->
     if e.id
         activeApp?.classList.remove 'highlight'
         e.classList.add 'highlight'
         activeApp = e
-
-activate = ->
-    done()
-    wc 'focus' activeApp.id if activeApp.id
 
 nextApp = -> highlight activeApp.nextSibling ? $('.apps').firstChild
 prevApp = -> highlight activeApp.previousSibling ? $('.apps').lastChild
@@ -241,9 +281,29 @@ initWin = ->
         if win.isVisible()
             nextApp()
         else
+            
+            # [x,y] = win.getPosition()     # enable smooth fade on windows:
+            win.setPosition -10000,-10000 # move window offscreen before show
+            win.show()
+            # $('#main').classList.remove 'fade'
+            # $('#main').style.opacity = 0
             a =$ '.apps'
             a.innerHTML = ''
-            win.show()
+            
+            restore = -> 
+                
+                # if x < -10 or y < -10 # key repeat hickup 'fix'
+                    # b = win.getBounds()
+                    # x = (screenSize().width - b.width)/2
+                    # y = 0
+                # else
+                wr = winRect apps.length
+                win.setBounds wr
+                    
+                # $('#main').classList.add 'fade'
+                
+            setTimeout restore, 30 # give windows some time to do it's flickering
+            
             loadApps()
     
 # 000       0000000    0000000   0000000         0000000   00000000   00000000    0000000  

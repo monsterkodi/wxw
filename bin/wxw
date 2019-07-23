@@ -38,6 +38,5 @@ else
             args[i] = '"' + args[i] + '"';   
         }
     }
-    console.log(args);
     childp.spawn(path.join(__dirname, "wc.exe"), args, {cwd:process.cwd(), shell:true, detached:true, stdio:'inherit'});
 }
