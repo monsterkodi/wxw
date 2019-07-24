@@ -1156,7 +1156,7 @@ HRESULT icon(char* id, char* targetfile=NULL)
 // 000   000       000  000   000  000   000  000       
 //  0000000   0000000   000   000   0000000   00000000  
 
-HRESULT usage(void)
+HRESULT usage()
 {
     klog("");
     klog("wxw [command] [args...]");
@@ -1191,6 +1191,7 @@ HRESULT usage(void)
     klog("");    
     klog("    nickname:");
     klog("");    
+    klog("         normal|maximized|minimized");    
     klog("         top|topmost|front|frontmost|foreground");
     klog("         taskbar");
     klog("");

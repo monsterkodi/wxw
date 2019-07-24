@@ -28,11 +28,12 @@ wxw [command] [args...]
          mouse
          help        command
          folder      name
-         trash       empty|count
+         trash       empty|count|file
          taskbar     hide|show
          screen     [size|user]
          screenshot [targetfile]
          icon        path [targetfile]
+         key        [ctrl+|shift+|alt+]key
 
     id:
 
@@ -43,6 +44,7 @@ wxw [command] [args...]
 
     nickname:
 
+         normal|maximized|minimized
          top|topmost|front|frontmost|foreground
          taskbar
 
@@ -73,6 +75,9 @@ console.log wxw('info', 'top')
 
 wxw('minimize', '8f04c6')
 wxw('launch',   'firefox')
+wxw('restore',  'minimized')
+wxw('trash',    './crap.txt')
+wxw('trash',    'count')
 wxw('trash',    'empty')
 
 ```

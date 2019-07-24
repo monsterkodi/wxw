@@ -45,7 +45,7 @@ getApps = ->
 pngPath = (appPath) ->
     # klog 'appPath' appPath, slash.base(appPath)
     pth = slash.resolve slash.join slash.userData(), 'icons', slash.base(appPath) + ".png"
-    klog pth
+    # klog pth
     pth
     
 #  0000000  000000000   0000000   00000000   000000000  
@@ -72,7 +72,7 @@ start = (opt={}) ->
     apps = getApps()
     
     for app in apps
-        png = pngPath slash.base app
+        png = pngPath app
         if not slash.fileExists png
             # klog 'icon' app, png
             wc 'icon' app, png
@@ -271,8 +271,8 @@ initWin = ->
     a.onkeydown   = onKeyDown
     a.onkeyup     = onKeyUp
     
-    # if not win.debug
-        # a.onblur = done
+    if not win.debug
+        a.onblur = done
     
     loadApps()
         

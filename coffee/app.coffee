@@ -165,6 +165,8 @@ app.on 'ready', ->
     
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
+        
+    onAppSwitch()
   
 if app.requestSingleInstanceLock? 
     if !app.requestSingleInstanceLock()
