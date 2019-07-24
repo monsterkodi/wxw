@@ -82,7 +82,7 @@ wstring WindowTitle(HWND hWnd)
 	if (length <= 0) return L"";
 	static wchar_t title[1024];
 	if (length > 1023) length = 1023;
-	GetWindowText(hWnd, title, length);
+    GetWindowText(hWnd, title, length+1);
 	return title;
 }
 

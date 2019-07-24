@@ -23,10 +23,8 @@ getApps = ->
     apps = []
     for info in infos
         continue if info.title == 'wxw-switch'
-        continue if info.path.endsWith 'ImmersiveControlPanel\SystemSettings.exe'
-        # continue if info.path.indexOf('\\WindowsApps\\microsoft.windowscommunicationsapps') >= 0
-        # continue if info.path.indexOf('\\WindowsApps\\Microsoft.WindowsAlarms') >= 0
-        continue if info.path.indexOf('\\WindowsApps\\') >= 0
+        # continue if info.path.endsWith 'ImmersiveControlPanel\SystemSettings.exe'
+        # continue if info.path.indexOf('\\WindowsApps\\') >= 0
         file = slash.file info.path
         if file == 'ApplicationFrameHost.exe'
             name = last info.title.split ' ?- '
@@ -284,26 +282,16 @@ initWin = ->
             nextApp()
         else
             
-            # [x,y] = win.getPosition()     # enable smooth fade on windows:
             win.setPosition -10000,-10000 # move window offscreen before show
             win.show()
-            # $('#main').classList.remove 'fade'
-            # $('#main').style.opacity = 0
             a =$ '.apps'
             a.innerHTML = ''
             
             restore = -> 
                 
-                # if x < -10 or y < -10 # key repeat hickup 'fix'
-                    # b = win.getBounds()
-                    # x = (screenSize().width - b.width)/2
-                    # y = 0
-                # else
                 wr = winRect apps.length
                 win.setBounds wr
                     
-                # $('#main').classList.add 'fade'
-                
             setTimeout restore, 30 # give windows some time to do it's flickering
             
             loadApps()
