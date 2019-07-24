@@ -24,13 +24,15 @@ getApps = ->
     for info in infos
         continue if info.title == 'wxw-switch'
         continue if info.path.endsWith 'ImmersiveControlPanel\SystemSettings.exe'
-        continue if info.path.indexOf('WindowsApps\\microsoft.windowscommunicationsapps') >= 0
+        # continue if info.path.indexOf('\\WindowsApps\\microsoft.windowscommunicationsapps') >= 0
+        # continue if info.path.indexOf('\\WindowsApps\\Microsoft.WindowsAlarms') >= 0
+        continue if info.path.indexOf('\\WindowsApps\\') >= 0
         file = slash.file info.path
         if file == 'ApplicationFrameHost.exe'
             name = last info.title.split ' ?- '
             if name in ['Calendar' 'Mail']
                 apps.push name if name not in apps
-            else if info.title in ['Settings' 'Calculator']
+            else if info.title in ['Settings' 'Calculator' 'Microsoft Store']
                 apps.push info.title
         else
             apps.push info.path if info.path not in apps
@@ -188,13 +190,13 @@ activate = ->
                     wc 'focus' info.hwnd
                     return
             childp.spawn 'start', [{Mail:'outlookmail:' Calendar:'outlookcal:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'            
-        else if activeApp.id in ['Calculator' 'Settings']
+        else if activeApp.id in ['Calculator' 'Settings' 'Microsoft Store']
             infos = wc 'info' 'ApplicationFrameHost.exe'
             for info in infos
                 if info.title == activeApp.id
                     wc 'focus' info.hwnd
                     return
-            childp.spawn 'start', [{Calculator:'calculator:' Settings:'ms-settings:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'
+            childp.spawn 'start', [{Calculator:'calculator:' Settings:'ms-settings:' 'Microsoft Store':'ms-windows-store:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'
         else
             wc 'focus' activeApp.id 
 

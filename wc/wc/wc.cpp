@@ -15,6 +15,7 @@
 #include <shlwapi.h>
 #include <ShlObj.h>
 #include <Shobjidl.h>
+#include <dwmapi.h>
 #include <commoncontrols.h>
 
 using namespace Gdiplus;
@@ -30,51 +31,25 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 // 000       000 0 000  000        
 //  0000000  000   000  000        
 
-int wwcmp(const wchar_t* a, const wchar_t* b)
-{
-    return lstrcmpiW(a, b) == 0;
-}
-
-int wcmp(const wchar_t *a, const char *b)
-{
-    size_t size = strlen(b);
-    wstring wc(size+1, L' ');
-    size_t conv;
-    mbstowcs_s(&conv, &wc[0], size+1, b, size);
-    
-    return lstrcmpiW(a, (LPCWSTR)&wc[0]) == 0;
-} 
-
-int cmp(const char *a, const char *b)
-{
-    return _strcmpi(a, b) == 0;
-} 
-
-wchar_t* wstr(char *s)
-{
-    size_t size = strlen(s);
-    wchar_t *ws = new wchar_t[size+1]; 
-    size_t conv;
-    mbstowcs_s(&conv, ws, size+1, s, size);
-    
-    return ws;
-}
-
 wstring s2ws(const string& str)
 {
-    using convert_typeX = codecvt_utf8<wchar_t>;
-    wstring_convert<convert_typeX, wchar_t> converterX;
+	using convert_typeX = codecvt_utf8<wchar_t>;
+	wstring_convert<convert_typeX, wchar_t> converterX;
 
-    return converterX.from_bytes(str);
+	return converterX.from_bytes(str);
 }
 
 string ws2s(const wstring& wstr)
 {
-    using convert_typeX = codecvt_utf8<wchar_t>;
-    wstring_convert<convert_typeX, wchar_t> converterX;
+	using convert_typeX = codecvt_utf8<wchar_t>;
+	wstring_convert<convert_typeX, wchar_t> converterX;
 
-    return converterX.to_bytes(wstr);
+	return converterX.to_bytes(wstr);
 }
+
+int cmp(const wstring& a, const wstring& b) { return a.compare(b) == 0; }
+int cmp(const wstring& a, const char*    b) { return cmp(a, s2ws(b)); }
+int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; } 
 
 int klog(char *msg)
 {
@@ -101,13 +76,33 @@ bool DirExists(char* szPath)
 //    000     000     000     000      000       
 //    000     000     000     0000000  00000000  
 
-wchar_t* winTitle(HWND hWnd)
+wstring WindowTitle(HWND hWnd)
 {
-    int length = GetWindowTextLengthW(hWnd);
-    if (length <= 0) return NULL; 
-    wchar_t* title = new wchar_t[length + 1];
-    GetWindowText(hWnd, title, length + 1);
-    return title;
+	int length = GetWindowTextLengthW(hWnd);
+	if (length <= 0) return L"";
+	static wchar_t title[1024];
+	if (length > 1023) length = 1023;
+	GetWindowText(hWnd, title, length);
+	return title;
+}
+
+string WindowStatus(HWND hWnd)
+{
+	LONG style = GetWindowLongW(hWnd, GWL_STYLE);
+	if    (!(style & WS_VISIBLE)) { return "hidden"; }
+	else if (style & WS_MINIMIZE) { return "minimized"; }
+	else if (style & WS_MAXIMIZE) { return "maximized"; }
+	return "normal";
+}
+
+bool IsWindowCloaked(HWND hWnd)
+{
+	int Cloaked;
+	if (S_OK != DwmGetWindowAttribute(hWnd, DWMWA_CLOAKED, &Cloaked, sizeof(Cloaked)))
+	{
+		Cloaked = 0;
+	}
+	return Cloaked ? true : false;
 }
 
 // 00     00   0000000   000000000   0000000  000   000  000  000   000   0000000   
@@ -116,59 +111,61 @@ wchar_t* winTitle(HWND hWnd)
 // 000 0 000  000   000     000     000       000   000  000  000  0000  000   000  
 // 000   000  000   000     000      0000000  000   000  000  000   000   0000000   
 
-bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, wchar_t* title, char* id)
+bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* id)
 {
-    bool found = false;
-
     if (!id) return false;
     
-    if (cmp(id, "all")) return true;
+	if (cmp(id, "all"))
+	{
+		return true;
+	}
+	else if (cmp(id, "normal") || cmp(id, "minimized") || cmp(id, "maximized"))
+	{
+		return cmp(WindowStatus(hWnd).c_str(), id);
+	}
 
-    wchar_t* wid = wstr(id);
+    wstring wid = s2ws(id);
     wchar_t buf[65];
     
     StringCbPrintfW(buf, 64, L"%ld", pid);
-    if (lstrcmpi(wid, buf) == 0)
+    if (cmp(wid, buf))
     {
-        found = true;
+        return true;
     }
     
     StringCbPrintfW(buf, 64, L"%llx", hWnd);
-    if (lstrcmpi(wid, buf) == 0)
+    if (cmp(wid, buf))
     {
-        found = true;
+		return true;
     }
     
     if (path && wstring(path).find(wid) != wstring::npos)
     {
-        found = true;
+		return true;
     }
 
     if (title && wstring(title).find(wid) != wstring::npos)
     {
-        found = true;
+		return true;
     }
     
-    delete wid;
-    return found;
+    return false;
 }
 
 static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
 {
     if (!IsWindowVisible(hWnd)) return true;
+	if ( IsWindowCloaked(hWnd)) return true;
     
-    wchar_t* title = winTitle(hWnd);
-    if (!title) return true;
+    wstring title = WindowTitle(hWnd);
+    if (!title.size()) return true;
 
-    if (wcmp(title, "Program Manager"))
+    if (cmp(title, "Program Manager"))
     {
-        delete title;
-        return false;
+        return true;
     }
 
-    delete title;
-    
-    DWORD pid;
+	DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
 
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
@@ -222,7 +219,7 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 
 HRESULT winInfo(HWND hWnd, char* id=NULL)
 {    
-    wchar_t* title = winTitle(hWnd);
+    wstring title = WindowTitle(hWnd);
     
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
@@ -235,13 +232,9 @@ HRESULT winInfo(HWND hWnd, char* id=NULL)
 
     QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
     
-    if (id == NULL || matchWin(hWnd, pid, path, title, id))
-    {        
-        wchar_t* status = L"normal";
-        LONG style = GetWindowLongW(hWnd, GWL_STYLE);
-        if    (!(style & WS_VISIBLE)) { status = L"hidden"; }
-        else if (style & WS_MINIMIZE) { status = L"minimized"; }
-        else if (style & WS_MAXIMIZE) { status = L"maximized"; }
+    if (id == NULL || matchWin(hWnd, pid, path, title.c_str(), id))
+    {       
+		string status = WindowStatus(hWnd);
         
         RECT rect; 
     
@@ -261,18 +254,17 @@ HRESULT winInfo(HWND hWnd, char* id=NULL)
         }
         
         wprintf(L".\n");
-        if (path)  wprintf(L"    path    %ls\n", path); 
-        if (title) wprintf(L"    title   %ls\n", title);
+        wprintf(L"    path    %ls\n", path); 
+        wprintf(L"    title   %ls\n", title.c_str());
         wprintf(L"    hwnd    %llx\n", (unsigned __int64)hWnd);
         wprintf(L"    pid     %lu\n", pid);
-        wprintf(L"    x       %d\n", x);
-        wprintf(L"    y       %d\n", y);
-        wprintf(L"    width   %d\n", width);
-        wprintf(L"    height  %d\n", height);
-        wprintf(L"    zindex  %d\n", zindex);
-        wprintf(L"    status  %ls\n", status);
+        wprintf(L"    x       %d\n",  x);
+        wprintf(L"    y       %d\n",  y);
+        wprintf(L"    width   %d\n",  width);
+        wprintf(L"    height  %d\n",  height);
+        wprintf(L"    zindex  %d\n",  zindex);
+		 printf( "    status  %s\n",  status.c_str());
 	}
-    delete title;
 	return S_OK;
 }
 
@@ -442,7 +434,7 @@ bool FindFile(const wstring& directory, const wstring& filename, wstring& result
 
             tmp = directory + L"\\" + wstring(file.cFileName);
 
-            if (wwcmp(filename.c_str(), file.cFileName))
+            if (cmp(filename, file.cFileName))
             {
                 result = tmp;
                 return true;
@@ -874,15 +866,15 @@ HRESULT trash(char* action)
         {
             if (SUCCEEDED(hr = op->SetOperationFlags(FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE | FOF_NOERRORUI | FOF_NOCONFIRMATION | FOFX_EARLYFAILURE)))
             {
-                PCWSTR path = wstr(action);
+                wstring path = s2ws(action);
                 
-                int len = GetFullPathName(path, 0, NULL, NULL);
+                int len = GetFullPathName(path.c_str(), 0, NULL, NULL);
 
                 if (len)
                 {
                     wchar_t* buf = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
 
-                    GetFullPathName(path, len, buf, NULL);
+                    GetFullPathName(path.c_str(), len, buf, NULL);
 
                     LPITEMIDLIST idlist = ILCreateFromPathW(buf);
                     IShellItem* item;
@@ -904,7 +896,6 @@ HRESULT trash(char* action)
                 {
                     hr = S_FALSE;
                 }
-                delete path;
             }
         }
         op->Release();

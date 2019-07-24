@@ -62,8 +62,11 @@ moveWindow = (dir) ->
         base = slash.base info.path
         
         return if base in ['kachel' 'kappo']
+        
         if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'space' 'ruler']
             b = 0  # sane window border
+        else if base in ['devenv']
+            b = -1  # wtf?
         else
             b = 10 # transparent window border
         
