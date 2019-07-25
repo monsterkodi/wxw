@@ -5,7 +5,7 @@
 
 It can be used as a node module or as a command line tool.
 
-## command line
+## Command line
 
 ```sh
 npm install -g wxw
@@ -50,7 +50,7 @@ wxw [command] [args...]
 
 ```
 
-## node module
+## Module
 
 ```coffeescript
 
@@ -81,3 +81,54 @@ wxw('trash',    'count')
 wxw('trash',    'empty')
 
 ```
+
+## Application
+
+The project on github contains sources for an application that uses some of the features provided by wxw. 
+
+The application does
+
+- provide a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac
+- switch applications similar to the mac cmd-tab switch
+- positions active windows on keyboard shortcuts similiar to divvy or magnet on mac
+
+In case you feel adventurous: 
+
+- you can either download an old binary from the releases section
+- or try to compile a recent version:
+
+```sh
+git clone https://github.com/monsterkodi/wxw.git
+cd wxw
+npm install
+
+npm run win # to build executable (needs some form of bash in your path)
+./node_modules/.bin/electron . # to try it out without building an executable
+./node_modules/.bin/konrad     # to recompile coffee sources
+```
+
+It's still a bit rough around the edges, but I wouldn't want to live without it :-)
+
+## Caveats
+
+The command line utility works in a lot of 'decent' shells:
+
+- Cmdr
+- Fish
+- GitBash
+- Msys/Mingw
+- WinEmu
+- Wsl
+
+For some weird reason, in the windows native shells (cmd, PowerShell), it only works when called through node:
+
+```sh
+node path/to/wxw ...
+```
+
+Any ideas what might cause this and/or how to fix this are welcome :-)
+
+
+
+
+
