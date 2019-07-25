@@ -21,6 +21,6 @@ dependencies
                 kxk  ^0.331.0
 devDependencies
                 electron        ^5.0.8
-                electron-packager  ^14.0.2
+                electron-packager  ^14.0.3
                 electron-rebuild  ^1.8.5
                 konrad          ^0.141.0

@@ -56,7 +56,8 @@ pngPath = (appPath) ->
 
 winRect = (numApps) ->
     
-    ss = electron.screen.getPrimaryDisplay().workAreaSize
+    screen = electron.remote? and electron.remote.screen or electron.screen
+    ss = screen.getPrimaryDisplay().workAreaSize
     as = 128
     border = 20
     width = (as+border)*apps.length+border
