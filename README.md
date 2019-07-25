@@ -84,30 +84,31 @@ wxw('trash',    'empty')
 
 ## Application
 
-The project on github contains sources for an application that uses some of the features provided by wxw. 
+The project on github contains sources for an application that uses some of the features provided by wxw.
 
 The application does
 
-- provide a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac
-- switch applications similar to the mac cmd-tab switch
-- positions active windows on keyboard shortcuts similiar to divvy or magnet on mac
+- provide a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac (Alt+Z)
+- switch applications similar to the mac cmd-tab switch (Ctrl+Tab)
+- positions active windows on keyboard shortcuts similiar to divvy or magnet on mac (Alt+Ctrl+[Up|Left...|1...4])
 
-In case you feel adventurous: 
+In case you feel adventurous:
 
-- you can either download an old binary from the releases section
+- you can either download an old binary from the releases section (which doesn't do the switching)
 - or try to compile a recent version:
 
 ```sh
+# with node, npm and git installed:
 git clone https://github.com/monsterkodi/wxw.git
 cd wxw
 npm install
 
-npm run win # to build executable (needs some form of bash in your path)
+npm run win # to build executable (needs some form of bash)
 ./node_modules/.bin/electron . # to try it out without building an executable
 ./node_modules/.bin/konrad     # to recompile coffee sources
 ```
 
-It's still a bit rough around the edges, but I wouldn't want to live without it :-)
+It's still a bit rough around the edges, but I believe it might be able to induce some joy in other people than myself :)
 
 ## Caveats
 
