@@ -103,12 +103,14 @@ git clone https://github.com/monsterkodi/wxw.git
 cd wxw
 npm install
 
-npm run win # to build executable (needs some form of bash)
+npm run win                    # to build executable (needs some form of bash)
 ./node_modules/.bin/electron . # to try it out without building an executable
 ./node_modules/.bin/konrad     # to recompile coffee sources
 ```
 
-It's still a bit rough around the edges, but I believe it might be able to induce some joy in other people than myself :)
+It's still a bit rough around the edges, but I believe it might be able to induce some joy in more people than just myself :)
+
+Please don't hesitate to let me know how it went in case you tried it.
 
 ## Caveats
 
