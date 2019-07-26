@@ -109,26 +109,10 @@ npm run build
 
 It's still a bit rough around the edges, let me know how it went in case you tried it.
 
-## Caveats
+#### Projects
 
-The command line utility works in a lot of 'decent' shells:
-
-- Cmdr
-- Fish
-- GitBash
-- Msys/Mingw
-- WinEmu
-- Wsl
-
-For some weird reason, in the windows native shells (cmd, PowerShell), it only works when called through node:
-
-```sh
-node path/to/wxw ...
-```
-
-Any ideas what might cause this and/or how to fix this are welcome :-)
-
-
-
+[clippo](https://github.com/monsterkodi/clippo)
+[kappo](https://github.com/monsterkodi/kappo)
+[kachel](https://github.com/monsterkodi/kachel)
 
 
