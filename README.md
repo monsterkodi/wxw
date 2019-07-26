@@ -92,10 +92,12 @@ The application does
 - switch applications similar to the mac cmd-tab switch (Ctrl+Tab)
 - positions active windows on keyboard shortcuts similiar to divvy or magnet on mac (Alt+Ctrl+[Up|Left...|1...4])
 
-In case you feel adventurous:
+<p align="center"><img src="img/switch.png"></p>
 
-- you can either download an old binary from the releases section (which doesn't do the switching)
-- or try to compile a recent version:
+In case you feel adventurous and want to try it out:
+
+- you can either download an installer from the github [releases page](https://github.com/monsterkodi/wxw/releases) (probably outdated)
+- or try to compile it from current sources:
 
 ```sh
 # with node, npm and git installed:

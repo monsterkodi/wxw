@@ -23,8 +23,6 @@ getApps = ->
     apps = []
     for info in infos
         continue if info.title == 'wxw-switch'
-        # continue if info.path.endsWith 'ImmersiveControlPanel\SystemSettings.exe'
-        # continue if info.path.indexOf('\\WindowsApps\\') >= 0
         file = slash.file info.path
         if file == 'ApplicationFrameHost.exe'
             name = last info.title.split ' ?- '
@@ -71,13 +69,7 @@ winRect = (numApps) ->
 start = (opt={}) -> 
     
     apps = getApps()
-    
-    for app in apps
-        png = pngPath app
-        if not slash.fileExists png
-            # klog 'icon' app, png
-            wc 'icon' app, png
-        
+            
     wr = winRect apps.length
             
     win = new electron.BrowserWindow
@@ -85,6 +77,7 @@ start = (opt={}) ->
         backgroundColor: '#00000000'
         transparent:     true
         preloadWindow:   true
+        show:            true
         x:               wr.x
         y:               wr.y
         width:           wr.width
@@ -94,7 +87,6 @@ start = (opt={}) ->
         frame:           false
         thickFrame:      false
         fullscreen:      false
-        show:            true
         webPreferences:
             nodeIntegration: true
             webSecurity:     false
@@ -308,11 +300,22 @@ loadApps = ->
     a =$ '.apps'
     a.innerHTML = ''
     
-    for p in getApps()
+    for app in getApps()
+        
+        if app in ['Mail' 'Calendar' 'Calculator' 'Settings' 'Microsoft Store']
+            png = slash.join __dirname, '..' 'icons' "#{app}.png"
+        else
+            png = pngPath app
+    
+            if not slash.fileExists png
+                wc 'icon' app, png
+                if not slash.fileExists png
+                    png = slash.join __dirname, '..' 'icons' 'app.png'
+        
         a.appendChild elem 'img',
-            id: p
+            id: app
             class:'app' 
-            src:slash.fileUrl pngPath p
+            src:slash.fileUrl png
         
     a.focus()
     
