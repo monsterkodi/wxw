@@ -72,11 +72,11 @@ start = (opt={}) ->
         backgroundColor: '#00000000'
         transparent:     true
         preloadWindow:   true
-        show:            true
         x:               wr.x
         y:               wr.y
         width:           wr.width
         height:          wr.height
+        show:            false
         hasShadow:       false
         resizable:       false
         frame:           false
@@ -147,8 +147,8 @@ start = (opt={}) ->
 
     win.debug = opt.debug
     
-    if opt.debug
-        win.webContents.openDevTools()
+    if opt.debug then win.webContents.openDevTools()
+    
     win
         
 # 0000000     0000000   000   000  00000000  
@@ -166,8 +166,11 @@ done = -> electron.remote.getCurrentWindow().hide()
 # 000   000   0000000     000     000      0      000   000     000     00000000  
 
 activeApp = null
+
 activate = ->
+    
     done()
+    
     if activeApp.id
         if activeApp.id in ['Mail' 'Calendar']
             infos = wc 'info' 'ApplicationFrameHost.exe'
@@ -245,6 +248,34 @@ onKeyUp = (event) ->
     { mod, key, char, combo } = keyinfo.forEvent event
     if empty combo
         activate()
+
+# 000   000  00000000  000   000  000000000   0000000   00000000   00000000   
+# 0000  000  000        000 000      000     000   000  000   000  000   000  
+# 000 0 000  0000000     00000       000     000000000  00000000   00000000   
+# 000  0000  000        000 000      000     000   000  000        000        
+# 000   000  00000000  000   000     000     000   000  000        000        
+
+onNextApp = ->
+    
+    win = electron.remote.getCurrentWindow()
+        
+    if win.isVisible()
+        nextApp()
+    else
+        win.setPosition -10000,-10000 # move window offscreen before show
+        win.show()
+        a =$ '.apps'
+        a.innerHTML = ''
+        
+        restore = -> 
+            
+            wr = winRect apps.length
+            win.setBounds wr
+            win.focus()
+                
+        setTimeout restore, 30 # give windows some time to do it's flickering
+        
+        loadApps()
         
 # 000  000   000  000  000000000    000   000  000  000   000  
 # 000  0000  000  000     000       000 0 000  000  0000  000  
@@ -254,38 +285,19 @@ onKeyUp = (event) ->
 
 initWin = ->
     
-    win = electron.remote.getCurrentWindow()
-    
     a =$ '.apps'
     
     a.onmousedown = onMouseDown
     a.onkeydown   = onKeyDown
     a.onkeyup     = onKeyUp
+
+    win = electron.remote.getCurrentWindow()
     
-    if not win.debug
-        a.onblur = done
+    win.on 'blur' -> done()
     
-    loadApps()
-        
-    post.on 'nextApp' -> 
-        
-        if win.isVisible()
-            nextApp()
-        else
-            
-            win.setPosition -10000,-10000 # move window offscreen before show
-            win.show()
-            a =$ '.apps'
-            a.innerHTML = ''
-            
-            restore = -> 
-                
-                wr = winRect apps.length
-                win.setBounds wr
+    post.on 'nextApp' onNextApp
                     
-            setTimeout restore, 30 # give windows some time to do it's flickering
-            
-            loadApps()
+    loadApps()
     
 # 000       0000000    0000000   0000000         0000000   00000000   00000000    0000000  
 # 000      000   000  000   000  000   000      000   000  000   000  000   000  000       

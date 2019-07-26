@@ -89,8 +89,8 @@ The project on github contains sources for an application that uses some of the 
 The application does
 
 - provide a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac (Alt+Z)
-- switch applications similar to the mac cmd-tab switch (Ctrl+Tab)
 - positions active windows on keyboard shortcuts similiar to divvy or magnet on mac (Alt+Ctrl+[Up|Left...|1...4])
+- switch applications similar to the mac cmd-tab switch (Ctrl+Tab)
 
 <p align="center"><img src="img/switch.png"></p>
 
@@ -110,9 +110,7 @@ npm run win                    # to build executable (needs some form of bash)
 ./node_modules/.bin/konrad     # to recompile coffee sources
 ```
 
-It's still a bit rough around the edges, but I believe it might be able to induce some joy in more people than just myself :)
-
-Please don't hesitate to let me know how it went in case you tried it.
+It's still a bit rough around the edges, let me know how it went in case you tried it.
 
 ## Caveats
 

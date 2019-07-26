@@ -24,8 +24,6 @@ wxw
 version  #{pkg.version}
 """
 
-# args.debug = true
-
 post.on 'winlog', (text) -> klog ">>> " + text
 
 #  0000000    0000000  000000000  000   0000000   000   000  
@@ -98,13 +96,7 @@ moveWindow = (dir) ->
         
         wc 'bounds' info.hwnd, x, y, w, h
        
-onAppSwitch = ->
-    
-    if not swtch 
-        swtch = require('./switch').start()
-        return
-    
-    post.toWin swtch.id, 'nextApp'
+onAppSwitch = -> post.toWin swtch.id, 'nextApp'
 
 #  0000000   0000000     0000000   000   000  000000000  
 # 000   000  000   000  000   000  000   000     000     
@@ -166,13 +158,13 @@ app.on 'ready', ->
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
         
-    onAppSwitch()
+    swtch = require('./switch').start()
   
-if app.requestSingleInstanceLock? 
-    if !app.requestSingleInstanceLock()
-        app.quit()
-        
-if args.debug
-    require('./zoom').start debug:true
+if app.requestSingleInstanceLock?
     
+    if app.requestSingleInstanceLock()
+        app.on 'second-instance' -> swtch.show()
+    else
+        app.quit()
+            
     
