@@ -94,20 +94,17 @@ The application does
 
 <p align="center"><img src="img/switch.png"></p>
 
-In case you feel adventurous and want to try it out:
+If you want to try it out
 
-- you can either download an installer from the github [releases page](https://github.com/monsterkodi/wxw/releases) (probably outdated)
-- or try to compile it from current sources:
+- you can either download an installer from the [releases page](https://github.com/monsterkodi/wxw/releases)
+- or try to build it yourself:
 
 ```sh
-# with node, npm and git installed:
+# with node, npm, git and some form of bash installed:
 git clone https://github.com/monsterkodi/wxw.git
 cd wxw
 npm install
-
-npm run win                    # to build executable (needs some form of bash)
-./node_modules/.bin/electron . # to try it out without building an executable
-./node_modules/.bin/konrad     # to recompile coffee sources
+npm run build
 ```
 
 It's still a bit rough around the edges, let me know how it went in case you tried it.

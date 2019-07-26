@@ -1,12 +1,12 @@
 name            wxw
-version         1.42.0
+version         1.43.0
 description     moves my windows
 keywords
                 windows
                 toolkit
 main            js/wxw.js
 scripts
-                win  bash ./bin/buildwin.sh
+                build  ./node_modules/.bin/konrad --build
 files
                 bin/wc.exe
                 bin/wxw

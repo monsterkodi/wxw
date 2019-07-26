@@ -241,7 +241,7 @@ onKeyDown = (event) ->
         when 'ctrl+shift+tab' then return prevApp()
         when 'q'              then return quitApp()
         when 'alt+ctrl+q'     then return electron.remote.app.quit()
-        else klog 'combo' combo
+        # else klog 'combo' combo
         
 onKeyUp = (event) ->        
     
