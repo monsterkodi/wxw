@@ -1,9 +1,5 @@
 name            wxw
-<<<<<<< HEAD
-version         1.41.0
-=======
 version         1.40.0
->>>>>>> misc
 description     moves my windows
 keywords
                 windows
