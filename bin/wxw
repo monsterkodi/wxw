@@ -2,4 +2,4 @@
 
 wc = require('../js/wc');
 
-console.log(wc.exec.apply(null, process.argv.slice(2)));
+process.stdout.write(wc.exec.apply(null, process.argv.slice(2)));

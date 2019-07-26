@@ -516,10 +516,10 @@ HRESULT launch(char *path)
     {
         if (wins.size())
         {
-            cout << "matching " << normpath << " " << wins.size() << endl;
+            //cout << "matching " << normpath << " " << wins.size() << endl;
             for (HWND hWnd : wins)
             {
-                ShowWindow(hWnd, SW_RESTORE);
+                ShowWindow(hWnd, SW_SHOW);
                 SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
                 SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
                 SetForegroundWindow(hWnd);
