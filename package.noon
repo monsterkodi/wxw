@@ -1,5 +1,9 @@
 name            wxw
+<<<<<<< HEAD
 version         1.41.0
+=======
+version         1.40.0
+>>>>>>> misc
 description     moves my windows
 keywords
                 windows
@@ -24,3 +28,4 @@ devDependencies
                 electron-packager  ^14.0.3
                 electron-rebuild  ^1.8.5
                 konrad          ^0.141.0
+                sds             ^3.2.0

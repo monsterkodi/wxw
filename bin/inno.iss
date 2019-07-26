@@ -1,5 +1,5 @@
 #define MyAppName "wxw"
-#define MyAppVersion "0.20.0"
+#define MyAppVersion "1.40.0"
 #define MyAppPublisher "monsterkodi"
 #define MyAppURL "https://github.com/monsterkodi/wxw"
 #define MyAppExeName "wxw.exe"

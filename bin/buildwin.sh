@@ -12,9 +12,9 @@ if rm -rf wxw-win32-x64; then
 
         $BIN/electron-rebuild
 
-        IGNORE="/(.*\.dmg$|Icon$|.*\.lock$)"
+        IGNORE="(Icon$|inno|wc/.*)"
             
-        $BIN/electron-packager . --overwrite --icon=img/app.ico --ignore $IGNORE
+        $BIN/electron-packager . --overwrite --icon=img/app.ico --ignore $IGNORE --prune
 
         start wxw-win32-x64/wxw.exe
     fi

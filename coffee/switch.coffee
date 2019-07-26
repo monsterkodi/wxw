@@ -19,7 +19,6 @@ apps = []
 getApps = ->
 
     infos = wc 'info'
-    
     apps = []
     for info in infos
         continue if info.title == 'wxw-switch'
@@ -40,11 +39,7 @@ getApps = ->
 # 000        000  0000  000   000  
 # 000        000   000   0000000   
 
-pngPath = (appPath) ->
-    # klog 'appPath' appPath, slash.base(appPath)
-    pth = slash.resolve slash.join slash.userData(), 'icons', slash.base(appPath) + ".png"
-    # klog pth
-    pth
+pngPath = (appPath) -> slash.resolve slash.join slash.userData(), 'icons', slash.base(appPath) + ".png"
     
 #  0000000  000000000   0000000   00000000   000000000  
 # 000          000     000   000  000   000     000     
@@ -216,6 +211,7 @@ quitApp = -> klog 'quitApp' activeApp.id
 onMouseMove = (event) -> highlight event.target
     
 onMouseDown = (event) -> 
+    
     activeApp = event.target
     activate()
         
@@ -229,22 +225,24 @@ onKeyDown = (event) ->
     
     { mod, key, char, combo } = keyinfo.forEvent event
     
+    win = electron.remote.getCurrentWindow()
+     
     switch key
-        when 'esc'   then done()
-        when 'right' then nextApp()
-        when 'left'  then prevApp()
-        when 'q'     then quitApp()
-        when 'enter' 'return' 'space' then activate()
-        else klog 'onKeyDown' combo
+        when 'esc'   then return done()
+        when 'right' then return nextApp()
+        when 'left'  then return prevApp()
+        when 'enter' 'return' 'space' then return activate()
         
     switch combo
-        when 'ctrl+shift+tab' then prevApp()
-        when 'alt+ctrl+q'     then electron.remote.app.quit()
+        when 'alt+ctrl+i'     then return win.webContents.openDevTools()
+        when 'ctrl+shift+tab' then return prevApp()
+        when 'q'              then return quitApp()
+        when 'alt+ctrl+q'     then return electron.remote.app.quit()
+        else klog 'combo' combo
         
-onKeyUp = (event) ->         
+onKeyUp = (event) ->        
     
     { mod, key, char, combo } = keyinfo.forEvent event
-    # klog "up #{mod}, #{key}, #{char}, #{combo}"
     if empty combo
         activate()
         
@@ -319,7 +317,8 @@ loadApps = ->
         
     a.focus()
     
-    highlight a.firstChild.nextSibling ? a.firstChild
+    if a.firstChild?
+        highlight a.firstChild.nextSibling ? a.firstChild
             
 module.exports = 
     start:start

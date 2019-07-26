@@ -64,11 +64,11 @@ exec = (argv...) ->
             if fakeIcon argv then return ''
             
         if cmd in ['launch']
-            childp.spawn wcexe, argv, encoding:'utf8' shell:true detached:true stdio:'inherit'
+            childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true detached:true stdio:'inherit'
             return ''
         else
             args = (kstr(s) for s in argv).join " "
-            return childp.execSync wcexe+" #{args}" encoding:'utf8' shell:true
+            return childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
     catch err
         return ''
     
