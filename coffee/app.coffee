@@ -35,10 +35,10 @@ post.on 'winlog', (text) -> klog ">>> " + text
 action = (act) ->
 
     switch act
-        when 'maximize'   then wc 'maximize' 'top'
-        when 'minimize'   then wc 'minimize' 'top'
-        when 'taskbar'    then wc 'taskbar'  'toggle'
-        when 'close'      then wc 'close'    'top'
+        when 'maximize'   then log wc 'maximize' 'top'
+        when 'minimize'   then log wc 'minimize' 'top'
+        when 'taskbar'    then log wc 'taskbar'  'toggle'
+        when 'close'      then log wc 'close'    'top'
         when 'screenzoom' then require('./zoom').start()
         when 'appswitch'  then onAppSwitch()
         else moveWindow act
@@ -95,8 +95,25 @@ moveWindow = (dir) ->
                 when 'up'    then w  = ar.w+d;   x = -b
         
         wc 'bounds' info.hwnd, x, y, w, h
-       
-onAppSwitch = -> post.toWin swtch.id, 'nextApp'
+
+#  0000000  000   000  000  000000000   0000000  000   000  
+# 000       000 0 000  000     000     000       000   000  
+# 0000000   000000000  000     000     000       000000000  
+#      000  000   000  000     000     000       000   000  
+# 0000000   00     00  000     000      0000000  000   000  
+
+getSwitch = ->
+    
+    if not swtch or swtch.isDestroyed()
+        swtch = require('./switch').start()
+        swtch.on 'close' -> 
+            swtch = null
+    swtch
+        
+onAppSwitch = -> 
+    
+    getSwitch().show()
+    post.toWin swtch.id, 'nextApp'
 
 #  0000000   0000000     0000000   000   000  000000000  
 # 000   000  000   000  000   000  000   000     000     
@@ -158,12 +175,13 @@ app.on 'ready', ->
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
         
-    swtch = require('./switch').start()
+    getSwitch()
   
 if app.requestSingleInstanceLock?
     
     if app.requestSingleInstanceLock()
-        app.on 'second-instance' -> swtch.show()
+        app.on 'second-instance' -> 
+            getSwitch().show()
     else
         app.quit()
             

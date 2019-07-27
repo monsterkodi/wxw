@@ -17,13 +17,14 @@
 #include <Shobjidl.h>
 #include <dwmapi.h>
 #include <commoncontrols.h>
+#include <tlhelp32.h>
 
 using namespace Gdiplus;
 using namespace std;
 
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+// #pragma comment(linker,"\"/manifestdependency:type='win32' \
+// name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+// processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 //  0000000  00     00  00000000   
 // 000       000   000  000   000  
@@ -49,7 +50,7 @@ string ws2s(const wstring& wstr)
 
 int cmp(const wstring& a, const wstring& b) { return a.compare(b) == 0; }
 int cmp(const wstring& a, const char*    b) { return cmp(a, s2ws(b)); }
-int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; } 
+int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; }
 
 int klog(char *msg)
 {
@@ -68,6 +69,41 @@ bool DirExists(char* szPath)
 {
     DWORD dwAttrib = GetFileAttributesA(szPath);
     return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+// 00000000   00000000    0000000    0000000  00000000    0000000   000000000  000   000  
+// 000   000  000   000  000   000  000       000   000  000   000     000     000   000  
+// 00000000   0000000    000   000  000       00000000   000000000     000     000000000  
+// 000        000   000  000   000  000       000        000   000     000     000   000  
+// 000        000   000   0000000    0000000  000        000   000     000     000   000  
+
+string procPath(DWORD pid)
+{
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+    DWORD pathSize = MAX_PATH;
+    static char path[MAX_PATH];
+    path[0] = 0;
+
+    if (QueryFullProcessImageNameA(hProcess, 0, path, &pathSize))
+    {
+        return string(path);
+    }
+    return string("");
+}
+
+string fileName(const string& path)
+{
+    static char name[_MAX_FNAME];
+    _splitpath_s(path.c_str(), NULL, 0, NULL, 0, name, _MAX_FNAME, NULL, 0);
+    return string(name);
+}
+
+string fileExt(const string& path)
+{
+    static char ext[_MAX_EXT];
+    _splitpath_s(path.c_str(), NULL, 0, NULL, 0, NULL, 0, ext, _MAX_EXT);
+    return string(ext);
 }
 
 // 000000000  000  000000000  000      00000000  
@@ -223,14 +259,14 @@ HRESULT winInfo(HWND hWnd)
     
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
-    
+        
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
-    DWORD pathSize = 10000;
-    static wchar_t path[10000];
-    path[0] = 0;
+    // DWORD pathSize = 10000;
+    // static wchar_t path[10000];
+    // path[0] = 0;
 
-    QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
+    // QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
     
     string status = WindowStatus(hWnd);
     
@@ -251,8 +287,8 @@ HRESULT winInfo(HWND hWnd)
         zindex += 1;
     }
     
-    wprintf(L".\n");
-    wprintf(L"    path    %ls\n", path); 
+     printf(".\n");
+     printf( "    path    %s\n", procPath(pid).c_str()); 
     wprintf(L"    title   %ls\n", title.c_str());
     wprintf(L"    hwnd    %llx\n", (unsigned __int64)hWnd);
     wprintf(L"    pid     %lu\n", pid);
@@ -335,20 +371,38 @@ HRESULT restore(char *id)
 HRESULT close(char *id)
 {
     vector<HWND> wins;
-    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) 
+    {
+        cout << "no match " << id << endl;
+        return S_FALSE;
+    }
         
     if (wins.size() >= 1)
     {
         HWND hWnd = wins[0];
 
-        ShowWindow(hWnd, SW_RESTORE);
-        SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        if (!cmp(WindowStatus(hWnd).c_str(), "normal"))
+        {
+            cout << "R " << hWnd << endl;
+            ShowWindow(hWnd, SW_RESTORE);
+        }
+        // SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        // SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         
-        keybd_event(VK_MENU, 0, 0, NULL);     // fake ALT press to enable foreground switch
-        SetForegroundWindow(hWnd);            // ... no wonder windows is so bad
-        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+        if (hWnd != GetForegroundWindow())
+        {
+            keybd_event(VK_MENU, 0, 0, NULL);     // fake ALT press to enable foreground switch
+            if (!SetForegroundWindow(hWnd))       // ... no wonder windows is so bad
+            {
+                cerr << "can't foreground window" << endl;
+                return S_FALSE;
+            }
+            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+        }
         
+        keybd_event(VK_MENU,    0, KEYEVENTF_KEYUP, NULL); // make sure alt is depressed
+        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, NULL); // should harm to depress ctrl as well
+
         keybd_event(VK_MENU, 0, 0, NULL);
         keybd_event(VK_F4,   0, 0, NULL);
         keybd_event(VK_F4,   0, KEYEVENTF_KEYUP, NULL);
@@ -1160,6 +1214,54 @@ HRESULT icon(char* id, char* targetfile=NULL)
     return hr;
 }
 
+
+// 00000000   00000000    0000000    0000000  
+// 000   000  000   000  000   000  000       
+// 00000000   0000000    000   000  000       
+// 000        000   000  000   000  000       
+// 000        000   000   0000000    0000000  
+
+HRESULT proclist(char* id=NULL)
+{ 
+    HANDLE hProcessSnap;
+    PROCESSENTRY32 pe32;
+    
+    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE)
+    {
+        return S_FALSE;
+    }
+    
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+    
+    if (!Process32First(hProcessSnap, &pe32))
+    {
+        CloseHandle(hProcessSnap);
+        return S_FALSE;
+    }
+    
+    do
+    {
+        string path = procPath(pe32.th32ProcessID);
+        string name = fileName(path);
+        string ext  = fileExt(path);
+        
+        if (ext.size() > 0) name += ext;
+        
+        if (id == NULL || name.find(id) != wstring::npos)
+        {
+            printf(".\n");
+            printf("    path    %s\n",  path.c_str());
+            printf("    pid     %lu\n", pe32.th32ProcessID);
+            printf("    parent  %lu\n", pe32.th32ParentProcessID);
+        }
+        
+    } while (Process32Next(hProcessSnap, &pe32));
+    
+    CloseHandle(hProcessSnap);
+    return S_OK;
+}
+
 // 000   000   0000000   0000000    0000000   00000000  
 // 000   000  000       000   000  000        000       
 // 000   000  0000000   000000000  000  0000  0000000   
@@ -1462,6 +1564,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = help(cmd);
         else           hr = trash(argv[2]);
+    }
+    else if (cmp(cmd, "proc"))
+    {
+        if (argc == 2) hr = proclist();
+        else           hr = proclist(argv[2]);
     }
     else
     {
