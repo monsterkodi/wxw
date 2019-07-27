@@ -112,7 +112,7 @@ getSwitch = ->
         
 onAppSwitch = -> 
     
-    getSwitch().show()
+    getSwitch()
     post.toWin swtch.id, 'nextApp'
 
 #  0000000   0000000     0000000   000   000  000000000  
