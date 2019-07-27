@@ -133,7 +133,7 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
         return true;
     }
     
-    StringCbPrintfW(buf, 64, L"%llx", hWnd);
+    StringCbPrintfW(buf, 64, L"%llx", (unsigned long long)hWnd);
     if (cmp(wid, buf))
     {
 		return true;
@@ -217,7 +217,7 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 // 000   000  000  000  0000  000  000  0000  000       000   000  
 // 00     00  000  000   000  000  000   000  000        0000000   
 
-HRESULT winInfo(HWND hWnd, char* id=NULL)
+HRESULT winInfo(HWND hWnd)
 {    
     wstring title = WindowTitle(hWnd);
     
@@ -227,45 +227,43 @@ HRESULT winInfo(HWND hWnd, char* id=NULL)
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
     DWORD pathSize = 10000;
-    wchar_t path[10000];
+    static wchar_t path[10000];
     path[0] = 0;
 
     QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
     
-    if (id == NULL || matchWin(hWnd, pid, path, title.c_str(), id))
-    {       
-		string status = WindowStatus(hWnd);
-        
-        RECT rect; 
+    string status = WindowStatus(hWnd);
     
-        GetWindowRect(hWnd, &rect);
-        LONG width  = rect.right - rect.left;
-        LONG height = rect.bottom - rect.top;
-        LONG x = rect.left;
-        LONG y = rect.top;
-        
-        int zindex = 0;
-        HWND prevWnd = hWnd;
-        HWND nextWnd;
-        while (nextWnd = GetWindow(prevWnd, GW_HWNDPREV))
-        {
-            prevWnd = nextWnd;
-            zindex += 1;
-        }
-        
-        wprintf(L".\n");
-        wprintf(L"    path    %ls\n", path); 
-        wprintf(L"    title   %ls\n", title.c_str());
-        wprintf(L"    hwnd    %llx\n", (unsigned __int64)hWnd);
-        wprintf(L"    pid     %lu\n", pid);
-        wprintf(L"    x       %d\n",  x);
-        wprintf(L"    y       %d\n",  y);
-        wprintf(L"    width   %d\n",  width);
-        wprintf(L"    height  %d\n",  height);
-        wprintf(L"    zindex  %d\n",  zindex);
-		 printf( "    status  %s\n",  status.c_str());
-	}
-	return S_OK;
+    RECT rect; 
+
+    GetWindowRect(hWnd, &rect);
+    LONG width  = rect.right - rect.left;
+    LONG height = rect.bottom - rect.top;
+    LONG x = rect.left;
+    LONG y = rect.top;
+    
+    int zindex = 0;
+    HWND prevWnd = hWnd;
+    HWND nextWnd;
+    while (nextWnd = GetWindow(prevWnd, GW_HWNDPREV))
+    {
+        prevWnd = nextWnd;
+        zindex += 1;
+    }
+    
+    wprintf(L".\n");
+    wprintf(L"    path    %ls\n", path); 
+    wprintf(L"    title   %ls\n", title.c_str());
+    wprintf(L"    hwnd    %llx\n", (unsigned __int64)hWnd);
+    wprintf(L"    pid     %lu\n", pid);
+    wprintf(L"    x       %d\n",  x);
+    wprintf(L"    y       %d\n",  y);
+    wprintf(L"    width   %d\n",  width);
+    wprintf(L"    height  %d\n",  height);
+    wprintf(L"    zindex  %d\n",  zindex);
+     printf( "    status  %s\n",  status.c_str());
+
+    return S_OK;
 }
 
 // 000  000   000  00000000   0000000   
@@ -528,14 +526,21 @@ HRESULT launch(char *path)
         }
     }
     
-    STARTUPINFOA info={sizeof(info)};
-    PROCESS_INFORMATION processInfo;
+    //STARTUPINFOA info={sizeof(info)};
+    STARTUPINFOA info = { 0 };
+    PROCESS_INFORMATION processInfo = { 0 };
     
     if (!CreateProcessA(normpath, NULL, NULL, NULL, TRUE, CREATE_NEW_CONSOLE, NULL, NULL, &info, &processInfo))
     {
         cerr << "can't launch " << normpath << endl;
+        CloseHandle(processInfo.hProcess);
+        CloseHandle(processInfo.hThread);
+        CloseHandle(&info);
         return S_FALSE;
     }
+    CloseHandle(processInfo.hProcess);
+    CloseHandle(processInfo.hThread);
+    CloseHandle(&info);
     cout << normpath << endl;
     return S_OK;
 }
@@ -813,8 +818,8 @@ HRESULT trash(char* action)
     LPITEMIDLIST  pidlRecycleBin = NULL;
     LPITEMIDLIST  pidl           = NULL;
 
-    SHGetDesktopFolder(&pDesktop);
-    SHGetSpecialFolderLocation (NULL, CSIDL_BITBUCKET, &pidlRecycleBin);
+    hr = SHGetDesktopFolder(&pDesktop);
+    hr = SHGetSpecialFolderLocation (NULL, CSIDL_BITBUCKET, &pidlRecycleBin);
     
     LPSHELLFOLDER pRecycleBin;
     pDesktop->BindToObject(pidlRecycleBin, NULL, IID_IShellFolder, (LPVOID *)&pRecycleBin);
@@ -868,11 +873,11 @@ HRESULT trash(char* action)
             {
                 wstring path = s2ws(action);
                 
-                int len = GetFullPathName(path.c_str(), 0, NULL, NULL);
+                unsigned long len = GetFullPathName(path.c_str(), 0, NULL, NULL);
 
                 if (len)
                 {
-                    wchar_t* buf = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
+                    wchar_t* buf = (wchar_t*)malloc((((unsigned long long)len) + 1) * sizeof(wchar_t));
 
                     GetFullPathName(path.c_str(), len, buf, NULL);
 
@@ -911,8 +916,9 @@ HRESULT trash(char* action)
 
 bool saveBitmap(Bitmap* bitmap, const char* targetfile)
 {
+    HRESULT hr;
     CLSID clsID;
-    CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
+    hr = CLSIDFromString(L"{557cf406-1a04-11d3-9a73-0000f81ef32e}", &clsID); //GetEncoderClsid(L"image/png", &clsID);
 
 	char normpath[MAX_PATH];
     char lname[_MAX_DRIVE + 1];
@@ -963,7 +969,8 @@ bool saveBitmap(HBITMAP hbitmap, const char* targetfile)
 
 HRESULT screenshot(char *targetfile="screenshot.png")
 {
-    CoInitialize(NULL);
+    HRESULT hr;
+    if (!SUCCEEDED(hr = CoInitialize(NULL))) return hr;
 
     ULONG_PTR token;
     GdiplusStartupInput tmp;
@@ -1028,14 +1035,14 @@ HBITMAP iconToBitmap(HICON hIcon, int x, int y)
     return hBitmap;
 }
 
-bool saveIcon (HICON hIcon, char* pngfile) 
+bool saveIcon(HICON hIcon, char* pngfile)
 {
     ICONINFO icon_info = { 0 };
     GetIconInfo(hIcon, &icon_info);
 
     BITMAP bm = { 0 };
-    
-    int w=0, h=0;
+
+    unsigned long w = 0, h = 0;
 
     if (icon_info.hbmColor && GetObject(icon_info.hbmColor, sizeof(bm), &bm))
     {
@@ -1044,7 +1051,7 @@ bool saveIcon (HICON hIcon, char* pngfile)
     }
 
     HBITMAP hBitmap = iconToBitmap(hIcon, w, h);
-        
+
     BITMAP source_info = { 0 };
     GetObject(hBitmap, sizeof(source_info), &source_info);
 
@@ -1057,7 +1064,10 @@ bool saveIcon (HICON hIcon, char* pngfile)
 
     s = bmp->LockBits(&rect, ImageLockModeWrite, PixelFormat32bppARGB, &target_info);
 
-    CopyMemory(target_info.Scan0, source_info.bmBits, w * h * 4);
+    if (target_info.Scan0)
+    { 
+        CopyMemory(target_info.Scan0, source_info.bmBits, ((unsigned long long) w) * ((unsigned long long) h) * 4);
+    }
 
     s = bmp->UnlockBits(&target_info);
 
@@ -1077,7 +1087,7 @@ HRESULT icon(char* id, char* targetfile=NULL)
     char normpath[MAX_PATH];
     GetFullPathNameA(id, MAX_PATH, normpath, NULL);
     
-    CoInitialize(NULL);
+    if (!SUCCEEDED(hr = CoInitialize(NULL))) return hr;
 
     ULONG_PTR token;
     GdiplusStartupInput tmp;
@@ -1101,7 +1111,7 @@ HRESULT icon(char* id, char* targetfile=NULL)
         cout << "can't find " << normpath << ", icon will be generic." << endl;
     }
 
-    SHFILEINFOA shfi;
+    SHFILEINFOA shfi = { 0 };
     if (SHGetFileInfoA(normpath, FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_ICON | SHGFI_SYSICONINDEX))
     {
         IImageList *imageList;
@@ -1350,7 +1360,7 @@ HRESULT help(char *command)
 // 000   000  000  000  0000  000 0 000  000   000  000  000  0000  
 // 00     00  000  000   000  000   000  000   000  000  000   000  
 
-int WINAPI WinMain( __in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, __in_opt LPSTR lpCmdLine, __in int nShowCmd )
+int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, __in LPSTR lpCmdLine, __in int nShowCmd)
 {
     int argc    = __argc;
     char** argv = __argv;
