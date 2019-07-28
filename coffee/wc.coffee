@@ -6,7 +6,9 @@
 00     00   0000000
 ###
 
-{ childp, slash, noon, klog, empty, kstr, fs } = require 'kxk'
+{ childp, slash, noon, klog, empty, first, kstr, fs } = require 'kxk'
+
+wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
 
 fakeIcon = (argv) ->
     
@@ -31,6 +33,23 @@ fakeIcon = (argv) ->
             error err
     false
 
+quitProcess = (args) ->
+    
+    proclist = wc 'proc' args[0]
+    if proclist.length
+        prts = new Set proclist.map (p) -> p.parent
+        pids = new Set proclist.map (p) -> p.pid
+        pidl = Array.from(pids).filter (p) -> prts.has p
+        out = ''
+        while pid = pidl.shift()
+            for proc in proclist
+                if proc.pid == pid
+                    out += wc 'terminate' pid
+        return out
+    else
+        error 'no process'
+    ''
+    
 exec = (argv...) ->
     
     try
@@ -58,8 +77,6 @@ exec = (argv...) ->
                 
         argv[0] = cmd
             
-        wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
-        
         if cmd == 'icon'
             if fakeIcon argv then return ''
             
@@ -68,7 +85,12 @@ exec = (argv...) ->
             return ''
         else
             args = (kstr(s) for s in argv).join " "
-            return childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
+            outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
+            
+            if cmd == 'quit' and not outp.startsWith 'terminated'
+                return quitProcess argv.slice 1
+            
+            return outp
     catch err
         return ''
     
@@ -77,7 +99,7 @@ wc = ->
     out = exec.apply null, [].slice.call arguments, 0
         
     switch kstr arguments[0]
-        when 'info' 'screen' 'mouse' 'trash'
+        when 'info' 'screen' 'mouse' 'trash' 'proc'
             noon.parse out
         else
             out

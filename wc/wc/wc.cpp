@@ -448,7 +448,7 @@ HRESULT quit(char *id)
             string path = procPath(procid);
             if (cmp(fileName(path).c_str(), "explorer"))
             {
-                cout << "skip explorer " << path << endl;
+                // cout << "skip explorer " << path << endl;
                 continue;
             }
         
@@ -471,7 +471,42 @@ HRESULT quit(char *id)
             }
         }        
     }
+    else
+    {
+        cerr << "no windows " << id << endl;
+    }
     return S_OK;    
+}
+
+// 000000000  00000000  00000000   00     00  000  000   000   0000000   000000000  00000000  
+//    000     000       000   000  000   000  000  0000  000  000   000     000     000       
+//    000     0000000   0000000    000000000  000  000 0 000  000000000     000     0000000   
+//    000     000       000   000  000 0 000  000  000  0000  000   000     000     000       
+//    000     00000000  000   000  000   000  000  000   000  000   000     000     00000000  
+
+HRESULT terminate(char* id)
+{
+    DWORD procid = (DWORD)_atoi64(id);
+
+    if (HANDLE hProc = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, procid))
+    {
+        if (TerminateProcess(hProc, 0))
+        {
+            cout << "terminated " << procid << endl;
+        }
+        else
+        {
+            cerr << "termination failed " << procid << endl;
+        }
+        
+        CloseHandle(hProc);
+    }
+    else
+    {
+        cerr << "no termination handle " << procid << endl;
+    }
+
+    return S_OK;
 }
 
 // 00000000    0000000   000   0000000  00000000  
@@ -1450,6 +1485,13 @@ HRESULT help(char *command)
         klog("      Quit application(s)");
         klog("");
     }
+    else if (cmp(command, "terminate"))
+    {
+        klog("wxw terminate pid");
+        klog("");
+        klog("      Terminate process");
+        klog("");
+    }
     else if (cmp(command, "taskbar"))
     {
         klog("wxw taskbar hide|show|toggle");
@@ -1596,6 +1638,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = help(cmd);
         else           hr = quit(argv[2]);
+    }
+    else if (cmp(cmd, "terminate"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = terminate(argv[2]);
     }
     else if (cmp(cmd, "bounds"))
     {

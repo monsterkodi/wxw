@@ -208,7 +208,7 @@ highlight = (e) ->
 
 nextApp = -> highlight activeApp.nextSibling ? $('.apps').firstChild
 prevApp = -> highlight activeApp.previousSibling ? $('.apps').lastChild
-quitApp = -> klog 'quitApp' activeApp.id; wxw 'quit' activeApp.id
+quitApp = -> klog 'quitApp' activeApp.id; wxw 'quit' "\"#{activeApp.id}\""
     
 # 00     00   0000000   000   000   0000000  00000000  
 # 000   000  000   000  000   000  000       000       
