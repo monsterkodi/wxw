@@ -23,17 +23,19 @@ wxw [command] [args...]
          restore     id
          focus       id
          close       id
-         bounds      id x y w h
+         quit        id
          launch      path
+         bounds      id x y w h
          mouse
+         key        [shift+|ctrl+|alt+]key
          help        command
          folder      name
-         trash       empty|count|file
-         taskbar     hide|show
+         trash       count|empty|file
+         taskbar     hide|show|toggle
          screen     [size|user]
          screenshot [targetfile]
+         proc       [file]
          icon        path [targetfile]
-         key        [ctrl+|shift+|alt+]key
 
     id:
 

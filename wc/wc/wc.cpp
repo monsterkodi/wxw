@@ -1336,6 +1336,12 @@ HRESULT proclist(char* id=NULL)
     do
     {
         string path = procPath(pe32.th32ProcessID);
+        
+        if (!path.size())        
+        {
+            continue;
+        }
+        
         string name = fileName(path);
         string ext  = fileExt(path);
         
@@ -1386,6 +1392,7 @@ HRESULT usage()
     klog("         taskbar     hide|show|toggle");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
+    klog("         proc       [file]");
     klog("         icon        path [targetfile]");
     klog("");
     klog("    id:");
@@ -1520,6 +1527,16 @@ HRESULT help(char *command)
         klog("wxw mouse");
         klog("");
         klog("      Print current mouse position");
+    }
+    else if (cmp(command, "proc"))
+    {
+        klog("wxw proc");
+        klog("");
+        klog("      Print all processes with an executable path");
+        klog("");
+        klog("wxw proc name");
+        klog("");
+        klog("      Print only those processes whose executable matches name");
     }
     else if (cmp(command, "screen"))
     {

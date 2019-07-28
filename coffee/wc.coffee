@@ -100,7 +100,7 @@ wc = ->
         
     switch kstr arguments[0]
         when 'info' 'screen' 'mouse' 'trash' 'proc'
-            noon.parse out
+            noon.parse out.trim()
         else
             out
             
