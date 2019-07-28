@@ -1,6 +1,6 @@
 {
   "name": "wxw",
-  "version": "1.49.0",
+  "version": "1.50.0",
   "description": "moves my windows",
   "keywords": [
     "windows",
@@ -22,13 +22,13 @@
   "license": "Unlicense",
   "bin": "./bin/wxw",
   "dependencies": {
-    "kxk": "^0.332.0"
+    "kxk": "^0.333.0"
   },
   "devDependencies": {
     "electron": "^5.0.8",
     "electron-packager": "^14.0.3",
     "electron-rebuild": "^1.8.5",
-    "konrad": "^0.152.0",
+    "konrad": "^0.154.0",
     "sds": "^3.2.0"
   }
 }

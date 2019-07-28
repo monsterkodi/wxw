@@ -21,7 +21,7 @@ fakeIcon = (argv) ->
         mintty:     'terminaldark'
         procexp64:  'procexp'
     
-    return if argv.length <= 1 
+    return if argv.length <= 1
     base = slash.base argv[1]
     if icon = iconMap[base]
         targetfile = slash.resolve argv[2] ? base + '.png'
@@ -35,7 +35,7 @@ fakeIcon = (argv) ->
 
 quitProcess = (args) ->
     
-    proclist = wc 'proc' args[0]
+    proclist = wc 'proc' slash.file args[0]
     if proclist.length
         prts = new Set proclist.map (p) -> p.parent
         pids = new Set proclist.map (p) -> p.pid
@@ -107,3 +107,5 @@ wc = ->
 wc.exec = exec
     
 module.exports = wc
+
+
