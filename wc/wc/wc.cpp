@@ -8,8 +8,9 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include <vector>
 #include <codecvt>
+#include <vector>
+#include <set>
 #include <shellscalingapi.h>
 #include <KnownFolders.h>
 #include <shlwapi.h>
@@ -373,7 +374,7 @@ HRESULT close(char *id)
     vector<HWND> wins;
     if (!SUCCEEDED(matchingWindows(id, &wins))) 
     {
-        cout << "no match " << id << endl;
+        cerr << "no match " << id << endl;
         return S_FALSE;
     }
         
@@ -383,7 +384,6 @@ HRESULT close(char *id)
 
         if (!cmp(WindowStatus(hWnd).c_str(), "normal"))
         {
-            cout << "R " << hWnd << endl;
             ShowWindow(hWnd, SW_RESTORE);
         }
         // SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -407,6 +407,69 @@ HRESULT close(char *id)
         keybd_event(VK_F4,   0, 0, NULL);
         keybd_event(VK_F4,   0, KEYEVENTF_KEYUP, NULL);
         keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+    }
+    return S_OK;    
+}
+
+//  0000000   000   000  000  000000000  
+// 000   000  000   000  000     000     
+// 000 00 00  000   000  000     000     
+// 000 0000   000   000  000     000     
+//  00000 00   0000000   000     000     
+
+HRESULT quit(char *id)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) 
+    {
+        cerr << "no match " << id << endl;
+        return S_FALSE;
+    }
+    
+    if (wins.size() >= 1)
+    {
+        set<DWORD> threadids;
+        set<DWORD> procids;
+        for (HWND win : wins)
+        {
+            DWORD procid;
+            threadids.insert(GetWindowThreadProcessId(win, &procid));
+            procids.insert (procid);
+            PostMessage(win, WM_CLOSE, 0, 0);
+        }
+
+        for (DWORD threadid : threadids)
+        {
+            PostThreadMessage(threadid, WM_QUIT, 0, 0);
+        }
+        
+        for (DWORD procid : procids)
+        {
+            string path = procPath(procid);
+            if (cmp(fileName(path).c_str(), "explorer"))
+            {
+                cout << "skip explorer " << path << endl;
+                continue;
+            }
+        
+            if (HANDLE hProc = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, procid))
+            {
+                if (TerminateProcess(hProc, 0))
+                {
+                    cout << "terminated " << procid << endl;
+                }
+                else
+                {
+                    cerr << "termination failed " << procid << endl;
+                }
+                
+                CloseHandle(hProc);
+            }
+            else
+            {
+                cerr << "no termination handle " << procid << endl;
+            }
+        }        
     }
     return S_OK;    
 }
@@ -1282,13 +1345,14 @@ HRESULT usage()
     klog("         restore     id");
     klog("         focus       id");
     klog("         close       id");
-    klog("         bounds      id x y w h");
+    klog("         quit        id");
     klog("         launch      path");
+    klog("         bounds      id x y w h");
     klog("         mouse");
     klog("         key        [shift+|ctrl+|alt+]key");
     klog("         help        command");
     klog("         folder      name");
-    klog("         trash       count|empty");
+    klog("         trash       count|empty|file");
     klog("         taskbar     hide|show|toggle");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
@@ -1377,6 +1441,13 @@ HRESULT help(char *command)
         klog("      Activate windows if application is running.");
         klog("");
         klog("      Search PATH and Program File folders if local path doesn't exist.");
+        klog("");
+    }
+    else if (cmp(command, "quit"))
+    {
+        klog("wxw quit id");
+        klog("");
+        klog("      Quit application(s)");
         klog("");
     }
     else if (cmp(command, "taskbar"))
@@ -1520,6 +1591,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = help(cmd);
         else           hr = close(argv[2]);
+    }
+    else if (cmp(cmd, "quit"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = quit(argv[2]);
     }
     else if (cmp(cmd, "bounds"))
     {

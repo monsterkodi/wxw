@@ -129,6 +129,8 @@ showAbout = ->
         size: 300
         pkg: pkg
 
+post.on 'showAbout' showAbout
+
 app.on 'window-all-closed' (event) -> event.preventDefault()
         
 # 00000000   00000000   0000000   0000000    000   000
@@ -137,10 +139,10 @@ app.on 'window-all-closed' (event) -> event.preventDefault()
 # 000   000  000       000   000  000   000     000   
 # 000   000  00000000  000   000  0000000       000   
 
-app.on 'ready', ->
+app.on 'ready' ->
     
     tray = new electron.Tray "#{__dirname}/../img/menu.png"
-    tray.on 'click' showAbout
+    tray.on 'click' -> getSwitch().show()
     tray.on 'double-click' -> app.exit 0; process.exit 0
     
     tray.setContextMenu Menu.buildFromTemplate [

@@ -50,16 +50,16 @@ pngPath = (appPath) -> slash.resolve slash.join slash.userData(), 'icons', slash
 winRect = (numApps) ->
     
     screen = electron.remote? and electron.remote.screen or electron.screen
-    ss = screen.getPrimaryDisplay().workAreaSize
-    as = 128
+    ss     = screen.getPrimaryDisplay().workAreaSize
+    as     = 128
     border = 20
-    width = (as+border)*apps.length+border
+    width  = (as+border)*apps.length+border
     height = as+border*2
     
-    x:parseInt (ss.width-width)/2
-    y:parseInt (ss.height-height)/2
-    width:width
-    height:height
+    x:      parseInt (ss.width-width)/2
+    y:      parseInt (ss.height-height)/2
+    width:  width
+    height: height
 
 start = (opt={}) -> 
     
@@ -172,14 +172,18 @@ activate = ->
     done()
     
     if activeApp.id
+        
         if activeApp.id in ['Mail' 'Calendar']
+            
             infos = wc 'info' 'ApplicationFrameHost.exe'
             for info in infos
                 if info.title.endsWith activeApp.id
                     wc 'focus' info.hwnd
                     return
             childp.spawn 'start', [{Mail:'outlookmail:' Calendar:'outlookcal:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'            
+            
         else if activeApp.id in ['Calculator' 'Settings' 'Microsoft Store']
+            
             infos = wc 'info' 'ApplicationFrameHost.exe'
             for info in infos
                 if info.title == activeApp.id
@@ -196,6 +200,7 @@ activate = ->
 # 000   000  000   0000000   000   000  0000000  000   0000000   000   000     000     
 
 highlight = (e) ->
+    
     if e.id
         activeApp?.classList.remove 'highlight'
         e.classList.add 'highlight'
@@ -203,7 +208,7 @@ highlight = (e) ->
 
 nextApp = -> highlight activeApp.nextSibling ? $('.apps').firstChild
 prevApp = -> highlight activeApp.previousSibling ? $('.apps').lastChild
-quitApp = -> klog 'quitApp' activeApp.id
+quitApp = -> klog 'quitApp' activeApp.id; wxw 'quit' activeApp.id
     
 # 00     00   0000000   000   000   0000000  00000000  
 # 000   000  000   000  000   000  000       000       
@@ -212,7 +217,6 @@ quitApp = -> klog 'quitApp' activeApp.id
 # 000   000   0000000    0000000   0000000   00000000  
 
 onMouseMove = (event) -> highlight event.target
-    
 onMouseDown = (event) -> 
     
     activeApp = event.target
@@ -239,8 +243,9 @@ onKeyDown = (event) ->
     switch combo
         when 'alt+ctrl+i'     then return win.webContents.openDevTools()
         when 'ctrl+shift+tab' then return prevApp()
-        when 'q'              then return quitApp()
+        when 'ctrl+q'         then return quitApp()
         when 'alt+ctrl+q'     then return electron.remote.app.quit()
+        when 'alt+ctrl+/'     then return post.toMain 'showAbout'
         # else klog 'combo' combo
         
 onKeyUp = (event) ->        
@@ -323,9 +328,9 @@ loadApps = ->
                     png = slash.join __dirname, '..' 'icons' 'app.png'
         
         a.appendChild elem 'img',
-            id: app
-            class:'app' 
-            src:slash.fileUrl png
+            id:     app
+            class:  'app' 
+            src:    slash.fileUrl png
         
     a.focus()
     
