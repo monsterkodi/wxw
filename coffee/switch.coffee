@@ -4,7 +4,7 @@
 #      000  000   000  000     000     000       000   000  
 # 0000000   00     00  000     000      0000000  000   000  
 
-{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, last, klog, keyinfo, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, valid, last, klog, keyinfo, $ } = require 'kxk'
 
 wc = require './wc'
 electron = require 'electron'
@@ -208,7 +208,27 @@ highlight = (e) ->
 
 nextApp = -> highlight activeApp.nextSibling ? $('.apps').firstChild
 prevApp = -> highlight activeApp.previousSibling ? $('.apps').lastChild
-quitApp = -> klog 'quitApp' activeApp.id; wxw 'quit' "\"#{activeApp.id}\""
+
+#  0000000   000   000  000  000000000  
+# 000   000  000   000  000     000     
+# 000 00 00  000   000  000     000     
+# 000 0000   000   000  000     000     
+#  00000 00   0000000   000     000     
+
+quitApp = -> 
+    
+    # klog 'wxw quit' "\"#{activeApp.id}\""
+    wc = require './wc'
+    if valid wc 'quit' "\"#{activeApp.id}\""
+        oldActive = activeApp
+        nextApp()
+        oldActive.remove()
+        apps = getApps()
+        wr  = winRect apps.length
+        win = electron.remote.getCurrentWindow()
+        win.setBounds wr
+    else
+        error "can't quit?"
     
 # 00     00   0000000   000   000   0000000  00000000  
 # 000   000  000   000  000   000  000       000       

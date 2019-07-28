@@ -23,10 +23,6 @@
 using namespace Gdiplus;
 using namespace std;
 
-// #pragma comment(linker,"\"/manifestdependency:type='win32' \
-// name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-// processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 //  0000000  00     00  00000000   
 // 000       000   000  000   000  
 // 000       000000000  00000000   
@@ -263,12 +259,6 @@ HRESULT winInfo(HWND hWnd)
         
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
-    // DWORD pathSize = 10000;
-    // static wchar_t path[10000];
-    // path[0] = 0;
-
-    // QueryFullProcessImageNameW(hProcess, 0, path, &pathSize);
-    
     string status = WindowStatus(hWnd);
     
     RECT rect; 
@@ -380,33 +370,38 @@ HRESULT close(char *id)
         
     if (wins.size() >= 1)
     {
-        HWND hWnd = wins[0];
-
-        if (!cmp(WindowStatus(hWnd).c_str(), "normal"))
+        for (HWND win : wins)
         {
-            ShowWindow(hWnd, SW_RESTORE);
-        }
-        // SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        // SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        
-        if (hWnd != GetForegroundWindow())
-        {
-            keybd_event(VK_MENU, 0, 0, NULL);     // fake ALT press to enable foreground switch
-            if (!SetForegroundWindow(hWnd))       // ... no wonder windows is so bad
-            {
-                cerr << "can't foreground window" << endl;
-                return S_FALSE;
-            }
-            keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+            PostMessage(win, WM_CLOSE, 0, 0);
         }
         
-        keybd_event(VK_MENU,    0, KEYEVENTF_KEYUP, NULL); // make sure alt is depressed
-        keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, NULL); // should harm to depress ctrl as well
+        // HWND hWnd = wins[0];
 
-        keybd_event(VK_MENU, 0, 0, NULL);
-        keybd_event(VK_F4,   0, 0, NULL);
-        keybd_event(VK_F4,   0, KEYEVENTF_KEYUP, NULL);
-        keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+        // if (!cmp(WindowStatus(hWnd).c_str(), "normal"))
+        // {
+            // ShowWindow(hWnd, SW_RESTORE);
+        // }
+        // // SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        // // SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+
+        // if (hWnd != GetForegroundWindow())
+        // {
+            // keybd_event(VK_MENU, 0, 0, NULL);     // fake ALT press to enable foreground switch
+            // if (!SetForegroundWindow(hWnd))       // ... no wonder windows is so bad
+            // {
+                // cerr << "can't foreground window" << endl;
+                // return S_FALSE;
+            // }
+            // keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+        // }
+
+        // keybd_event(VK_MENU,    0, KEYEVENTF_KEYUP, NULL); // make sure alt is depressed
+        // keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, NULL); // should harm to depress ctrl as well
+
+        // keybd_event(VK_MENU, 0, 0, NULL);
+        // keybd_event(VK_F4,   0, 0, NULL);
+        // keybd_event(VK_F4,   0, KEYEVENTF_KEYUP, NULL);
+        // keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
     }
     return S_OK;    
 }
