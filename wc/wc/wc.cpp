@@ -373,35 +373,7 @@ HRESULT close(char *id)
         for (HWND win : wins)
         {
             PostMessage(win, WM_CLOSE, 0, 0);
-        }
-        
-        // HWND hWnd = wins[0];
-
-        // if (!cmp(WindowStatus(hWnd).c_str(), "normal"))
-        // {
-            // ShowWindow(hWnd, SW_RESTORE);
-        // }
-        // // SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        // // SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-
-        // if (hWnd != GetForegroundWindow())
-        // {
-            // keybd_event(VK_MENU, 0, 0, NULL);     // fake ALT press to enable foreground switch
-            // if (!SetForegroundWindow(hWnd))       // ... no wonder windows is so bad
-            // {
-                // cerr << "can't foreground window" << endl;
-                // return S_FALSE;
-            // }
-            // keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
-        // }
-
-        // keybd_event(VK_MENU,    0, KEYEVENTF_KEYUP, NULL); // make sure alt is depressed
-        // keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, NULL); // should harm to depress ctrl as well
-
-        // keybd_event(VK_MENU, 0, 0, NULL);
-        // keybd_event(VK_F4,   0, 0, NULL);
-        // keybd_event(VK_F4,   0, KEYEVENTF_KEYUP, NULL);
-        // keybd_event(VK_MENU, 0, KEYEVENTF_KEYUP, NULL);
+        }        
     }
     return S_OK;    
 }
@@ -519,18 +491,7 @@ HRESULT raise(char *id)
         ShowWindow(hWnd, SW_RESTORE);
         // typical windows WTF :-)
         SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        
-        // VK_MENU     = 0x12 # ALT key
-        // KEYDOWN     = 1
-        // KEYUP       = 3
-//         
-        // if win.minimized
-            // user.RestoreWindow win.hwnd
-//         
-        // user.keybd_event VK_MENU, 0, KEYDOWN, null # fake ALT press to enable foreground switch
-        // user.SetForegroundWindow win.hwnd          # ... no wonder windows is so bad
-        // user.keybd_event VK_MENU, 0, KEYUP, null
+        SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);        
     }
     return S_OK;    
 }
@@ -551,6 +512,17 @@ HRESULT focus(char *id)
         SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         SetForegroundWindow(hWnd);
+        
+        // VK_MENU     = 0x12 # ALT key
+        // KEYDOWN     = 1
+        // KEYUP       = 3
+
+        // if win.minimized
+            // user.RestoreWindow win.hwnd
+
+        // user.keybd_event VK_MENU, 0, KEYDOWN, null # fake ALT press to enable foreground switch
+        // user.SetForegroundWindow win.hwnd          # ... no wonder windows is so bad
+        // user.keybd_event VK_MENU, 0, KEYUP, null
     }
     return S_OK;    
 }
@@ -835,28 +807,20 @@ HRESULT taskbar(char* id)
         {
             switch(nTaskBarPosition)
             {
-                case 0:
-                    rcWorkArea.bottom -= rcTaskBar.bottom - rcTaskBar.top;
-                    break;
-                case 1:
-                    rcWorkArea.left += rcTaskBar.right - rcTaskBar.left;
-                    break;
-                case 2:
-                    rcWorkArea.right -= rcTaskBar.right - rcTaskBar.left;
-                    break;
-                case 3:
-                    rcWorkArea.top += rcTaskBar.bottom - rcTaskBar.top;
-                    break;
+                case 0: rcWorkArea.bottom = nHeight - (rcTaskBar.bottom - rcTaskBar.top); break;
+                case 1: rcWorkArea.left   = rcTaskBar.right - rcTaskBar.left; break; 
+                case 2: rcWorkArea.right  = nWidth - (rcTaskBar.right - rcTaskBar.left); break;
+                case 3: rcWorkArea.top    = rcTaskBar.bottom - rcTaskBar.top; break;
             }
             SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&rcWorkArea,0);
             ShowWindow(hTaskBar, SW_SHOW);
         }
         else
         {
-            if      (rcWorkArea.left!=0) nTaskBarPosition = 1;
-            else if (rcWorkArea.top!=0)  nTaskBarPosition = 3;
-            else if ((rcWorkArea.right-rcWorkArea.left)<nWidth)  nTaskBarPosition = 2;
-            else if ((rcWorkArea.bottom-rcWorkArea.top)<nHeight) nTaskBarPosition = 0;
+            if      ( rcWorkArea.left!=0) nTaskBarPosition = 1;
+            else if ( rcWorkArea.top!=0)  nTaskBarPosition = 3;
+            else if ((rcWorkArea.right-rcWorkArea.left) < nWidth)  nTaskBarPosition = 2;
+            else if ((rcWorkArea.bottom-rcWorkArea.top) < nHeight) nTaskBarPosition = 0;
 
             rcWorkArea.left   = 0;
             rcWorkArea.top    = 0;

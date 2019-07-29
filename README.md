@@ -88,11 +88,10 @@ wxw('trash',    'empty')
 
 The project on github contains sources for an application that uses some of the features provided by wxw.
 
-The application does
-
-- provide a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac (Alt+Z)
-- positions active windows on keyboard shortcuts similiar to divvy or magnet on mac (Alt+Ctrl+[Up|Left...|1...4])
-- switch applications similar to the mac cmd-tab switch (Ctrl+Tab)
+The application 
+- provides a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac (Alt+Z)
+- positions active windows on keyboard shortcuts similiar to divvy or magnet (Alt+Ctrl+[Up|Left...|1...4])
+- switches between other applications similar to the cmd-tab switch on mac (Ctrl+Tab):
 
 <p align="center"><img src="img/switch.png"></p>
 
@@ -111,7 +110,7 @@ npm run build
 
 It's still a bit rough around the edges, let me know how it went in case you tried it.
 
-#### Projects
+#### Projects using wxw
 
 [clippo](https://github.com/monsterkodi/clippo)
 [kappo](https://github.com/monsterkodi/kappo)
