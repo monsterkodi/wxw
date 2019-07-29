@@ -86,9 +86,7 @@ wxw('trash',    'empty')
 
 ## Application
 
-The project on github contains sources for an application that uses some of the features provided by wxw.
-
-The application 
+The project contains also sources for an application that ...
 - provides a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac (Alt+Z)
 - positions active windows on keyboard shortcuts similiar to divvy or magnet (Alt+Ctrl+[Up|Left...|1...4])
 - switches between other applications similar to the cmd-tab switch on mac (Ctrl+Tab):
