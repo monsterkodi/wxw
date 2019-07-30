@@ -19,6 +19,9 @@
 #include <dwmapi.h>
 #include <commoncontrols.h>
 #include <tlhelp32.h>
+#include <winsock.h>
+
+#include "uiohook.h"
 
 using namespace Gdiplus;
 using namespace std;
@@ -49,11 +52,19 @@ int cmp(const wstring& a, const wstring& b) { return a.compare(b) == 0; }
 int cmp(const wstring& a, const char*    b) { return cmp(a, s2ws(b)); }
 int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; }
 
-int klog(char *msg)
+int klog(const char *msg)
 {
     printf(msg);
     printf("\n");
     return 0;
+}
+
+void flog(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
 }
 
 bool FileExists(char* szPath)
@@ -66,6 +77,68 @@ bool DirExists(char* szPath)
 {
     DWORD dwAttrib = GetFileAttributesA(szPath);
     return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+// 000   000  0000000    00000000   
+// 000   000  000   000  000   000  
+// 000   000  000   000  00000000   
+// 000   000  000   000  000        
+//  0000000   0000000    000        
+
+SOCKET udpSocket;
+struct sockaddr_in udpAddr;
+
+bool initUDP(uint32_t port = 66666)
+{
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(1, 1), &wsa))
+    {
+        cerr << "Failed to init Winsock!" << endl;
+        return false;
+    }
+
+    udpSocket = socket(PF_INET, SOCK_DGRAM, 0);
+    if (udpSocket < 0)
+    {
+        cerr << "socket() failed: " << WSAGetLastError() << endl;
+        return false;
+    }
+
+    int bAllow = 1;
+    if (setsockopt(udpSocket, SOL_SOCKET, SO_BROADCAST, (char*)& bAllow, sizeof(bAllow)) < 0)
+    {
+        cerr << "setsockopt() failed: " << WSAGetLastError() << endl;
+        closesocket(udpSocket);
+        return false;
+    }
+
+    memset(&udpAddr, 0, sizeof(udpAddr));
+
+    udpAddr.sin_port = htons(port);
+    udpAddr.sin_family = AF_INET;
+    udpAddr.sin_addr.s_addr = INADDR_BROADCAST;
+
+    return true;
+}
+
+int sendUDP(const string& msg)
+{
+    const int length = (int)msg.length();
+
+    int bytes = sendto(udpSocket, msg.c_str(), length, 0, (sockaddr*)& udpAddr, sizeof(struct sockaddr_in));
+
+    if (bytes < length)
+    {
+        cerr << "WARNING: only sent " << bytes << " bytes! (Expected " << length << ')' << endl;
+        return 1;
+    }
+
+    return bytes;
+}
+
+void closeUDP()
+{
+    closesocket(udpSocket);
 }
 
 // 00000000   00000000    0000000    0000000  00000000    0000000   000000000  000   000  
@@ -1271,7 +1344,6 @@ HRESULT icon(char* id, char* targetfile=NULL)
     return hr;
 }
 
-
 // 00000000   00000000    0000000    0000000  
 // 000   000  000   000  000   000  000       
 // 00000000   0000000    000   000  000       
@@ -1545,6 +1617,46 @@ HRESULT help(char *command)
     return S_OK;
 }
 
+// 000   000   0000000    0000000   000   000
+// 000   000  000   000  000   000  000  000 
+// 000000000  000   000  000   000  0000000  
+// 000   000  000   000  000   000  000  000 
+// 000   000   0000000    0000000   000   000
+
+void hook_event(uiohook_event* const event) 
+{
+    char buffer[256] = { 0 };
+    
+    switch (event->type) 
+    {
+    case EVENT_KEY_PRESSED:
+        if (event->data.keyboard.keycode == VC_ESCAPE) { hook_stop();}
+        else snprintf(buffer, sizeof(buffer), "KEY DOWN code:%u raw:0x%X", event->data.keyboard.keycode, event->data.keyboard.rawcode);
+        break;
+        
+    case EVENT_KEY_RELEASED:   snprintf(buffer, sizeof(buffer), "KEY UP   code:%u raw:0x%X", event->data.keyboard.keycode, event->data.keyboard.rawcode); break;
+    // case EVENT_KEY_TYPED:      snprintf(buffer, sizeof(buffer), "KEY CLCK char:%lc raw:%u", (wint_t)event->data.keyboard.keychar, event->data.keyboard.rawcode); break;
+    case EVENT_MOUSE_PRESSED:  snprintf(buffer, sizeof(buffer), "MOUSE DOWN x:%i y:%i button:%i", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button);break;
+    case EVENT_MOUSE_RELEASED: snprintf(buffer, sizeof(buffer), "MOUSE UP   x:%i y:%i button:%i", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button);break;
+    case EVENT_MOUSE_CLICKED:  snprintf(buffer, sizeof(buffer), "MOUSE CLCK x:%i y:%i button:%i", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button);break;
+    case EVENT_MOUSE_DRAGGED:  
+    case EVENT_MOUSE_MOVED:    snprintf(buffer, sizeof(buffer), "MOUSE MOVE x:%i y:%i", event->data.mouse.x, event->data.mouse.y);break;
+    case EVENT_MOUSE_WHEEL:    snprintf(buffer, sizeof(buffer), "WHEEL %i", event->data.wheel.amount * event->data.wheel.rotation); break;
+    default: snprintf(buffer, sizeof(buffer), "UNKNOWN %d", event->type); break;
+    }
+    
+    sendUDP(buffer);
+    cout << buffer << endl;
+}
+
+void initHook()
+{
+    initUDP();
+    hook_set_dispatch_proc(&hook_event);
+    hook_run();
+    closeUDP();
+}
+
 // 000   000  000  000   000  00     00   0000000   000  000   000  
 // 000 0 000  000  0000  000  000   000  000   000  000  0000  000  
 // 000000000  000  000 0 000  000000000  000000000  000  000 0 000  
@@ -1668,6 +1780,10 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = proclist();
         else           hr = proclist(argv[2]);
+    }
+    else if (cmp(cmd, "hook"))
+    {
+        initHook();
     }
     else
     {
