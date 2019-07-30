@@ -1397,6 +1397,44 @@ HRESULT proclist(char* id=NULL)
     return S_OK;
 }
 
+// 000   000   0000000    0000000   000   000
+// 000   000  000   000  000   000  000  000 
+// 000000000  000   000  000   000  0000000  
+// 000   000  000   000  000   000  000  000 
+// 000   000   0000000    0000000   000   000
+
+void hook_event(uiohook_event* const event) 
+{
+    char buffer[256] = { 0 };
+    
+    switch (event->type) 
+    {
+    case EVENT_KEY_PRESSED:
+        if (event->data.keyboard.keycode == VC_ESCAPE) { hook_stop(); }
+        else snprintf(buffer, sizeof(buffer), "{\"event\":\"keydown\", \"code\":%d, \"raw\":%d}", event->data.keyboard.keycode, event->data.keyboard.rawcode);
+        break;
+        
+    case EVENT_KEY_RELEASED:   snprintf(buffer, sizeof(buffer), "{\"event\":\"keyup\", \"code\":%d, \"raw\":%d}", event->data.keyboard.keycode, event->data.keyboard.rawcode); break;
+    case EVENT_MOUSE_PRESSED:  snprintf(buffer, sizeof(buffer), "{\"event\":\"mousedown\", \"x\":%i, \"y\":%i, \"button\":%i}", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button); break;
+    case EVENT_MOUSE_RELEASED: snprintf(buffer, sizeof(buffer), "{\"event\":\"mouseup\", \"x\":%i, \"y\":%i, \"button\":%i}", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button); break;
+    case EVENT_MOUSE_CLICKED:  snprintf(buffer, sizeof(buffer), "{\"event\":\"mouseclick\", \"x\":%i, \"y\":%i, \"button\":%i}", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button); break;
+    case EVENT_MOUSE_DRAGGED:                                     
+    case EVENT_MOUSE_MOVED:    snprintf(buffer, sizeof(buffer), "{\"event\":\"mousemove\", \"x\":%i, \"y\":%i}", event->data.mouse.x, event->data.mouse.y); break;
+    case EVENT_MOUSE_WHEEL:    snprintf(buffer, sizeof(buffer), "{\"event\":\"mousewheel\", \"delta\":%i}", event->data.wheel.amount * event->data.wheel.rotation); break;
+    default: snprintf(buffer, sizeof(buffer), "{\"event\":%d}", event->type); break;
+    }
+    
+    sendUDP(buffer);
+}
+
+void initHook()
+{
+    initUDP();
+    hook_set_dispatch_proc(&hook_event);
+    hook_run();
+    closeUDP();
+}
+
 // 000   000   0000000   0000000    0000000   00000000  
 // 000   000  000       000   000  000        000       
 // 000   000  0000000   000000000  000  0000  0000000   
@@ -1617,51 +1655,11 @@ HRESULT help(char *command)
     return S_OK;
 }
 
-// 000   000   0000000    0000000   000   000
-// 000   000  000   000  000   000  000  000 
-// 000000000  000   000  000   000  0000000  
-// 000   000  000   000  000   000  000  000 
-// 000   000   0000000    0000000   000   000
-
-void hook_event(uiohook_event* const event) 
-{
-    char buffer[256] = { 0 };
-    
-    switch (event->type) 
-    {
-    case EVENT_KEY_PRESSED:
-        if (event->data.keyboard.keycode == VC_ESCAPE) { hook_stop();}
-        else snprintf(buffer, sizeof(buffer), "KEY DOWN code:%u raw:0x%X", event->data.keyboard.keycode, event->data.keyboard.rawcode);
-        break;
-        
-    case EVENT_KEY_RELEASED:   snprintf(buffer, sizeof(buffer), "KEY UP   code:%u raw:0x%X", event->data.keyboard.keycode, event->data.keyboard.rawcode); break;
-    // case EVENT_KEY_TYPED:      snprintf(buffer, sizeof(buffer), "KEY CLCK char:%lc raw:%u", (wint_t)event->data.keyboard.keychar, event->data.keyboard.rawcode); break;
-    case EVENT_MOUSE_PRESSED:  snprintf(buffer, sizeof(buffer), "MOUSE DOWN x:%i y:%i button:%i", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button);break;
-    case EVENT_MOUSE_RELEASED: snprintf(buffer, sizeof(buffer), "MOUSE UP   x:%i y:%i button:%i", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button);break;
-    case EVENT_MOUSE_CLICKED:  snprintf(buffer, sizeof(buffer), "MOUSE CLCK x:%i y:%i button:%i", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button);break;
-    case EVENT_MOUSE_DRAGGED:  
-    case EVENT_MOUSE_MOVED:    snprintf(buffer, sizeof(buffer), "MOUSE MOVE x:%i y:%i", event->data.mouse.x, event->data.mouse.y);break;
-    case EVENT_MOUSE_WHEEL:    snprintf(buffer, sizeof(buffer), "WHEEL %i", event->data.wheel.amount * event->data.wheel.rotation); break;
-    default: snprintf(buffer, sizeof(buffer), "UNKNOWN %d", event->type); break;
-    }
-    
-    sendUDP(buffer);
-    cout << buffer << endl;
-}
-
-void initHook()
-{
-    initUDP();
-    hook_set_dispatch_proc(&hook_event);
-    hook_run();
-    closeUDP();
-}
-
-// 000   000  000  000   000  00     00   0000000   000  000   000  
-// 000 0 000  000  0000  000  000   000  000   000  000  0000  000  
-// 000000000  000  000 0 000  000000000  000000000  000  000 0 000  
-// 000   000  000  000  0000  000 0 000  000   000  000  000  0000  
-// 00     00  000  000   000  000   000  000   000  000  000   000  
+// 00     00   0000000   000  000   000  
+// 000   000  000   000  000  0000  000  
+// 000000000  000000000  000  000 0 000  
+// 000 0 000  000   000  000  000  0000  
+// 000   000  000   000  000  000   000  
 
 int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, __in LPSTR lpCmdLine, __in int nShowCmd)
 {

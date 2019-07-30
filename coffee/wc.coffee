@@ -80,9 +80,9 @@ exec = (argv...) ->
         if cmd == 'icon'
             if fakeIcon argv then return ''
             
-        if cmd in ['launch' 'raise' 'focus']
-            childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true detached:true stdio:'inherit'
-            return ''
+        if cmd in ['launch' 'raise' 'focus' 'hook']
+            # return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true detached:true stdio:'inherit'
+            return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true stdio:'inherit'
         else
             args = (kstr(s) for s in argv).join " "
             outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
