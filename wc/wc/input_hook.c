@@ -22,6 +22,7 @@
 
 #include <inttypes.h>
 #include <windows.h>
+#include <stdio.h>
 
 #include "uiohook.h"
 #include "input_helper.h"
@@ -29,7 +30,10 @@
 
 // Thread and hook handles.
 static DWORD hook_thread_id = 0;
-static HHOOK keyboard_event_hhook = NULL, mouse_event_hhook = NULL;
+static HHOOK keyboard_event_hhook = NULL;
+static HHOOK mouse_event_hhook = NULL;
+static HHOOK shell_event_hhook = NULL;
+static HHOOK wmsg_event_hhook = NULL;
 static HWINEVENTHOOK win_event_hhook = NULL;
 
 // The handle to the DLL module pulled in DllMain on DLL_PROCESS_ATTACH.
@@ -166,6 +170,16 @@ void unregister_running_hooks() {
 		UnhookWindowsHookEx(mouse_event_hhook);
 		mouse_event_hhook = NULL;
 	}
+    
+    if (shell_event_hhook != NULL) {
+        UnhookWindowsHookEx(shell_event_hhook);
+        shell_event_hhook = NULL;
+    }
+
+    if (wmsg_event_hhook != NULL) {
+        UnhookWindowsHookEx(wmsg_event_hhook);
+        wmsg_event_hhook = NULL;
+    }
 }
 
 void hook_start_proc() {
@@ -287,6 +301,18 @@ static void process_key_released(KBDLLHOOKSTRUCT *kbhook) {
 
 	// Fire key released event.
 	dispatch_event(&event);
+}
+
+LRESULT CALLBACK wmsg_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) 
+{
+    printf("wmsg %d\n", nCode);
+    return S_OK;
+}
+
+LRESULT CALLBACK shell_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) 
+{
+    printf("shell %d\n", nCode);
+    return S_OK;
 }
 
 LRESULT CALLBACK keyboard_hook_event_proc(int nCode, WPARAM wParam, LPARAM lParam) {
@@ -642,9 +668,19 @@ void CALLBACK win_hook_event_proc(HWINEVENTHOOK hook, DWORD event, HWND hWnd, LO
 				UnhookWindowsHookEx(mouse_event_hhook);
 			}
 
+            if (shell_event_hhook != NULL) {
+                UnhookWindowsHookEx(shell_event_hhook);
+            }
+
+            if (wmsg_event_hhook != NULL) {
+                UnhookWindowsHookEx(wmsg_event_hhook);
+            }
+
 			// Restart the event hooks.
 			keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
 			mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
+            shell_event_hhook = SetWindowsHookEx(WH_SHELL, shell_hook_event_proc, hInst, 0);
+            wmsg_event_hhook = SetWindowsHookEx(WH_CBT, wmsg_hook_event_proc, hInst, 0);
 			
 			// Re-initialize modifier masks.
 			initialize_modifiers();
@@ -694,6 +730,8 @@ UIOHOOK_API int hook_run() {
 	// Create the native hooks.
 	keyboard_event_hhook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboard_hook_event_proc, hInst, 0);
 	mouse_event_hhook = SetWindowsHookEx(WH_MOUSE_LL, mouse_hook_event_proc, hInst, 0);
+    shell_event_hhook = SetWindowsHookEx(WH_SHELL, shell_hook_event_proc, hInst, 0);
+    wmsg_event_hhook = SetWindowsHookEx(WH_CBT, wmsg_hook_event_proc, hInst, 0);
 
 	// Create a window event hook to listen for capture change.
 	win_event_hhook = SetWinEventHook(
