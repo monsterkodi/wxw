@@ -1409,11 +1409,7 @@ void hook_event(uiohook_event* const event)
     
     switch (event->type) 
     {
-    case EVENT_KEY_PRESSED:
-        if (event->data.keyboard.keycode == VC_ESCAPE) { hook_stop(); }
-        else snprintf(buffer, sizeof(buffer), "{\"event\":\"keydown\", \"code\":%d, \"raw\":%d}", event->data.keyboard.keycode, event->data.keyboard.rawcode);
-        break;
-        
+    case EVENT_KEY_PRESSED:    snprintf(buffer, sizeof(buffer), "{\"event\":\"keydown\", \"code\":%d, \"raw\":%d}", event->data.keyboard.keycode, event->data.keyboard.rawcode); break;
     case EVENT_KEY_RELEASED:   snprintf(buffer, sizeof(buffer), "{\"event\":\"keyup\", \"code\":%d, \"raw\":%d}", event->data.keyboard.keycode, event->data.keyboard.rawcode); break;
     case EVENT_MOUSE_PRESSED:  snprintf(buffer, sizeof(buffer), "{\"event\":\"mousedown\", \"x\":%i, \"y\":%i, \"button\":%i}", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button); break;
     case EVENT_MOUSE_RELEASED: snprintf(buffer, sizeof(buffer), "{\"event\":\"mouseup\", \"x\":%i, \"y\":%i, \"button\":%i}", event->data.mouse.x, event->data.mouse.y, event->data.mouse.button); break;
@@ -1421,7 +1417,7 @@ void hook_event(uiohook_event* const event)
     case EVENT_MOUSE_DRAGGED:                                     
     case EVENT_MOUSE_MOVED:    snprintf(buffer, sizeof(buffer), "{\"event\":\"mousemove\", \"x\":%i, \"y\":%i}", event->data.mouse.x, event->data.mouse.y); break;
     case EVENT_MOUSE_WHEEL:    snprintf(buffer, sizeof(buffer), "{\"event\":\"mousewheel\", \"delta\":%i}", event->data.wheel.amount * event->data.wheel.rotation); break;
-    default: snprintf(buffer, sizeof(buffer), "{\"event\":%d}", event->type); break;
+    default: snprintf(buffer, sizeof(buffer), "{\"event\": \"unknow\", \"type\":%d}", event->type); break;
     }
     
     sendUDP(buffer);
