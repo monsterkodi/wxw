@@ -67,13 +67,13 @@ void flog(const char* format, ...)
     va_end(args);
 }
 
-bool FileExists(char* szPath)
+bool fileExists(char* szPath)
 {
     DWORD dwAttrib = GetFileAttributesA(szPath);
     return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-bool DirExists(char* szPath)
+bool dirExists(char* szPath)
 {
     DWORD dwAttrib = GetFileAttributesA(szPath);
     return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
@@ -182,7 +182,7 @@ string fileExt(const string& path)
 //    000     000     000     000      000       
 //    000     000     000     0000000  00000000  
 
-wstring WindowTitle(HWND hWnd)
+wstring windowTitle(HWND hWnd)
 {
 	int length = GetWindowTextLengthW(hWnd);
 	if (length <= 0) return L"";
@@ -192,7 +192,7 @@ wstring WindowTitle(HWND hWnd)
 	return title;
 }
 
-string WindowStatus(HWND hWnd)
+string windowStatus(HWND hWnd)
 {
 	LONG style = GetWindowLongW(hWnd, GWL_STYLE);
 	if    (!(style & WS_VISIBLE)) { return "hidden"; }
@@ -201,7 +201,7 @@ string WindowStatus(HWND hWnd)
 	return "normal";
 }
 
-bool IsWindowCloaked(HWND hWnd)
+bool isWindowCloaked(HWND hWnd)
 {
 	int Cloaked;
 	if (S_OK != DwmGetWindowAttribute(hWnd, DWMWA_CLOAKED, &Cloaked, sizeof(Cloaked)))
@@ -209,6 +209,106 @@ bool IsWindowCloaked(HWND hWnd)
 		Cloaked = 0;
 	}
 	return Cloaked ? true : false;
+}
+
+
+// 00000000   00000000    0000000    0000000  
+// 000   000  000   000  000   000  000       
+// 00000000   0000000    000   000  000       
+// 000        000   000  000   000  000       
+// 000        000   000   0000000    0000000  
+
+struct procinfo
+{
+    string   path;
+    uint32_t pid;
+    uint32_t parent;
+};
+
+vector<procinfo> procs(char* id=NULL)
+{
+    vector<procinfo> procinfos;
+    
+    HANDLE hProcessSnap;
+    PROCESSENTRY32 pe32;
+    
+    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hProcessSnap == INVALID_HANDLE_VALUE)
+    {
+        return procinfos;
+    }
+    
+    pe32.dwSize = sizeof(PROCESSENTRY32);
+    
+    if (!Process32First(hProcessSnap, &pe32))
+    {
+        CloseHandle(hProcessSnap);
+        return procinfos;
+    }
+    
+    do
+    {
+        string path = procPath(pe32.th32ProcessID);
+        
+        if (!path.size())        
+        {
+            continue;
+        }
+        
+        string name = fileName(path);
+        string ext  = fileExt(path);
+        
+        if (ext.size() > 0) name += ext;
+        
+        if (id == NULL || name.find(id) != wstring::npos)
+        {
+            procinfos.push_back({path.c_str(), pe32.th32ProcessID, pe32.th32ParentProcessID});
+        }
+        
+    } while (Process32Next(hProcessSnap, &pe32));
+    
+    CloseHandle(hProcessSnap);
+    
+    return procinfos;
+}
+
+HRESULT proclist(char* id=NULL)
+{ 
+    for (auto info : procs(id))
+    {
+        printf(".\n");
+        printf("    path    %s\n",  info.path.c_str());
+        printf("    pid     %lu\n", info.pid);
+        printf("    parent  %lu\n", info.parent);
+    }
+    
+    return S_OK;
+}
+
+HRESULT terminateProc(uint32_t procid)
+{
+    HRESULT result = S_OK;
+    if (HANDLE hProc = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, procid))
+    {
+        if (TerminateProcess(hProc, 0))
+        {
+            cout << "terminated " << procid << endl;
+        }
+        else
+        {
+            cerr << "termination failed " << procid << endl;
+            result = S_FALSE;
+        }
+        
+        CloseHandle(hProc);
+    }
+    else
+    {
+        cerr << "no termination handle " << procid << endl;
+        result = S_FALSE;
+    }
+    
+    return result;
 }
 
 // 00     00   0000000   000000000   0000000  000   000  000  000   000   0000000   
@@ -227,7 +327,7 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
 	}
 	else if (cmp(id, "normal") || cmp(id, "minimized") || cmp(id, "maximized"))
 	{
-		return cmp(WindowStatus(hWnd).c_str(), id);
+        return cmp(windowStatus(hWnd).c_str(), id);
 	}
 
     wstring wid = s2ws(id);
@@ -261,9 +361,9 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
 static BOOL CALLBACK matchWindow(HWND hWnd, LPARAM param)
 {
     if (!IsWindowVisible(hWnd)) return true;
-	if ( IsWindowCloaked(hWnd)) return true;
+    if ( isWindowCloaked(hWnd)) return true;
     
-    wstring title = WindowTitle(hWnd);
+    wstring title = windowTitle(hWnd);
     if (!title.size()) return true;
 
     if (cmp(title, "Program Manager"))
@@ -325,14 +425,14 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 
 HRESULT winInfo(HWND hWnd)
 {    
-    wstring title = WindowTitle(hWnd);
+    wstring title = windowTitle(hWnd);
     
     DWORD pid;
     GetWindowThreadProcessId(hWnd, &pid);
         
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
-    string status = WindowStatus(hWnd);
+    string status = windowStatus(hWnd);
     
     RECT rect; 
 
@@ -451,6 +551,33 @@ HRESULT close(char *id)
     return S_OK;    
 }
 
+// 000000000  00000000  00000000   00     00  000  000   000   0000000   000000000  00000000  
+//    000     000       000   000  000   000  000  0000  000  000   000     000     000       
+//    000     0000000   0000000    000000000  000  000 0 000  000000000     000     0000000   
+//    000     000       000   000  000 0 000  000  000  0000  000   000     000     000       
+//    000     00000000  000   000  000   000  000  000   000  000   000     000     00000000  
+
+HRESULT terminate(char* id)
+{
+    vector<procinfo> infos = procs(id);
+        
+    if (infos.size())
+    {
+        for (auto info : infos)
+        {
+            if (!cmp(fileName(info.path).c_str(), "explorer"))
+            {
+                terminateProc(info.pid);
+            }
+        }
+        
+        return S_OK;
+    }
+ 
+    cerr << "no match " << id << endl;
+    return S_FALSE;
+}
+
 //  0000000   000   000  000  000000000  
 // 000   000  000   000  000     000     
 // 000 00 00  000   000  000     000     
@@ -460,93 +587,39 @@ HRESULT close(char *id)
 HRESULT quit(char *id)
 {
     vector<HWND> wins;
-    if (!SUCCEEDED(matchingWindows(id, &wins))) 
-    {
-        cerr << "no match " << id << endl;
-        return S_FALSE;
+    if (!SUCCEEDED(matchingWindows(id, &wins)) || wins.size() == 0) 
+    {        
+        return terminate(id);
     }
     
-    if (wins.size() >= 1)
+    set<DWORD> threadids;
+    set<DWORD> procids;
+    for (HWND win : wins)
     {
-        set<DWORD> threadids;
-        set<DWORD> procids;
-        for (HWND win : wins)
-        {
-            DWORD procid;
-            threadids.insert(GetWindowThreadProcessId(win, &procid));
-            procids.insert (procid);
-            PostMessage(win, WM_CLOSE, 0, 0);
-        }
+        DWORD procid;
+        threadids.insert(GetWindowThreadProcessId(win, &procid));
+        procids.insert (procid);
+        PostMessage(win, WM_CLOSE, 0, 0);
+    }
 
-        for (DWORD threadid : threadids)
-        {
-            PostThreadMessage(threadid, WM_QUIT, 0, 0);
-        }
-        
-        for (DWORD procid : procids)
-        {
-            string path = procPath(procid);
-            if (cmp(fileName(path).c_str(), "explorer"))
-            {
-                // cout << "skip explorer " << path << endl;
-                continue;
-            }
-        
-            if (HANDLE hProc = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, procid))
-            {
-                if (TerminateProcess(hProc, 0))
-                {
-                    cout << "terminated " << procid << endl;
-                }
-                else
-                {
-                    cerr << "termination failed " << procid << endl;
-                }
-                
-                CloseHandle(hProc);
-            }
-            else
-            {
-                cerr << "no termination handle " << procid << endl;
-            }
-        }        
-    }
-    else
+    for (DWORD threadid : threadids)
     {
-        cerr << "no windows " << id << endl;
+        PostThreadMessage(threadid, WM_QUIT, 0, 0);
     }
+    
+    for (DWORD procid : procids)
+    {
+        string path = procPath(procid);
+        if (cmp(fileName(path).c_str(), "explorer"))
+        {
+            // cout << "skip explorer " << path << endl;
+            continue;
+        }
+    
+        terminateProc(procid);            
+    }        
+
     return S_OK;    
-}
-
-// 000000000  00000000  00000000   00     00  000  000   000   0000000   000000000  00000000  
-//    000     000       000   000  000   000  000  0000  000  000   000     000     000       
-//    000     0000000   0000000    000000000  000  000 0 000  000000000     000     0000000   
-//    000     000       000   000  000 0 000  000  000  0000  000   000     000     000       
-//    000     00000000  000   000  000   000  000  000   000  000   000     000     00000000  
-
-HRESULT terminate(char* id)
-{
-    DWORD procid = (DWORD)_atoi64(id);
-
-    if (HANDLE hProc = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, procid))
-    {
-        if (TerminateProcess(hProc, 0))
-        {
-            cout << "terminated " << procid << endl;
-        }
-        else
-        {
-            cerr << "termination failed " << procid << endl;
-        }
-        
-        CloseHandle(hProc);
-    }
-    else
-    {
-        cerr << "no termination handle " << procid << endl;
-    }
-
-    return S_OK;
 }
 
 // 00000000    0000000   000   0000000  00000000  
@@ -606,7 +679,7 @@ HRESULT focus(char *id)
 // 000       000  000  0000  000   000  000       000  000      000       
 // 000       000  000   000  0000000    000       000  0000000  00000000  
 
-bool FindFile(const wstring& directory, const wstring& filename, wstring& result)
+bool findFile(const wstring& directory, const wstring& filename, wstring& result)
 {
     wstring tmp = directory + L"\\*";
     WIN32_FIND_DATAW file;
@@ -641,7 +714,7 @@ bool FindFile(const wstring& directory, const wstring& filename, wstring& result
 
         for (vector<wstring>::iterator iter = directories.begin(), end = directories.end(); iter != end; ++iter)
         { 
-            if (FindFile(*iter, filename, result))
+            if (findFile(*iter, filename, result))
             {
                 return true;
             }
@@ -662,7 +735,7 @@ HRESULT launch(char *path)
     char normpath[MAX_PATH];
     GetFullPathNameA(path, MAX_PATH, normpath, NULL);
     
-    if (!FileExists(normpath) && PathIsRelativeA(path))
+    if (!fileExists(normpath) && PathIsRelativeA(path))
     {
         char fname[_MAX_FNAME];
         
@@ -683,11 +756,11 @@ HRESULT launch(char *path)
             {
                 cout << "found in PATH " << normpath << endl;
             }
-            else if (FindFile(L"C:\\Program Files", wpath, found))
+            else if (findFile(L"C:\\Program Files", wpath, found))
             { 
                 GetFullPathNameA(ws2s(found).c_str(), MAX_PATH, normpath, NULL);
             }
-            else if (FindFile(L"C:\\Program Files (x86)", wpath, found))
+            else if (findFile(L"C:\\Program Files (x86)", wpath, found))
             {
                 GetFullPathNameA(ws2s(found).c_str(), MAX_PATH, normpath, NULL);
             }
@@ -1116,7 +1189,7 @@ bool saveBitmap(Bitmap* bitmap, const char* targetfile)
 		GetFullPathNameA(targetdir, MAX_PATH, normpath, NULL);
 
 		normpath[strlen(normpath) - 1] = 0;
-		if (!DirExists(normpath))
+        if (!dirExists(normpath))
 		{
 			if ((ERROR_SUCCESS != SHCreateDirectoryExA(0, normpath, 0)))
 			{
@@ -1290,7 +1363,7 @@ HRESULT icon(char* id, char* targetfile=NULL)
         sprintf_s(pngfile, "%s.png", fname);
     }
     
-    if (!FileExists(normpath))
+    if (!fileExists(normpath))
     {
         cout << "can't find " << normpath << ", icon will be generic." << endl;
     }
@@ -1344,59 +1417,6 @@ HRESULT icon(char* id, char* targetfile=NULL)
     return hr;
 }
 
-// 00000000   00000000    0000000    0000000  
-// 000   000  000   000  000   000  000       
-// 00000000   0000000    000   000  000       
-// 000        000   000  000   000  000       
-// 000        000   000   0000000    0000000  
-
-HRESULT proclist(char* id=NULL)
-{ 
-    HANDLE hProcessSnap;
-    PROCESSENTRY32 pe32;
-    
-    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hProcessSnap == INVALID_HANDLE_VALUE)
-    {
-        return S_FALSE;
-    }
-    
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-    
-    if (!Process32First(hProcessSnap, &pe32))
-    {
-        CloseHandle(hProcessSnap);
-        return S_FALSE;
-    }
-    
-    do
-    {
-        string path = procPath(pe32.th32ProcessID);
-        
-        if (!path.size())        
-        {
-            continue;
-        }
-        
-        string name = fileName(path);
-        string ext  = fileExt(path);
-        
-        if (ext.size() > 0) name += ext;
-        
-        if (id == NULL || name.find(id) != wstring::npos)
-        {
-            printf(".\n");
-            printf("    path    %s\n",  path.c_str());
-            printf("    pid     %lu\n", pe32.th32ProcessID);
-            printf("    parent  %lu\n", pe32.th32ParentProcessID);
-        }
-        
-    } while (Process32Next(hProcessSnap, &pe32));
-    
-    CloseHandle(hProcessSnap);
-    return S_OK;
-}
-
 // 000   000   0000000    0000000   000   000
 // 000   000  000   000  000   000  000  000 
 // 000000000  000   000  000   000  0000000  
@@ -1428,6 +1448,15 @@ void initHook()
     initUDP();
     hook_set_dispatch_proc(&hook_event);
     hook_run();
+    
+    MSG message;
+    while (GetMessage(&message, (HWND)NULL, 0, 0) > 0) 
+    {
+        TranslateMessage(&message);
+        DispatchMessage(&message);
+    }
+    
+    hook_end();    
     closeUDP();
 }
 
@@ -1560,6 +1589,7 @@ HRESULT help(char *command)
     else if (cmp(command, "terminate"))
     {
         klog("wxw terminate pid");
+        klog("wxw kill pid");
         klog("");
         klog("      Terminate process");
         klog("");
@@ -1724,6 +1754,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     else if (cmp(cmd, "terminate"))
     {
         if (argc == 2) hr = help(cmd);
+        else           hr = terminate(argv[2]);
+    }
+    else if (cmp(cmd, "kill"))
+    {
+        if (argc == 2) hr = help("terminate");
         else           hr = terminate(argv[2]);
     }
     else if (cmp(cmd, "bounds"))

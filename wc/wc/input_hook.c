@@ -762,11 +762,11 @@ UIOHOOK_API int hook_run() {
 		hook_start_proc();
 
 		// Block until the thread receives an WM_QUIT request.
-		MSG message;
-		while (GetMessage(&message, (HWND) NULL, 0, 0) > 0) {
-			TranslateMessage(&message);
-			DispatchMessage(&message);
-		}
+        // MSG message;
+        // while (GetMessage(&message, (HWND) NULL, 0, 0) > 0) {
+            // TranslateMessage(&message);
+            // DispatchMessage(&message);
+        // }
 	}
 	else {
 		logger(LOG_LEVEL_ERROR,	"%s [%u]: SetWindowsHookEx() failed! (%#lX)\n",
@@ -774,16 +774,20 @@ UIOHOOK_API int hook_run() {
 
 		status = UIOHOOK_ERROR_SET_WINDOWS_HOOK_EX;
 	}
-	
-	
+    
 	// Unregister any hooks that may still be installed.
-	unregister_running_hooks();
+    // unregister_running_hooks();
 
 	// We must explicitly call the cleanup handler because Windows does not
 	// provide a thread cleanup method like POSIX pthread_cleanup_push/pop.
-	hook_stop_proc();
+    // hook_stop_proc();
 
 	return status;
+}
+
+UIOHOOK_API void hook_end() {
+    unregister_running_hooks();
+    hook_stop_proc();
 }
 
 UIOHOOK_API int hook_stop() {

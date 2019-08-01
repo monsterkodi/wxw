@@ -425,6 +425,8 @@ extern "C" {
 	// Insert the event hook.
 	UIOHOOK_API int hook_run();
 
+    UIOHOOK_API void hook_end();
+        
 	// Withdraw the event hook.
 	UIOHOOK_API int hook_stop();
 
