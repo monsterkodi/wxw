@@ -11,6 +11,7 @@
 #include <codecvt>
 #include <vector>
 #include <set>
+#include <algorithm>
 #include <shellscalingapi.h>
 #include <KnownFolders.h>
 #include <shlwapi.h>
@@ -77,6 +78,11 @@ bool dirExists(char* szPath)
 {
     DWORD dwAttrib = GetFileAttributesA(szPath);
     return ((dwAttrib != INVALID_FILE_ATTRIBUTES) && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+DWORD now()
+{
+    return GetTickCount();
 }
 
 // 000   000  0000000    00000000   
@@ -174,6 +180,28 @@ string fileExt(const string& path)
     static char ext[_MAX_EXT];
     _splitpath_s(path.c_str(), NULL, 0, NULL, 0, NULL, 0, ext, _MAX_EXT);
     return string(ext);
+}
+
+stringreplace(string const& original, string const& from, string const& to)
+{
+    string result;
+    string::const_iterator end     = original.end();
+    string::const_iterator current = original.begin();
+    string::const_iterator next    = search(current, end, from.begin(), from.end());
+    while (next != end) 
+    {
+        result.append(current, next);
+        result.append(to);
+        current = next + from.size();
+        next = search(current, end, from.begin(), from.end());
+    }
+    result.append(current, next);
+    return result;
+}
+
+string slash(const string& path)
+{
+    return replace(path, "\\", "/");
 }
 
 // 000000000  000  000000000  000      00000000  
@@ -423,7 +451,21 @@ HRESULT matchingWindows(char* id, vector<HWND>* wins)
 // 000   000  000  000  0000  000  000  0000  000       000   000  
 // 00     00  000  000   000  000  000   000  000        0000000   
 
-HRESULT winInfo(HWND hWnd)
+struct winfo
+{
+    string path;
+    wstring title;
+    string hwnd;
+    DWORD  pid;
+    LONG   x;
+    LONG   y;
+    LONG   width;
+    LONG   height;
+    LONG   zindex;
+    string status;
+};
+
+winfo winInfo(HWND hWnd)
 {    
     wstring title = windowTitle(hWnd);
     
@@ -451,19 +493,10 @@ HRESULT winInfo(HWND hWnd)
         zindex += 1;
     }
     
-     printf(".\n");
-     printf( "    path    %s\n", procPath(pid).c_str()); 
-    wprintf(L"    title   %ls\n", title.c_str());
-    wprintf(L"    hwnd    %llx\n", (unsigned __int64)hWnd);
-    wprintf(L"    pid     %lu\n", pid);
-    wprintf(L"    x       %d\n",  x);
-    wprintf(L"    y       %d\n",  y);
-    wprintf(L"    width   %d\n",  width);
-    wprintf(L"    height  %d\n",  height);
-    wprintf(L"    zindex  %d\n",  zindex);
-     printf( "    status  %s\n",  status.c_str());
-
-    return S_OK;
+    char swnd[64];
+    sprintf_s(swnd, "%llx", (unsigned __int64)hWnd);
+    
+    return { procPath(pid), title, swnd, pid, x, y, width, height, zindex, status };
 }
 
 // 000  000   000  00000000   0000000   
@@ -474,17 +507,26 @@ HRESULT winInfo(HWND hWnd)
 
 HRESULT info(char *id="all")
 {
-    HRESULT hr = S_OK;
-    
     vector<HWND> wins;
     if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
 
     for (HWND hWnd : wins)
     {
-        winInfo(hWnd);
+        winfo i = winInfo(hWnd);
+         printf(".\n");
+         printf( "    path    %s\n",  i.path.c_str()); 
+        wprintf(L"    title   %ls\n", i.title.c_str());
+         printf( "    hwnd    %s\n",  i.hwnd.c_str());
+         printf( "    pid     %lu\n", i.pid);
+         printf( "    x       %d\n",  i.x);
+         printf( "    y       %d\n",  i.y);
+         printf( "    width   %d\n",  i.width);
+         printf( "    height  %d\n",  i.height);
+         printf( "    zindex  %d\n",  i.zindex);
+         printf( "    status  %s\n",  i.status.c_str());
     }
 
-    return hr;
+    return S_OK;
 }
 
 // 00     00  000  000   000  00     00   0000000   000   000  
@@ -1443,20 +1485,96 @@ void hook_event(uiohook_event* const event)
     sendUDP(buffer);
 }
 
+void sendProc()
+{
+    ostringstream ss;
+
+    ss << "{\"event\":\"proc\",\n \"proc\": [\n";
+    for (auto info : procs())
+    {
+        ss << "   {\"path\":    \"" << slash(info.path) << "\",\n";
+        ss << "    \"pid\":     "   << info.pid    << ",\n";
+        ss << "    \"parent\":  "   << info.parent << "\n";
+        ss << "   },\n";
+    }
+    ss << "{}]}";
+    sendUDP(ss.str());
+}
+
+void sendInfo()
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows("all", &wins)) || wins.size() == 0) return;
+
+    ostringstream ss;
+
+    ss << "{\"event\":\"info\",\n \"info\": [\n";
+    
+    for (HWND hWnd : wins)
+    {
+        winfo i = winInfo(hWnd);
+         
+        string title = replace(ws2s(i.title), "\\", "\\\\");
+        
+        ss << "   {\"path\":    \"" << slash(i.path) << "\",\n";
+        ss << "    \"title\":   \"" << title         << "\",\n";
+        ss << "    \"hwnd\":    \"" << i.hwnd        << "\",\n";
+        ss << "    \"pid\":     "   << i.pid         << ",\n";
+        ss << "    \"x\":       "   << i.x           << ",\n";
+        ss << "    \"y\":       "   << i.y           << ",\n";
+        ss << "    \"width\":   "   << i.width       << ",\n";
+        ss << "    \"height\":  "   << i.height      << ",\n";
+        ss << "    \"zindex\":  "   << i.zindex      << ",\n";
+        ss << "    \"status\":  \"" << i.status      << "\"\n";
+        ss << "   },\n";
+    }
+    ss << "{}]}";    
+    sendUDP(ss.str());    
+}
+
 void initHook()
 {
     initUDP();
     hook_set_dispatch_proc(&hook_event);
+    
+    cout << "hook..." << endl;
+    
     hook_run();
     
+    DWORD last = now();
+    DWORD msec = 0;
     MSG message;
-    while (GetMessage(&message, (HWND)NULL, 0, 0) > 0) 
-    {
-        TranslateMessage(&message);
-        DispatchMessage(&message);
+    while (true) 
+    {        
+        if (PeekMessage(&message, (HWND)NULL, 0, 0, PM_REMOVE))
+        {
+            if (message.message == WM_QUIT)
+            {
+                cout << "got quit" << endl;
+                break;
+            }
+            cout << "got message " << message.message << endl;
+            TranslateMessage(&message);
+            DispatchMessage(&message);
+        }
+                
+        DWORD n = now();
+        DWORD delta =  n - last;
+        if (delta > 0)
+        {
+            last = n;
+            msec += delta;
+            if (msec >= 1000)
+            {
+                msec -= 1000;
+                sendProc();
+                sendInfo();
+            }
+        }
     }
     
-    hook_end();    
+    cout << "...hook" << endl;
+    hook_end();
     closeUDP();
 }
 

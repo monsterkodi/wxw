@@ -81,7 +81,6 @@ exec = (argv...) ->
             if fakeIcon argv then return ''
             
         if cmd in ['launch' 'raise' 'focus' 'hook']
-            # return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true detached:true stdio:'inherit'
             return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true stdio:'inherit'
         else
             args = (kstr(s) for s in argv).join " "
