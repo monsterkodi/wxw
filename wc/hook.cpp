@@ -106,7 +106,7 @@ void hook_event(uiohook_event* const event)
 //      000  000       000  0000  000   000  
 // 0000000   00000000  000   000  0000000    
 
-void sendProc()
+DWORD WINAPI sendProc(LPVOID lParam)
 {
     ostringstream ss;
 
@@ -120,12 +120,13 @@ void sendProc()
     }
     ss << "{}]}";
     sendUDP(ss.str());
+    return 0;
 }
 
-void sendInfo()
+DWORD WINAPI sendInfo(LPVOID lParam)
 {
     vector<HWND> wins;
-    if (!SUCCEEDED(matchingWindows("all", &wins)) || wins.size() == 0) return;
+    if (!SUCCEEDED(matchingWindows("all", &wins)) || wins.size() == 0) return 1;
 
     ostringstream ss;
 
@@ -150,7 +151,8 @@ void sendInfo()
         ss << "   },\n";
     }
     ss << "{}]}";    
-    sendUDP(ss.str());    
+    sendUDP(ss.str()); 
+    return 0;
 }
 
 // 000  000   000  000  000000000  
@@ -191,11 +193,13 @@ void initHook()
             
             if (msec < 500 && msec+delta >= 500)
             {
-                sendInfo();
+                CreateThread(0, 0, sendInfo, 0, 0, 0);
+                // sendInfo();
             }
             else if (msec < 1000 && msec+delta >= 1000)
             {
-                sendProc();
+                CreateThread(0, 0, sendProc, 0, 0, 0);
+                // sendProc();
             }
             msec += delta;
             if (msec >= 1000)
