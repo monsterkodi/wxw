@@ -43,12 +43,12 @@ int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; }
 
 bool contains(const wstring& str, const wstring& sub)
 {
-	return str.find(sub) != wstring::npos;
+    return str.find(sub) != wstring::npos;
 }
 
 bool contains(const string& str, const string& sub)
 {
-	return str.find(sub) != string::npos;
+    return str.find(sub) != string::npos;
 }
 
 // 000       0000000   000   000  00000000  00000000   

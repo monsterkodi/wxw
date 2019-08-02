@@ -11,17 +11,17 @@
 
 using namespace std;
 
-wstring s2w(const string& str);
-string  w2s(const wstring& wstr);
-string lower(const string& in);
+string  w2s (const wstring& wstr);
+wstring s2w (const  string& str);
+string lower(const  string& in);
 
 int cmp(const wstring& a, const wstring& b);
-int cmp(const string&  a, const string& b);
+int cmp(const  string& a, const  string& b);
 int cmp(const wstring& a, const char*    b);
 int cmp(const char*    a, const char*    b);
 
 bool contains(const wstring& str, const wstring& sub);
-bool contains(const string& str, const string& sub);
+bool contains(const  string& str, const  string& sub);
 
 string itos(unsigned __int64 i, int radix=10);
 string replace(const string& original, const string& from, const string& to);

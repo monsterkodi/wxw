@@ -1,12 +1,18 @@
-#include <windows.h>
-#include <WinUser.h>
-#include <math.h>
-#include <set>
+/*
+000   000   0000000    
+000 0 000  000         
+000000000  000         
+000   000  000         
+00     00   0000000    
+*/
+
 #include <shellscalingapi.h>
 #include <KnownFolders.h>
+#include <WinUser.h>
 #include <shlwapi.h>
 #include <ShlObj.h>
-
+#include <math.h>
+#include <set>
 #include "taskbar.h"
 #include "handle.h"
 #include "trash.h"
@@ -64,11 +70,11 @@ HRESULT info(char *id="all")
     return S_OK;
 }
 
-// 00     00  000  000   000  00     00   0000000   000   000  
-// 000   000  000  0000  000  000   000  000   000   000 000   
-// 000000000  000  000 0 000  000000000  000000000    00000    
-// 000 0 000  000  000  0000  000 0 000  000   000   000 000   
-// 000   000  000  000   000  000   000  000   000  000   000  
+// 00     00  000  000   000  000  00     00   0000000   000   000  000  
+// 000   000  000  0000  000  000  000   000  000   000   000 000   000  
+// 000000000  000  000 0 000  000  000000000  000000000    00000    000  
+// 000 0 000  000  000  0000  000  000 0 000  000   000   000 000   000  
+// 000   000  000  000   000  000  000   000  000   000  000   000  000  
 
 HRESULT minimize(char *id)
 {

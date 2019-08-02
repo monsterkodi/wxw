@@ -178,7 +178,7 @@ vector<procinfo> procs(char* id)
 //    000     000       000   000  000 0 000  000  000  0000  000   000     000     000       
 //    000     00000000  000   000  000   000  000  000   000  000   000     000     00000000  
 
-HRESULT terminateProc(uint32_t procid)
+HRESULT terminateProc(DWORD procid)
 {
     HRESULT result = S_OK;
     if (HANDLE hProc = OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, procid))
