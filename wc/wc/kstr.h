@@ -11,7 +11,7 @@
 using namespace std;
 
 wstring s2w(const string& str);
-string w2s(const wstring& wstr);
+string  w2s(const wstring& wstr);
 string lower(const string& in);
 
 int cmp(const wstring& a, const wstring& b);
@@ -22,9 +22,10 @@ int cmp(const char*    a, const char*    b);
 bool contains(const wstring& str, const wstring& sub);
 bool contains(const string& str, const string& sub);
 
-string replace(string const& original, string const& from, string const& to);
+string replace(const string& original, const string& from, const string& to);
 
-string slash(const string& path);
-string unslash(const string& path);
-string fileName(const string& path);
-string fileExt(const string& path);
+string pad      (const string& str, int count, char ch=' ');
+string slash    (const string& path);
+string unslash  (const string& path);
+string fileName (const string& path);
+string fileExt  (const string& path);

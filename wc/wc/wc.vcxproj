@@ -160,24 +160,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="handle.cpp" />
-    <ClCompile Include="input_helper.c" />
-    <ClCompile Include="input_hook.c" />
     <ClCompile Include="kstr.cpp" />
     <ClCompile Include="kutl.cpp" />
-    <ClCompile Include="logger.c" />
-    <ClCompile Include="post_event.c" />
-    <ClCompile Include="SystemInfo.cpp" />
-    <ClCompile Include="system_properties.c" />
+    <ClCompile Include="uiohook\input_helper.c" />
+    <ClCompile Include="uiohook\input_hook.c" />
+    <ClCompile Include="uiohook\logger.c" />
+    <ClCompile Include="uiohook\post_event.c" />
+    <ClCompile Include="uiohook\system_properties.c" />
     <ClCompile Include="wc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="handle.h" />
-    <ClInclude Include="input_helper.h" />
     <ClInclude Include="kstr.h" />
     <ClInclude Include="kutl.h" />
-    <ClInclude Include="logger.h" />
-    <ClInclude Include="SystemInfo.h" />
-    <ClInclude Include="uiohook.h" />
+    <ClInclude Include="uiohook\input_helper.h" />
+    <ClInclude Include="uiohook\logger.h" />
+    <ClInclude Include="uiohook\uiohook.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

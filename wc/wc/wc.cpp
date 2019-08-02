@@ -12,7 +12,7 @@
 #include <commoncontrols.h>
 #include <winsock.h>
 
-#include "uiohook.h"
+#include "uiohook/uiohook.h"
 #include "handle.h"
 #include "kutl.h"
 
@@ -1786,7 +1786,7 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     }
     else if (cmp(cmd, "handle"))
     {
-        if (argc == 2) hr = help(cmd);
+        if (argc == 2) hr = handle();
         else           hr = handle(argv[2]);
     }
     else if (cmp(cmd, "hook"))

@@ -87,6 +87,16 @@ stringreplace(string const& original, string const& from, string const& to)
     return result;
 }
 
+string pad(const string& str, int count, char ch)
+{
+    string out(str);
+    while (out.size() < count)
+    {
+        out += ch;
+    }
+    return out;
+}
+
 //  0000000  000       0000000    0000000  000   000  
 // 000       000      000   000  000       000   000  
 // 0000000   000      000000000  0000000   000000000  

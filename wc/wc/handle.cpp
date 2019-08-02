@@ -3,22 +3,44 @@
 #include <Tlhelp32.h>
 #include <Psapi.h>
 #include "kutl.h"
-#include "SystemInfo.h"
 
 UINT g_CurrentIndex = 0;
 
-typedef DWORD(WINAPI* GetFinalPathNameByHandleDef)(HANDLE hFile, LPWSTR lpszFilePath, DWORD cchFilePath, DWORD dwFlags);
+typedef struct _SYSTEM_HANDLE 
+{
+    DWORD dwProcessId;
+    BYTE  bObjectType;
+    BYTE  bFlags;
+    WORD  wValue;
+    PVOID pAddress;
+    DWORD GrantedAccess;
+    
+}   SYSTEM_HANDLE;
 
-GetFinalPathNameByHandleDef pGetFinalPathNameByHandle = (GetFinalPathNameByHandleDef)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetFinalPathNameByHandleW");
+typedef struct _SYSTEM_HANDLE_INFORMATION 
+{
+    DWORD         dwCount;
+    SYSTEM_HANDLE Handles[1];
+    
+}   SYSTEM_HANDLE_INFORMATION, * PSYSTEM_HANDLE_INFORMATION;
+
+typedef enum _SYSTEM_INFORMATION_CLASS 
+{
+    SystemHandleInformation = 0X10,
+    
+}   SYSTEM_INFORMATION_CLASS;
 
 struct THREAD_PARAMS
 {
 	PSYSTEM_HANDLE_INFORMATION pSysHandleInformation;
-	LPTSTR lpPath;
-	HANDLE hStartEvent;
-	HANDLE hFinishedEvent;
-	bool bStatus;
+    LPTSTR  lpPath;
+    HANDLE  hStartEvent;
+    HANDLE  hFinishedEvent;
+    bool    bStatus;
 };
+
+typedef DWORD(WINAPI* GetFinalPathNameByHandleDef)(HANDLE hFile, LPWSTR lpszFilePath, DWORD cchFilePath, DWORD dwFlags);
+GetFinalPathNameByHandleDef pGetFinalPathNameByHandle = (GetFinalPathNameByHandleDef)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetFinalPathNameByHandleW");
 
 DWORD WINAPI ThreadProc(LPVOID lParam)
 {
@@ -63,80 +85,9 @@ DWORD WINAPI ThreadProc(LPVOID lParam)
 
 HRESULT handle(const char* id)
 {
-//// 	for (auto info : procs(id))
-//// 	{
-//// 		HANDLE hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, info.pid);
-//// 		printf(".\n");
-//// 		printf("    path    %s\n", info.path.c_str());
-//// 		printf("    pid     %lu\n", info.pid);
-//// 		printf("    parent  %lu\n", info.parent);
-//// 	}
-
-	string name;
-	string processName;
-	string deviceFileName;
-    // string fsFilePath;
-	//SystemProcessInformation::SYSTEM_PROCESS_INFORMATION* p;
-	//SystemProcessInformation pi;
-	HandleInformation hi("File");
-
-	//if (bFullPathCheck)
-	//{
-	//	if (!SystemInfoUtils::GetDeviceFileName(lpFileName, deviceFileName))
-	//	{
-    //      printf("GetDeviceFileName() failed.\n"));
-	//		return;
-	//	}
-	//}
-
-	//hi.SetFilter("File", TRUE);
-
-	if (hi.m_HandleInfos.size() == 0)
-	{
-		printf("No handle information\n");
-		return S_FALSE;
-	}
-
-	//pi.Refresh();
-
-    printf("%-6s  %-20s  %s\n", "PID", "Name", "Path");
-    printf("------------------------------------------------------\n");
-
-    for (int i = 0; i < hi.m_HandleInfos.size(); i++)
-	{
-        HandleInformation::SYSTEM_HANDLE& h = hi.m_HandleInfos[i];
-
-        // if (pi.m_ProcessInfos.Lookup(h.ProcessID, p))
-        // {
-            // SystemInfoUtils::Unicode2CString(&p->usName, processName);
-        // }
-        // else
-            // processName = "";
-        name = hi.GetFileName((HANDLE)h.HandleNumber);
-
-        // if (bFullPathCheck)
-            // bShow = _tcsicmp(name, deviceFileName) == 0;
-        // else
-            // bShow = _tcsicmp(GetFileNamePosition(name), lpFileName) == 0;
-
-        // if (bShow)
-        // {
-            // if (!bFullPathCheck)
-            // {
-                // fsFilePath = "";
-                // SystemInfoUtils::GetFsFileName(name, fsFilePath);
-            // }
-
-        printf("0x%04X  %-20s  %s\n", h.ProcessID, processName.c_str(), name.c_str());
-        // }
-	}
-
-	return S_OK;
-}
-
-HRESULT handle2(const char* id)
-{
-	HMODULE hModule = GetModuleHandleA("ntdll.dll");		
+    HMODULE hModule = GetModuleHandleA("ntdll.dll"); 
+    
+    typedef NTSTATUS(WINAPI* PNtQuerySystemInformation) (IN SYSTEM_INFORMATION_CLASS SystemInformationClass, OUT PVOID SystemInformation, IN ULONG SystemInformationLength, OUT PULONG ReturnLength OPTIONAL);
 	PNtQuerySystemInformation NtQuerySystemInformation = (PNtQuerySystemInformation)GetProcAddress(hModule, "NtQuerySystemInformation");
 
 	if (0 == NtQuerySystemInformation)
@@ -150,7 +101,7 @@ HRESULT handle2(const char* id)
 	DWORD needed = 0;
 	NTSTATUS status = NtQuerySystemInformation(SystemHandleInformation, pSysHandleInformation, size, &needed);
 
-	if (!NT_SUCCESS(status))
+    if (status < 0)
 	{
 		if (0 == needed) return S_FALSE;
 
@@ -158,7 +109,7 @@ HRESULT handle2(const char* id)
 		size = needed + 1024;
 		pSysHandleInformation = (PSYSTEM_HANDLE_INFORMATION)new BYTE[size];
 		status = NtQuerySystemInformation(SystemHandleInformation, pSysHandleInformation, size, &needed);
-		if (!NT_SUCCESS(status))
+        if (status < 0)
 		{
 			delete pSysHandleInformation;
 			cerr << "NtQuerySystemInformation failed" << endl;
@@ -204,12 +155,12 @@ HRESULT handle2(const char* id)
 
         string file = slash(w2s(wstring(ThreadParams.lpPath).substr(4)));
 
-		if (contains(file, id))
+        if (!id || contains(file, id))
 		{ 
 			DWORD pid = pSysHandleInformation->Handles[g_CurrentIndex - 1].dwProcessId;
 			if (procPath(pid).size())
 			{ 
-				cout << pid << " " << procPath(pid) << " " << file << endl;
+                cout << pid << " " << pad(fileName(procPath(pid)), 20) << " " << file << endl;
 			}
 		}
 	}

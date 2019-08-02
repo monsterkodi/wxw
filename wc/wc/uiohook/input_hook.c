@@ -357,8 +357,7 @@ static void process_button_pressed(MSLLHOOKSTRUCT *mshook, uint16_t button) {
 			click_count++;
 		}
 		else {
-			logger(LOG_LEVEL_WARN, "%s [%u]: Click count overflow detected!\n",
-					__FUNCTION__, __LINE__);
+            logger(LOG_LEVEL_WARN, "%s [%u]: Click count overflow detected!\n", __FUNCTION__, __LINE__);
 		}
 	}
 	else {
