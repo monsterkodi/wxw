@@ -8,12 +8,38 @@
 
 #include "taskbar.h"
 #include "kutl.h"
+#include "wins.h"
 
 bool taskbarIsHidden()
 {
     HWND hWnd = FindWindow(L"Shell_TrayWnd", L"");
     LONG style = GetWindowLongW(hWnd, GWL_STYLE);
     return !(style & WS_VISIBLE);
+}
+
+// 00000000   00000000   0000000  000  0000000  00000000
+// 000   000  000       000       000     000   000     
+// 0000000    0000000   0000000   000    000    0000000 
+// 000   000  000            000  000   000     000     
+// 000   000  00000000  0000000   000  0000000  00000000
+
+void resizeWindows(RECT& wa, int height)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows("all", &wins)) || wins.size() == 0) return;
+    
+    for (HWND hWnd : wins)
+    {
+        winfo i = winInfo(hWnd);
+        if (i.y+i.height > wa.bottom) // window would overlay taskbar, make it smaller
+        {
+            SetWindowPos(hWnd, NULL, i.x, i.y, i.width, wa.bottom-i.y, SWP_NOZORDER);
+        }
+        else if (i.y+i.height >= height-10) // bottom (almost) touches hiding taskbar, make it larger
+        {
+            SetWindowPos(hWnd, NULL, i.x, i.y, i.width, wa.bottom-i.y, SWP_NOZORDER);
+        }
+    }    
 }
 
 // 000000000   0000000    0000000  000   000  0000000     0000000   00000000   
@@ -59,8 +85,9 @@ HRESULT taskbar(char* id)
                 case 2: wa.right  = width - tb.width;   break;
                 case 3: wa.top    = tb.height;          break;
             }
+            
+            if (!position) resizeWindows(wa, height);
             ShowWindow(hTaskBar, SW_SHOW);
-            cout << "hide " << wa.right << " " << wa.bottom << endl;
             SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&wa,0);
         }
         else
@@ -75,8 +102,13 @@ HRESULT taskbar(char* id)
             wa.bottom = height;
             wa.right  = width;
             
+            if (!position) 
+            {
+                RECT oa;
+                SystemParametersInfo(SPI_GETWORKAREA,0,(LPVOID)&oa,0);
+                resizeWindows(wa, oa.bottom);
+            }
             ShowWindow(hTaskBar, SW_HIDE);
-            cout << "hide " << width << " " << height << endl;
             SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&wa,0);
         }
     }
