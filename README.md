@@ -24,8 +24,13 @@ wxw [command] [args...]
          focus       id
          close       id
          quit        id
+         bounds      id [x y w h]
+         move        id x y
+         size        id w h
          launch      path
-         bounds      id x y w h
+         handle     [pid|path]
+         proc       [pid|file]
+         terminate  [pid|file]
          mouse
          key        [shift+|ctrl+|alt+]key
          help        command
@@ -34,7 +39,6 @@ wxw [command] [args...]
          taskbar     hide|show|toggle
          screen     [size|user]
          screenshot [targetfile]
-         proc       [file]
          icon        path [targetfile]
 
     id:
@@ -49,7 +53,6 @@ wxw [command] [args...]
          normal|maximized|minimized
          top|topmost|front|frontmost|foreground
          taskbar
-
 ```
 
 ## Module
@@ -87,9 +90,9 @@ wxw('trash',    'empty')
 ## Application
 
 The project contains also sources for an application that ...
-- provides a full screen screen zoom feature similar to the ctrl+mousewheel experience on mac (Alt+Z)
-- positions active windows on keyboard shortcuts similiar to divvy or magnet (Alt+Ctrl+[Up|Left...|1...4])
-- switches between other applications similar to the cmd-tab switch on mac (Ctrl+Tab):
+- provides a full-screen zoom similar to the ctrl-mousewheel experience on mac (Alt+Z)
+- positions windows on keyboard shortcuts similiar to divvy or magnet (Alt+Ctrl+[Up|Left...|1...4])
+- switches between applications similar to the cmd-tab switch on mac (Ctrl+Tab):
 
 <p align="center"><img src="img/switch.png"></p>
 
@@ -106,7 +109,7 @@ npm install
 npm run build
 ```
 
-It's still a bit rough around the edges, let me know how it went in case you tried it.
+It's still a bit rough around the edges, let me know how it went if you tried it.
 
 #### Projects using wxw
 

@@ -97,6 +97,26 @@ string pad(const string& str, int count, char ch)
     return out;
 }
 
+string lpad(const string& str, int count, char ch)
+{
+    string out(str);
+    while (out.size() < count)
+    {
+        out = ch + out;
+    }
+    return out;
+}
+
+string itos(unsigned __int64 i, int radix)
+{
+    char buf[64];
+    if (0 ==_ui64toa_s(i, buf, 64, radix))
+    { 
+        return buf;
+    }
+    return "";
+}
+
 //  0000000  000       0000000    0000000  000   000  
 // 000       000      000   000  000       000   000  
 // 0000000   000      000000000  0000000   000000000  

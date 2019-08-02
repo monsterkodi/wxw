@@ -22,8 +22,10 @@ int cmp(const char*    a, const char*    b);
 bool contains(const wstring& str, const wstring& sub);
 bool contains(const string& str, const string& sub);
 
+string itos(unsigned __int64 i, int radix=10);
 string replace(const string& original, const string& from, const string& to);
 
+string lpad     (const string& str, int count, char ch=' ');
 string pad      (const string& str, int count, char ch=' ');
 string slash    (const string& path);
 string unslash  (const string& path);

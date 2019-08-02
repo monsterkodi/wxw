@@ -87,6 +87,8 @@ HRESULT handle(const char* id)
 {
     HMODULE hModule = GetModuleHandleA("ntdll.dll"); 
     
+    int procid = atoi(id);
+    
     typedef NTSTATUS(WINAPI* PNtQuerySystemInformation) (IN SYSTEM_INFORMATION_CLASS SystemInformationClass, OUT PVOID SystemInformation, IN ULONG SystemInformationLength, OUT PULONG ReturnLength OPTIONAL);
 	PNtQuerySystemInformation NtQuerySystemInformation = (PNtQuerySystemInformation)GetProcAddress(hModule, "NtQuerySystemInformation");
 
@@ -155,12 +157,13 @@ HRESULT handle(const char* id)
 
         string file = slash(w2s(wstring(ThreadParams.lpPath).substr(4)));
 
-        if (!id || contains(file, id))
+        DWORD pid = pSysHandleInformation->Handles[g_CurrentIndex - 1].dwProcessId;
+        if (!id || contains(file, id) || (procid && procid == pid))
 		{ 
-			DWORD pid = pSysHandleInformation->Handles[g_CurrentIndex - 1].dwProcessId;
-			if (procPath(pid).size())
+            string ppath = procPath(pid);
+            if (ppath.size())
 			{ 
-                cout << pid << " " << pad(fileName(procPath(pid)), 20) << " " << file << endl;
+                cout << lpad(itos(pid), 6) << " " << pad(fileName(ppath), 30) << " " << file << endl;
 			}
 		}
 	}

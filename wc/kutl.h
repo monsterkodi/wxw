@@ -3,6 +3,16 @@
 #include "kstr.h"
 #include <vector>
 
+struct wRect
+{
+    LONG x;
+    LONG y;
+    LONG width;
+    LONG height;
+};
+
+wRect winRect(HWND hWnd);
+
 struct procinfo
 {
 	string   path;

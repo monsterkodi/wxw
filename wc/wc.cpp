@@ -322,15 +322,7 @@ winfo winInfo(HWND hWnd)
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
     string status = windowStatus(hWnd);
-    
-    RECT rect; 
-
-    GetWindowRect(hWnd, &rect);
-    LONG width  = rect.right - rect.left;
-    LONG height = rect.bottom - rect.top;
-    LONG x = rect.left;
-    LONG y = rect.top;
-    
+        
     int zindex = 0;
     HWND prevWnd = hWnd;
     HWND nextWnd;
@@ -343,7 +335,9 @@ winfo winInfo(HWND hWnd)
     char swnd[64];
     sprintf_s(swnd, "%llx", (unsigned __int64)hWnd);
     
-    return { procPath(pid), title, swnd, pid, x, y, width, height, zindex, status };
+    wRect wr = winRect(hWnd);
+        
+    return { procPath(pid), title, swnd, pid, wr.x, wr.y, wr.width, wr.height, zindex, status };
 }
 
 // 000  000   000  00000000   0000000   
@@ -705,13 +699,67 @@ HRESULT launch(char *path)
 // 000   000  000   000  000   000  000  0000  000   000       000  
 // 0000000     0000000    0000000   000   000  0000000    0000000   
 
-HRESULT bounds(char *id, char *x, char *y, char *w, char *h)
+HRESULT bounds(char *id, char *x=NULL, char *y=NULL, char *w=NULL, char *h=NULL)
+{
+    if (x && y && w && h)
+    {
+        vector<HWND> wins;
+        if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+        for (HWND hWnd : wins)
+        {
+            SetWindowPos(hWnd, NULL, atoi(x), atoi(y), atoi(w), atoi(h), SWP_NOZORDER);
+        }
+    }
+    else
+    {
+        vector<HWND> wins;
+        if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+        for (HWND hWnd : wins)
+        {
+            wRect wr = winRect(hWnd);
+            printf(".\n");
+            printf( "    hwnd    %s\n",  itos((unsigned __int64)hWnd, 16).c_str());
+            printf( "    x       %d\n",  wr.x);
+            printf( "    y       %d\n",  wr.y);
+            printf( "    width   %d\n",  wr.width);
+            printf( "    height  %d\n",  wr.height);
+        }
+    }
+    return S_OK;
+}
+
+// 00     00   0000000   000   000  00000000  
+// 000   000  000   000  000   000  000       
+// 000000000  000   000   000 000   0000000   
+// 000 0 000  000   000     000     000       
+// 000   000   0000000       0      00000000  
+
+HRESULT move(char* id, char* x, char* y)
 {
     vector<HWND> wins;
     if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
     for (HWND hWnd : wins)
     {
-        SetWindowPos(hWnd, NULL, atoi(x), atoi(y), atoi(w), atoi(h), SWP_NOZORDER);
+        wRect wr = winRect(hWnd);
+        SetWindowPos(hWnd, NULL, atoi(x), atoi(y), wr.width, wr.height, SWP_NOZORDER);
+    }
+    return S_OK;
+}
+
+//  0000000  000  0000000  00000000  
+// 000       000     000   000       
+// 0000000   000    000    0000000   
+//      000  000   000     000       
+// 0000000   000  0000000  00000000  
+
+HRESULT size(char* id, char* width, char* height)
+{
+    vector<HWND> wins;
+    if (!SUCCEEDED(matchingWindows(id, &wins))) return S_FALSE;
+    for (HWND hWnd : wins)
+    {
+        wRect wr = winRect(hWnd);
+        SetWindowPos(hWnd, NULL, wr.x, wr.y, atoi(width), atoi(height), SWP_NOZORDER);
     }
     return S_OK;
 }
@@ -827,14 +875,15 @@ HRESULT taskbar(char* id)
     static int nTaskBarPosition = 0;
 
     RECT rcWorkArea;
-    RECT rcTaskBar;
-
+    
     HWND hTaskBar = FindWindow(L"Shell_TrayWnd", L"");
-    GetWindowRect(hTaskBar, &rcTaskBar);
-
+    
     if (hTaskBar)
     {
+        wRect tb = winRect(hTaskBar);
+        
         SystemParametersInfo(SPI_GETWORKAREA,0,(LPVOID)&rcWorkArea,0);
+        
         int nWidth  = ::GetSystemMetrics(SM_CXSCREEN);
         int nHeight = ::GetSystemMetrics(SM_CYSCREEN);
         
@@ -842,10 +891,10 @@ HRESULT taskbar(char* id)
         {
             switch(nTaskBarPosition)
             {
-                case 0: rcWorkArea.bottom = nHeight - (rcTaskBar.bottom - rcTaskBar.top); break;
-                case 1: rcWorkArea.left   = rcTaskBar.right - rcTaskBar.left; break; 
-                case 2: rcWorkArea.right  = nWidth - (rcTaskBar.right - rcTaskBar.left); break;
-                case 3: rcWorkArea.top    = rcTaskBar.bottom - rcTaskBar.top; break;
+                case 0: rcWorkArea.bottom = nHeight - tb.height; break;
+                case 1: rcWorkArea.left   = tb.width; break; 
+                case 2: rcWorkArea.right  = nWidth - tb.width; break;
+                case 3: rcWorkArea.top    = tb.height; break;
             }
             SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&rcWorkArea,0);
             ShowWindow(hTaskBar, SW_SHOW);
@@ -1455,8 +1504,13 @@ HRESULT usage()
     klog("         focus       id");
     klog("         close       id");
     klog("         quit        id");
+    klog("         bounds      id [x y w h]");
+    klog("         move        id x y");
+    klog("         size        id w h");
     klog("         launch      path");
-    klog("         bounds      id x y w h");
+    klog("         handle     [pid|path]");
+    klog("         proc       [pid|file]");
+    klog("         terminate  [pid|file]");
     klog("         mouse");
     klog("         key        [shift+|ctrl+|alt+]key");
     klog("         help        command");
@@ -1465,7 +1519,6 @@ HRESULT usage()
     klog("         taskbar     hide|show|toggle");
     klog("         screen     [size|user]");
     klog("         screenshot [targetfile]");
-    klog("         proc       [file]");
     klog("         icon        path [targetfile]");
     klog("");
     klog("    id:");
@@ -1737,8 +1790,19 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     }
     else if (cmp(cmd, "bounds"))
     {
-        if (argc < 7)  hr = help(cmd);
-        else           hr = bounds(argv[2], argv[3], argv[4], argv[5], argv[6]);
+        if (argc < 3 or argc != 3 and argc != 7) hr = help(cmd);
+        else if (argc == 3) hr = bounds(argv[2]);
+        else if (argc == 7) hr = bounds(argv[2], argv[3], argv[4], argv[5], argv[6]);
+    }
+    else if (cmp(cmd, "move"))
+    {
+        if (argc <= 3 || argc != 5) hr = help(cmd);
+        else           hr = move(argv[2], argv[3], argv[4]);
+    }
+    else if (cmp(cmd, "size"))
+    {
+        if (argc <= 3 || argc != 5) hr = help(cmd);
+        else           hr = size(argv[2], argv[3], argv[4]);
     }
 	else if (cmp(cmd, "folder"))
     {
