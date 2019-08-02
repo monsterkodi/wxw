@@ -3,7 +3,7 @@
 
 **wxw** is a collection of tools for the windows operating system.
 
-It can be used as a node module or as a command line tool.
+It can be used from the command line or as a node module.
 
 ## Command line
 
@@ -89,7 +89,7 @@ wxw('trash',    'empty')
 
 ## Application
 
-The project contains also sources for an application that ...
+The project contains sources for an application that ...
 - provides a full-screen zoom similar to the ctrl-mousewheel experience on mac (Alt+Z)
 - positions windows on keyboard shortcuts similiar to divvy or magnet (Alt+Ctrl+[Up|Left...|1...4])
 - switches between applications similar to the cmd-tab switch on mac (Ctrl+Tab):
@@ -109,12 +109,10 @@ npm install
 npm run build
 ```
 
-It's still a bit rough around the edges, let me know how it went if you tried it.
-
 #### Projects using wxw
 
+[kachel](https://github.com/monsterkodi/kachel)
 [clippo](https://github.com/monsterkodi/clippo)
 [kappo](https://github.com/monsterkodi/kappo)
-[kachel](https://github.com/monsterkodi/kachel)
 
 

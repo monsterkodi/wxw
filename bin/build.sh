@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 cd `dirname $0`/../wc
 
-wxw kill wc.exe
+wxw kill /wxw/bin/wc.exe
 
 MSBUILD="/c/Program Files (x86)/Microsoft Visual Studio/2017/Professional/MSBuild/15.0/Bin/"
 

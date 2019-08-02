@@ -35,9 +35,9 @@ HRESULT taskbar(char* id)
         bShowTaskBar = taskbarIsHidden();
     }
 
-    static int nTaskBarPosition = 0;
+    static int position = 0;
 
-    RECT rcWorkArea;
+    RECT wa;
     
     HWND hTaskBar = FindWindow(L"Shell_TrayWnd", L"");
     
@@ -45,36 +45,39 @@ HRESULT taskbar(char* id)
     {
         wRect tb = winRect(hTaskBar);
         
-        SystemParametersInfo(SPI_GETWORKAREA,0,(LPVOID)&rcWorkArea,0);
+        SystemParametersInfo(SPI_GETWORKAREA,0,(LPVOID)&wa,0);
         
-        int nWidth  = ::GetSystemMetrics(SM_CXSCREEN);
-        int nHeight = ::GetSystemMetrics(SM_CYSCREEN);
+        int width  = GetSystemMetrics(SM_CXSCREEN);
+        int height = GetSystemMetrics(SM_CYSCREEN);
         
         if (bShowTaskBar)
         {
-            switch(nTaskBarPosition)
+            switch(position)
             {
-                case 0: rcWorkArea.bottom = nHeight - tb.height; break;
-                case 1: rcWorkArea.left   = tb.width; break; 
-                case 2: rcWorkArea.right  = nWidth - tb.width; break;
-                case 3: rcWorkArea.top    = tb.height; break;
+                case 0: wa.bottom = height - tb.height; break;
+                case 1: wa.left   = tb.width;           break; 
+                case 2: wa.right  = width - tb.width;   break;
+                case 3: wa.top    = tb.height;          break;
             }
-            SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&rcWorkArea,0);
             ShowWindow(hTaskBar, SW_SHOW);
+            cout << "hide " << wa.right << " " << wa.bottom << endl;
+            SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&wa,0);
         }
         else
         {
-            if      ( rcWorkArea.left!=0) nTaskBarPosition = 1;
-            else if ( rcWorkArea.top!=0)  nTaskBarPosition = 3;
-            else if ((rcWorkArea.right-rcWorkArea.left) < nWidth)  nTaskBarPosition = 2;
-            else if ((rcWorkArea.bottom-rcWorkArea.top) < nHeight) nTaskBarPosition = 0;
+            if      ( wa.left!=0)                 position = 1;
+            else if ( wa.top!=0)                  position = 3;
+            else if ((wa.right-wa.left) < width)  position = 2;
+            else if ((wa.bottom-wa.top) < height) position = 0;
 
-            rcWorkArea.left   = 0;
-            rcWorkArea.top    = 0;
-            rcWorkArea.bottom = nHeight;
-            rcWorkArea.right  = nWidth;
-            SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&rcWorkArea,0);
+            wa.left   = 0;
+            wa.top    = 0;
+            wa.bottom = height;
+            wa.right  = width;
+            
             ShowWindow(hTaskBar, SW_HIDE);
+            cout << "hide " << width << " " << height << endl;
+            SystemParametersInfo(SPI_SETWORKAREA,0,(LPVOID)&wa,0);
         }
     }
     else
