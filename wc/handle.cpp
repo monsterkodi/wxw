@@ -1,7 +1,12 @@
+/*
+000   000   0000000   000   000  0000000    000      00000000  
+000   000  000   000  0000  000  000   000  000      000       
+000000000  000000000  000 0 000  000   000  000      0000000   
+000   000  000   000  000  0000  000   000  000      000       
+000   000  000   000  000   000  0000000    0000000  00000000  
+*/
 
 #include "handle.h"
-#include <Tlhelp32.h>
-#include <Psapi.h>
 #include "kutl.h"
 
 UINT g_CurrentIndex = 0;
@@ -41,6 +46,12 @@ struct THREAD_PARAMS
 
 typedef DWORD(WINAPI* GetFinalPathNameByHandleDef)(HANDLE hFile, LPWSTR lpszFilePath, DWORD cchFilePath, DWORD dwFlags);
 GetFinalPathNameByHandleDef pGetFinalPathNameByHandle = (GetFinalPathNameByHandleDef)GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetFinalPathNameByHandleW");
+
+// 000000000  000   000  00000000   00000000   0000000   0000000    
+//    000     000   000  000   000  000       000   000  000   000  
+//    000     000000000  0000000    0000000   000000000  000   000  
+//    000     000   000  000   000  000       000   000  000   000  
+//    000     000   000  000   000  00000000  000   000  0000000    
 
 DWORD WINAPI ThreadProc(LPVOID lParam)
 {
@@ -82,6 +93,12 @@ DWORD WINAPI ThreadProc(LPVOID lParam)
 	}
 	return 0;
 }
+
+// 000   000   0000000   000   000  0000000    000      00000000  
+// 000   000  000   000  0000  000  000   000  000      000       
+// 000000000  000000000  000 0 000  000   000  000      0000000   
+// 000   000  000   000  000  0000  000   000  000      000       
+// 000   000  000   000  000   000  0000000    0000000  00000000  
 
 HRESULT handle(const char* id)
 {

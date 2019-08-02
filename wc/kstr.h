@@ -3,6 +3,7 @@
 #include <string.h>
 #include <tchar.h>
 #include <strsafe.h>
+#include <vector>
 #include <iostream>
 #include <sstream>
 #include <fstream>

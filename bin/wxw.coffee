@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 
 wc = require '../js/wc'
 

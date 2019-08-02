@@ -160,22 +160,32 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="handle.cpp" />
+    <ClCompile Include="hook.cpp" />
+    <ClCompile Include="icon.cpp" />
     <ClCompile Include="kstr.cpp" />
     <ClCompile Include="kutl.cpp" />
+    <ClCompile Include="taskbar.cpp" />
+    <ClCompile Include="trash.cpp" />
     <ClCompile Include="uiohook\input_helper.c" />
     <ClCompile Include="uiohook\input_hook.c" />
     <ClCompile Include="uiohook\logger.c" />
     <ClCompile Include="uiohook\post_event.c" />
     <ClCompile Include="uiohook\system_properties.c" />
     <ClCompile Include="wc.cpp" />
+    <ClCompile Include="wins.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="handle.h" />
+    <ClInclude Include="hook.h" />
+    <ClInclude Include="icon.h" />
     <ClInclude Include="kstr.h" />
     <ClInclude Include="kutl.h" />
+    <ClInclude Include="taskbar.h" />
+    <ClInclude Include="trash.h" />
     <ClInclude Include="uiohook\input_helper.h" />
     <ClInclude Include="uiohook\logger.h" />
     <ClInclude Include="uiohook\uiohook.h" />
+    <ClInclude Include="wins.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
