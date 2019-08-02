@@ -1,17 +1,8 @@
 #include <windows.h>
 #include <WinUser.h>
 #include <gdiplus.h>
-#include <string.h>
-#include <tchar.h>
 #include <math.h>
-#include <strsafe.h>
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <codecvt>
-#include <vector>
 #include <set>
-#include <algorithm>
 #include <shellscalingapi.h>
 #include <KnownFolders.h>
 #include <shlwapi.h>
@@ -19,40 +10,13 @@
 #include <Shobjidl.h>
 #include <dwmapi.h>
 #include <commoncontrols.h>
-#include <tlhelp32.h>
 #include <winsock.h>
 
 #include "uiohook.h"
 #include "handle.h"
+#include "kutl.h"
 
 using namespace Gdiplus;
-using namespace std;
-
-//  0000000  00     00  00000000   
-// 000       000   000  000   000  
-// 000       000000000  00000000   
-// 000       000 0 000  000        
-//  0000000  000   000  000        
-
-wstring s2ws(const string& str)
-{
-	using convert_typeX = codecvt_utf8<wchar_t>;
-	wstring_convert<convert_typeX, wchar_t> converterX;
-
-	return converterX.from_bytes(str);
-}
-
-string ws2s(const wstring& wstr)
-{
-	using convert_typeX = codecvt_utf8<wchar_t>;
-	wstring_convert<convert_typeX, wchar_t> converterX;
-
-	return converterX.to_bytes(wstr);
-}
-
-int cmp(const wstring& a, const wstring& b) { return a.compare(b) == 0; }
-int cmp(const wstring& a, const char*    b) { return cmp(a, s2ws(b)); }
-int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; }
 
 int klog(const char *msg)
 {
@@ -148,63 +112,6 @@ void closeUDP()
     closesocket(udpSocket);
 }
 
-// 00000000   00000000    0000000    0000000  00000000    0000000   000000000  000   000  
-// 000   000  000   000  000   000  000       000   000  000   000     000     000   000  
-// 00000000   0000000    000   000  000       00000000   000000000     000     000000000  
-// 000        000   000  000   000  000       000        000   000     000     000   000  
-// 000        000   000   0000000    0000000  000        000   000     000     000   000  
-
-string procPath(DWORD pid)
-{
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-
-    DWORD pathSize = MAX_PATH;
-    static char path[MAX_PATH];
-    path[0] = 0;
-
-    if (QueryFullProcessImageNameA(hProcess, 0, path, &pathSize))
-    {
-        return string(path);
-    }
-    return string("");
-}
-
-string fileName(const string& path)
-{
-    static char name[_MAX_FNAME];
-    _splitpath_s(path.c_str(), NULL, 0, NULL, 0, name, _MAX_FNAME, NULL, 0);
-    return string(name);
-}
-
-string fileExt(const string& path)
-{
-    static char ext[_MAX_EXT];
-    _splitpath_s(path.c_str(), NULL, 0, NULL, 0, NULL, 0, ext, _MAX_EXT);
-    return string(ext);
-}
-
-stringreplace(string const& original, string const& from, string const& to)
-{
-    string result;
-    string::const_iterator end     = original.end();
-    string::const_iterator current = original.begin();
-    string::const_iterator next    = search(current, end, from.begin(), from.end());
-    while (next != end) 
-    {
-        result.append(current, next);
-        result.append(to);
-        current = next + from.size();
-        next = search(current, end, from.begin(), from.end());
-    }
-    result.append(current, next);
-    return result;
-}
-
-string slash(const string& path)
-{
-    return replace(path, "\\", "/");
-}
-
 // 000000000  000  000000000  000      00000000  
 //    000     000     000     000      000       
 //    000     000     000     000      0000000   
@@ -238,67 +145,6 @@ bool isWindowCloaked(HWND hWnd)
 		Cloaked = 0;
 	}
 	return Cloaked ? true : false;
-}
-
-
-// 00000000   00000000    0000000    0000000  
-// 000   000  000   000  000   000  000       
-// 00000000   0000000    000   000  000       
-// 000        000   000  000   000  000       
-// 000        000   000   0000000    0000000  
-
-struct procinfo
-{
-    string   path;
-    uint32_t pid;
-    uint32_t parent;
-};
-
-vector<procinfo> procs(char* id=NULL)
-{
-    vector<procinfo> procinfos;
-    
-    HANDLE hProcessSnap;
-    PROCESSENTRY32 pe32;
-    
-    hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hProcessSnap == INVALID_HANDLE_VALUE)
-    {
-        return procinfos;
-    }
-    
-    pe32.dwSize = sizeof(PROCESSENTRY32);
-    
-    if (!Process32First(hProcessSnap, &pe32))
-    {
-        CloseHandle(hProcessSnap);
-        return procinfos;
-    }
-    
-    do
-    {
-        string path = procPath(pe32.th32ProcessID);
-        
-        if (!path.size())        
-        {
-            continue;
-        }
-        
-        string name = fileName(path);
-        string ext  = fileExt(path);
-        
-        if (ext.size() > 0) name += ext;
-        
-        if (id == NULL || name.find(id) != wstring::npos)
-        {
-            procinfos.push_back({path.c_str(), pe32.th32ProcessID, pe32.th32ParentProcessID});
-        }
-        
-    } while (Process32Next(hProcessSnap, &pe32));
-    
-    CloseHandle(hProcessSnap);
-    
-    return procinfos;
 }
 
 HRESULT proclist(char* id=NULL)
@@ -359,7 +205,7 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
         return cmp(windowStatus(hWnd).c_str(), id);
 	}
 
-    wstring wid = s2ws(id);
+    wstring wid = s2w(id);
     wchar_t buf[65];
     
     StringCbPrintfW(buf, 64, L"%ld", pid);
@@ -374,12 +220,12 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
 		return true;
     }
     
-    if (path && wstring(path).find(wid) != wstring::npos)
+    if (path && contains(path, wid))
     {
 		return true;
     }
 
-    if (title && wstring(title).find(wid) != wstring::npos)
+    if (title && contains(title, wid))
     {
 		return true;
     }
@@ -792,7 +638,7 @@ HRESULT launch(char *path)
         if (wins.size() <= 0)
         {
             LPSTR lpFilePart;
-            wstring wpath = s2ws(file);
+            wstring wpath = s2w(file);
             wstring found;
 
             if (SearchPathA(NULL, file, ".exe", MAX_PATH, normpath, &lpFilePart))
@@ -801,11 +647,11 @@ HRESULT launch(char *path)
             }
             else if (findFile(L"C:\\Program Files", wpath, found))
             { 
-                GetFullPathNameA(ws2s(found).c_str(), MAX_PATH, normpath, NULL);
+                GetFullPathNameA(w2s(found).c_str(), MAX_PATH, normpath, NULL);
             }
             else if (findFile(L"C:\\Program Files (x86)", wpath, found))
             {
-                GetFullPathNameA(ws2s(found).c_str(), MAX_PATH, normpath, NULL);
+                GetFullPathNameA(w2s(found).c_str(), MAX_PATH, normpath, NULL);
             }
             else
             {
@@ -1171,7 +1017,7 @@ HRESULT trash(char* action)
         {
             if (SUCCEEDED(hr = op->SetOperationFlags(FOFX_ADDUNDORECORD | FOFX_RECYCLEONDELETE | FOF_NOERRORUI | FOF_NOCONFIRMATION | FOFX_EARLYFAILURE)))
             {
-                wstring path = s2ws(action);
+                wstring path = s2w(action);
                 
                 unsigned long len = GetFullPathName(path.c_str(), 0, NULL, NULL);
 
@@ -1243,7 +1089,7 @@ bool saveBitmap(Bitmap* bitmap, const char* targetfile)
 	}
 
     GetFullPathNameA(targetfile, MAX_PATH, normpath, NULL);
-	if (Ok == bitmap->Save(s2ws(normpath).c_str(), &clsID))
+    if (Ok == bitmap->Save(s2w(normpath).c_str(), &clsID))
 	{
 		cout << "saved " << normpath << endl;
 		return true;
@@ -1460,13 +1306,6 @@ HRESULT icon(char* id, char* targetfile=NULL)
     return hr;
 }
 
-HRESULT handle(const char* id)
-{
-    cout << "handle " << id << endl;
-    GetOpenedFiles(id);
-    return S_OK;
-}
-
 // 000   000   0000000    0000000   000   000
 // 000   000  000   000  000   000  000  000 
 // 000000000  000   000  000   000  0000000  
@@ -1522,7 +1361,7 @@ void sendInfo()
     {
         winfo i = winInfo(hWnd);
          
-        string title = replace(ws2s(i.title), "\\", "\\\\");
+        string title = replace(w2s(i.title), "\\", "\\\\");
         
         ss << "   {\"path\":    \"" << slash(i.path) << "\",\n";
         ss << "    \"title\":   \"" << title         << "\",\n";

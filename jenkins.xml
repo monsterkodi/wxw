@@ -1,0 +1,128 @@
+<workflowJob _class='org.jenkinsci.plugins.workflow.job.WorkflowJob'>
+<action _class='com.cloudbees.plugins.credentials.ViewCredentialsAction'>
+</action>
+<description>Manticore Unleashed PS4 Continuous Build</description>
+<displayName>PS4-Continuous</displayName>
+<fullDisplayName>unleashed » continuous » PS4-Continuous</fullDisplayName>
+<fullName>unleashed/continuous/PS4-Continuous</fullName>
+<name>PS4-Continuous</name>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/</url>
+<buildable>true</buildable>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4965</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4965/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4964</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4964/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4963</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4963/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4962</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4962/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4961</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4961/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4960</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4960/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4959</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4959/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4958</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4958/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4957</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4957/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4956</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4956/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4955</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4955/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4954</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4954/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4953</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4953/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4952</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4952/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4951</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4951/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4950</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4950/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4949</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4949/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4948</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4948/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4947</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4947/</url>
+</build>
+<build _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4946</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4946/</url>
+</build>
+<color>blue</color>
+<firstBuild _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4946</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4946/</url>
+</firstBuild>
+<healthReport>
+<description>Build stability: No recent builds failed.</description>
+<iconClassName>icon-health-80plus</iconClassName>
+<iconUrl>health-80plus.png</iconUrl>
+<score>100</score>
+</healthReport>
+<inQueue>false</inQueue>
+<keepDependencies>false</keepDependencies>
+<lastBuild _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4965</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4965/</url>
+</lastBuild>
+<lastCompletedBuild _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4965</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4965/</url>
+</lastCompletedBuild>
+<lastStableBuild _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4965</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4965/</url>
+</lastStableBuild>
+<lastSuccessfulBuild _class='org.jenkinsci.plugins.workflow.job.WorkflowRun'>
+<number>4965</number>
+<url>http://dehamapp23:8080/job/unleashed/job/continuous/job/PS4-Continuous/4965/</url>
+</lastSuccessfulBuild>
+<nextBuildNumber>4966</nextBuildNumber>
+<property _class='org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty'>
+</property>
+<property _class='jenkins.model.BuildDiscarderProperty'>
+</property>
+<property _class='hudson.security.AuthorizationMatrixProperty'>
+</property>
+<concurrentBuild>false</concurrentBuild>
+</workflowJob>

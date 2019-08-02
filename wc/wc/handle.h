@@ -4,20 +4,17 @@
 
 #define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
 
-typedef struct _HANDLE_INFO
-{
+typedef struct _HANDLE_INFO { 
     USHORT tcDeviceName[260];
     USHORT tcFileName[260];
     ULONG uType;
 } HANDLE_INFO;
 
-typedef struct _ADDRESS_INFO
-{
+typedef struct _ADDRESS_INFO {
     PVOID pAddress;
 } ADDRESS_INFO;
 
-typedef struct _SYSTEM_HANDLE
-{
+typedef struct _SYSTEM_HANDLE {
     DWORD       dwProcessId;
     BYTE		bObjectType;
     BYTE		bFlags;
@@ -26,8 +23,7 @@ typedef struct _SYSTEM_HANDLE
     DWORD GrantedAccess;
 } SYSTEM_HANDLE;
 
-typedef struct _SYSTEM_HANDLE_INFORMATION
-{
+typedef struct _SYSTEM_HANDLE_INFORMATION {
     DWORD         dwCount;
     SYSTEM_HANDLE Handles[1];
 } SYSTEM_HANDLE_INFORMATION, * PSYSTEM_HANDLE_INFORMATION, ** PPSYSTEM_HANDLE_INFORMATION;
@@ -36,11 +32,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemHandleInformation = 0X10,
 } SYSTEM_INFORMATION_CLASS;
 
-typedef NTSTATUS(WINAPI* PNtQuerySystemInformation)
-(IN	SYSTEM_INFORMATION_CLASS SystemInformationClass,
-    OUT	PVOID					 SystemInformation,
-    IN	ULONG					 SystemInformationLength,
-    OUT	PULONG					 ReturnLength OPTIONAL);
+typedef NTSTATUS(WINAPI* PNtQuerySystemInformation) (IN SYSTEM_INFORMATION_CLASS SystemInformationClass, OUT PVOID SystemInformation, IN ULONG SystemInformationLength, OUT PULONG ReturnLength OPTIONAL);
 
 enum OF_TYPE
 {
@@ -57,10 +49,5 @@ struct OF_INFO_t
 };
 
 typedef void (CALLBACK* OF_CALLBACK)(OF_INFO_t OpenedFileInf0, UINT_PTR uUserContext );
-typedef DWORD(WINAPI* GetFinalPathNameByHandleDef)(
-    HANDLE hFile,
-    LPWSTR lpszFilePath,
-    DWORD cchFilePath,
-    DWORD dwFlags);
 
-extern "C" __declspec(dllexport) void GetOpenedFiles( LPCSTR lpPath );
+HRESULT handle(const char* id);
