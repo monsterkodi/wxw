@@ -1,5 +1,20 @@
 #!/usr/bin/env node
 
+var args, out, wc;
+
 wc = require('../js/wc');
 
-process.stdout.write(wc.exec.apply(null, process.argv.slice(2)));
+args = process.argv.slice(2);
+
+out = wc.exec.apply(null, args);
+
+switch (args[0]) {
+    case 'launch':
+    case 'raise':
+    case 'focus':
+    case 'hook':
+        process.stdout.write("\n");
+        break;
+    default:
+        process.stdout.write(out);
+}

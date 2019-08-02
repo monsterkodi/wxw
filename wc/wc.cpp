@@ -137,6 +137,11 @@ string windowStatus(HWND hWnd)
 	return "normal";
 }
 
+bool isMinimized(HWND hWnd)
+{
+    return cmp(windowStatus(hWnd), "minimized");
+}
+
 bool isWindowCloaked(HWND hWnd)
 {
 	int Cloaked;
@@ -442,6 +447,12 @@ HRESULT close(char *id)
 
 HRESULT terminate(char* id)
 {
+    if (!id) 
+    {
+        cerr << "no path or pid?" << endl;
+        return S_FALSE;
+    }
+    
     vector<procinfo> infos = procs(id);
         
     if (infos.size())
@@ -666,6 +677,10 @@ HRESULT launch(char *path)
             for (HWND hWnd : wins)
             {
                 ShowWindow(hWnd, SW_SHOW);
+                if (isMinimized(hWnd))
+                {
+                    ShowWindow(hWnd, SW_RESTORE);
+                }
                 SetWindowPos(hWnd, HWND_TOPMOST,   0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
                 SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
                 SetForegroundWindow(hWnd);
@@ -674,7 +689,6 @@ HRESULT launch(char *path)
         }
     }
     
-    //STARTUPINFOA info={sizeof(info)};
     STARTUPINFOA info = { 0 };
     PROCESS_INFORMATION processInfo = { 0 };
     
@@ -689,7 +703,8 @@ HRESULT launch(char *path)
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
     CloseHandle(&info);
-    cout << normpath << endl;
+    // cout << normpath << endl;
+    printf("%s\n", normpath);
     return S_OK;
 }
 
