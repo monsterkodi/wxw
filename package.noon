@@ -1,5 +1,5 @@
 name            wxw
-version         1.64.0
+version         1.65.0
 description     moves my windows
 keywords
                 windows
@@ -20,8 +20,9 @@ bin             ./bin/wxw
 dependencies
                 kxk  ^0.333.0
 devDependencies
-                electron        ^5.0.8
-                electron-packager  ^14.0.3
+                electron        ^6.0.0
+                electron-packager  ^14.0.4
                 electron-rebuild  ^1.8.5
-                konrad          ^0.154.0
+                konrad          ^0.156.0
+                node-abi        ^2.10.0
                 sds             ^3.2.0
