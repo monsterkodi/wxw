@@ -23,6 +23,7 @@
 #include <winsock.h>
 
 #include "uiohook.h"
+#include "handle.h"
 
 using namespace Gdiplus;
 using namespace std;
@@ -1459,6 +1460,13 @@ HRESULT icon(char* id, char* targetfile=NULL)
     return hr;
 }
 
+HRESULT handle(const char* id)
+{
+    cout << "handle " << id << endl;
+    GetOpenedFiles(id);
+    return S_OK;
+}
+
 // 000   000   0000000    0000000   000   000
 // 000   000  000   000  000   000  000  000 
 // 000000000  000   000  000   000  0000000  
@@ -1550,10 +1558,8 @@ void initHook()
         {
             if (message.message == WM_QUIT)
             {
-                cout << "got quit" << endl;
                 break;
             }
-            cout << "got message " << message.message << endl;
             TranslateMessage(&message);
             DispatchMessage(&message);
         }
@@ -1563,13 +1569,24 @@ void initHook()
         if (delta > 0)
         {
             last = n;
+            
+            if (msec < 500 && msec+delta >= 500)
+            {
+                sendInfo();
+            }
+            else if (msec < 1000 && msec+delta >= 1000)
+            {
+                sendProc();
+            }
             msec += delta;
             if (msec >= 1000)
             {
                 msec -= 1000;
-                sendProc();
-                sendInfo();
             }
+        }
+        else
+        {
+            Sleep(1);
         }
     }
     
@@ -1927,6 +1944,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = proclist();
         else           hr = proclist(argv[2]);
+    }
+    else if (cmp(cmd, "handle"))
+    {
+        if (argc == 2) hr = help(cmd);
+        else           hr = handle(argv[2]);
     }
     else if (cmp(cmd, "hook"))
     {
