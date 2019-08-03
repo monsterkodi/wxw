@@ -8,6 +8,9 @@
 #include "kutl.h"
 
 #include <dwmapi.h>
+#include <KnownFolders.h>
+#include <shlwapi.h>
+#include <ShlObj.h>
 
 int klog(const char *msg)
 {
@@ -98,6 +101,48 @@ wRect winRect(HWND hWnd)
     return {x,y,width,height};
 }
 
+//  0000000  000   000   0000000  00000000    0000000   000000000  000   000  
+// 000        000 000   000       000   000  000   000     000     000   000  
+// 0000000     00000    0000000   00000000   000000000     000     000000000  
+//      000     000          000  000        000   000     000     000   000  
+// 0000000      000     0000000   000        000   000     000     000   000  
+
+string sysPath(char* id)
+{
+    string sp = "";
+    PWSTR path = NULL;
+    
+    HRESULT hr = S_OK;
+    
+    if      (cmp(id, "AppData"))    { hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData,  0, NULL, &path); }
+    else if (cmp(id, "Desktop"))    { hr = SHGetKnownFolderPath(FOLDERID_Desktop,         0, NULL, &path); }
+    else if (cmp(id, "Documents"))  { hr = SHGetKnownFolderPath(FOLDERID_Documents,       0, NULL, &path); }
+    else if (cmp(id, "Downloads"))  { hr = SHGetKnownFolderPath(FOLDERID_Downloads,       0, NULL, &path); }
+    else if (cmp(id, "Fonts"))      { hr = SHGetKnownFolderPath(FOLDERID_Fonts,           0, NULL, &path); }
+    else if (cmp(id, "Home"))       { hr = SHGetKnownFolderPath(FOLDERID_Profile,         0, NULL, &path); }
+    else if (cmp(id, "Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
+    else if (cmp(id, "ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
+    else if (cmp(id, "Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
+    else
+    {
+        cerr << "ERROR: invalid folder " << id << endl;
+        return sp;
+    }
+
+    if (SUCCEEDED(hr) && path) 
+    {
+        sp = slash(w2s(path));
+    }
+    else
+    {
+        cerr << "ERROR: can't get folder " << id << endl; 
+    }
+
+    CoTaskMemFree(path);
+    
+    return sp;
+}
+
 // 00000000   00000000    0000000    0000000  00000000    0000000   000000000  000   000  
 // 000   000  000   000  000   000  000       000   000  000   000     000     000   000  
 // 00000000   0000000    000   000  000       00000000   000000000     000     000000000  
@@ -114,7 +159,7 @@ string procPath(DWORD pid)
 
 	if (QueryFullProcessImageNameA(hProcess, 0, path, &pathSize))
 	{
-		return string(path);
+        return slash(path);
 	}
 	return string("");
 }
@@ -162,7 +207,7 @@ vector<procinfo> procs(char* id)
 
         if (id == NULL || contains(name, id) || pe32.th32ProcessID == atoll(id) || matchPath(path, id))
 		{
-            procinfos.push_back({ slash(path).c_str(), pe32.th32ProcessID, pe32.th32ParentProcessID });
+            procinfos.push_back({ path.c_str(), pe32.th32ProcessID, pe32.th32ParentProcessID });
 		}
 
 	} while (Process32Next(hProcessSnap, &pe32));

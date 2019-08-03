@@ -7,10 +7,8 @@
 */
 
 #include <shellscalingapi.h>
-#include <KnownFolders.h>
 #include <WinUser.h>
 #include <shlwapi.h>
-#include <ShlObj.h>
 #include <math.h>
 #include <set>
 #include "taskbar.h"
@@ -552,36 +550,46 @@ HRESULT screen(char *id="size")
 
 HRESULT folder(char *id)
 {
-    PWSTR path = NULL;
-    HRESULT hr = S_OK; 
-    
-    if      (cmp(id, "AppData"))    { hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData,  0, NULL, &path); }
-    else if (cmp(id, "Desktop"))    { hr = SHGetKnownFolderPath(FOLDERID_Desktop,         0, NULL, &path); }
-    else if (cmp(id, "Documents"))  { hr = SHGetKnownFolderPath(FOLDERID_Documents,       0, NULL, &path); }
-    else if (cmp(id, "Downloads"))  { hr = SHGetKnownFolderPath(FOLDERID_Downloads,       0, NULL, &path); }
-    else if (cmp(id, "Fonts"))      { hr = SHGetKnownFolderPath(FOLDERID_Fonts,           0, NULL, &path); }
-    else if (cmp(id, "Program"))    { hr = SHGetKnownFolderPath(FOLDERID_ProgramFiles,    0, NULL, &path); }
-    else if (cmp(id, "ProgramX86")) { hr = SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, NULL, &path); }
-    else if (cmp(id, "Startup"))    { hr = SHGetKnownFolderPath(FOLDERID_Startup,         0, NULL, &path); }
-    else
-    {
-        cerr << "ERROR: invalid folder name " << id << endl;
-        return S_FALSE;
-    }
+    string sp = unslash(sysPath(id));
 
-    if (SUCCEEDED(hr) && path) 
+    if (!sp.size()) return S_FALSE;
+    
+    if (contains(sp, " "))
     {
-        wprintf(L"%ls\n", path);
+        printf("\"%s\"", sp.c_str());
     }
     else
     {
-        cerr << "ERROR: can't get folder " << id << endl; 
-        hr = S_FALSE;
+        printf("%s", sp.c_str());
     }
-
-    CoTaskMemFree(path);
     
-    return hr;
+    return S_OK;
+}
+
+HRESULT path(char *id)
+{
+    string sp = sysPath(id);
+
+    if (!sp.size()) return S_FALSE;
+    
+    if (sp[1] == ':')
+    {
+        sp[1] = lower(sp.substr(0,1)).c_str()[0];
+        sp[0] = '/';
+    }
+    
+    if (contains(sp, " "))
+    {
+        // sp = replace(sp, " ", "\\ ");
+        // printf("%s", sp.c_str());
+        printf("%s", sp.c_str());
+    }
+    else
+    {
+        printf("%s", sp.c_str());
+    }
+    
+    return S_OK;
 }
 
 //  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
@@ -778,9 +786,14 @@ HRESULT help(char *command)
         klog("      Documents");
         klog("      Downloads");
         klog("      Fonts");
+        klog("      Home");
         klog("      Program");
         klog("      ProgramX86");
         klog("      Startup");
+        klog("");
+        klog("wxw path name");
+        klog("");
+        klog("      As above, but in unix style");
     }
     else if (cmp(command, "key"))
     {
@@ -853,6 +866,26 @@ HRESULT help(char *command)
 // 000 0 000  000   000  000  000  0000  
 // 000   000  000   000  000  000   000  
 
+char* swappable[] = {
+    "info",
+    "proc",
+    "taskbar",
+    "move",
+    "bounds",
+    "size",
+    "minimize",
+    "maximize",
+    "raise",
+    "focus",
+    "close",
+    "quit",
+    "handle",
+    "restore",
+    "terminate",
+    "taskbar",
+    0
+};
+
 int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, __in LPSTR lpCmdLine, __in int nShowCmd)
 {
     int argc    = __argc;
@@ -864,9 +897,25 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         return usage();
     }
+        
+    if (argc > 2)
+    {
+        int i=0;
+        while (swappable[i])
+        {
+            char* swp=swappable[i];
+            if (cmp(argv[2],swp))
+            {
+                char* tmp = argv[1];
+                argv[1] = argv[2];
+                argv[2] = tmp;
+            }
+            i++;
+        }
+    }
     
     char* cmd = argv[1];
-    
+        
     if (cmp(cmd, "help"))
     {
         if (argc == 2) hr = usage();
@@ -947,6 +996,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = help(cmd);
         else           hr = folder(argv[2]);
+    }
+    else if (cmp(cmd, "path"))
+    {
+        if (argc == 2) hr = help("folder");
+        else           hr = path(argv[2]);
     }
     else if (cmp(cmd, "taskbar"))
     {

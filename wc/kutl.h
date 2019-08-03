@@ -35,6 +35,7 @@ struct procinfo
 };
 
 string procPath(DWORD pid);
+string sysPath(char* id);
 vector<procinfo> procs(char* id = NULL);
 HRESULT terminateProc(DWORD procid);
 
