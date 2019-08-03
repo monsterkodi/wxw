@@ -1,5 +1,5 @@
 name            wxw
-version         1.66.0
+version         1.67.0
 description     moves my windows
 keywords
                 windows
@@ -23,6 +23,6 @@ devDependencies
                 electron        ^6.0.0
                 electron-packager  ^14.0.4
                 electron-rebuild  ^1.8.5
-                konrad          ^0.156.0
+                konrad          ^0.157.0
                 node-abi        ^2.10.0
                 sds             ^3.2.0

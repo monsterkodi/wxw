@@ -51,6 +51,11 @@ bool contains(const string& str, const string& sub)
     return str.find(sub) != string::npos;
 }
 
+bool matchPath(const string& a, const string& b)
+{
+    return cmp(slash(a),slash(b));
+}
+
 // 000       0000000   000   000  00000000  00000000   
 // 000      000   000  000 0 000  000       000   000  
 // 000      000   000  000000000  0000000   0000000    

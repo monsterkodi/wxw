@@ -160,9 +160,9 @@ vector<procinfo> procs(char* id)
 
 		if (ext.size() > 0) name += ext;
 
-		if (id == NULL || contains(name, id) || pe32.th32ProcessID == atoll(id))
+        if (id == NULL || contains(name, id) || pe32.th32ProcessID == atoll(id) || matchPath(path, id))
 		{
-			procinfos.push_back({ path.c_str(), pe32.th32ProcessID, pe32.th32ParentProcessID });
+            procinfos.push_back({ slash(path).c_str(), pe32.th32ProcessID, pe32.th32ParentProcessID });
 		}
 
 	} while (Process32Next(hProcessSnap, &pe32));

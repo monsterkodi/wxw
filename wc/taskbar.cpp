@@ -31,13 +31,15 @@ void resizeWindows(RECT& wa, int height)
     for (HWND hWnd : wins)
     {
         winfo i = winInfo(hWnd);
-        if (i.y+i.height > wa.bottom) // window would overlay taskbar, make it smaller
+        if (i.y+i.height > wa.bottom || i.y+i.height >= height-10) // window would overlay taskbar or bottom (almost) touches hiding taskbar
         {
             SetWindowPos(hWnd, NULL, i.x, i.y, i.width, wa.bottom-i.y, SWP_NOZORDER);
         }
-        else if (i.y+i.height >= height-10) // bottom (almost) touches hiding taskbar, make it larger
+        
+        winfo n = winInfo(hWnd);
+        if (i.width != n.width) // for some reason electron apps dont get the width we requested
         {
-            SetWindowPos(hWnd, NULL, i.x, i.y, i.width, wa.bottom-i.y, SWP_NOZORDER);
+            SetWindowPos(hWnd, NULL, n.x, n.y, i.width+i.width-n.width, wa.bottom-i.y, SWP_NOZORDER);
         }
     }    
 }
