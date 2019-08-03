@@ -906,9 +906,12 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
             char* swp=swappable[i];
             if (cmp(argv[2],swp))
             {
-                char* tmp = argv[1];
-                argv[1] = argv[2];
-                argv[2] = tmp;
+                if (!cmp(argv[1], "hook"))
+                {
+                    char* tmp = argv[1];
+                    argv[1] = argv[2];
+                    argv[2] = tmp;
+                }
             }
             i++;
         }
@@ -1048,7 +1051,8 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     }
     else if (cmp(cmd, "hook"))
     {
-        initHook();
+        if (argc == 2) hr = help(cmd);
+        else initHook(argv[2]);
     }
     else
     {

@@ -137,6 +137,7 @@ DWORD WINAPI sendInfo(LPVOID lParam)
         winfo i = winInfo(hWnd);
          
         string title = replace(w2s(i.title), "\\", "\\\\");
+        title = replace(title, "\"", "\\\"");
         
         ss << "   {\"path\":    \"" << slash(i.path) << "\",\n";
         ss << "    \"title\":   \"" << title         << "\",\n";
@@ -161,59 +162,79 @@ DWORD WINAPI sendInfo(LPVOID lParam)
 // 000  000  0000  000     000     
 // 000  000   000  000     000     
 
-void initHook()
+void initHook(const char* id)
 {
+    cout << "hook " << id << endl;
+        
     initUDP();
-    hook_set_dispatch_proc(&hook_event);
-    
-    cout << "hook..." << endl;
-    
-    hook_run();
-    
-    DWORD last = now();
-    DWORD msec = 0;
+                
     MSG message;
-    while (true) 
-    {        
-        if (PeekMessage(&message, (HWND)NULL, 0, 0, PM_REMOVE))
+    
+    if (cmp(id, "input"))
+    {
+        hook_set_dispatch_proc(&hook_event);
+                
+        hook_run();
+        
+        while (true) 
         {
-            if (message.message == WM_QUIT)
+            if (PeekMessage(&message, (HWND)NULL, 0, 0, PM_REMOVE))
             {
-                break;
+                if (message.message == WM_QUIT)
+                {
+                    break;
+                }
+                TranslateMessage(&message);
+                DispatchMessage(&message);
             }
-            TranslateMessage(&message);
-            DispatchMessage(&message);
         }
                 
-        DWORD n = now();
-        DWORD delta =  n - last;
-        if (delta > 0)
-        {
-            last = n;
-            
-            if (msec < 500 && msec+delta >= 500)
+        hook_end();
+    }
+    else if (cmp(id, "info") || cmp(id, "proc"))
+    {
+        DWORD last = now();
+        DWORD msec = 0;
+        while (true) 
+        {        
+            if (PeekMessage(&message, (HWND)NULL, 0, 0, PM_REMOVE))
             {
-                CreateThread(0, 0, sendInfo, 0, 0, 0);
-                // sendInfo();
+                if (message.message == WM_QUIT)
+                {
+                    break;
+                }
+                TranslateMessage(&message);
+                DispatchMessage(&message);
             }
-            else if (msec < 1000 && msec+delta >= 1000)
+                    
+            DWORD n = now();
+            DWORD delta =  n - last;
+            if (delta > 0)
             {
-                CreateThread(0, 0, sendProc, 0, 0, 0);
-                // sendProc();
+                last = n;
+                
+                if (msec < 1000 && msec+delta >= 1000)
+                {
+                    if (cmp(id, "info"))
+                    {
+                        CreateThread(0, 0, sendInfo, 0, 0, 0);
+                    }
+                    else if (cmp(id, "proc"))
+                    {
+                        CreateThread(0, 0, sendProc, 0, 0, 0);
+                    }
+                }
+                msec += delta;
+                if (msec >= 1000)
+                {
+                    msec -= 1000;
+                }
             }
-            msec += delta;
-            if (msec >= 1000)
-            {
-                msec -= 1000;
-            }
-        }
-        else
-        {
-            Sleep(1);
+
+            Sleep(50);
         }
     }
     
-    cout << "...hook" << endl;
-    hook_end();
+    cout << "...hook " << id << endl;
     closeUDP();
 }

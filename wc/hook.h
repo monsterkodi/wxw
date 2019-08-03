@@ -1,3 +1,3 @@
 #pragma once
 
-void initHook();
+void initHook(const char* id);
