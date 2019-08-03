@@ -170,7 +170,7 @@ activeApp = null
 activate = ->
     
     done()
-    
+        
     if activeApp.id
         
         if activeApp.id in ['Mail' 'Calendar']

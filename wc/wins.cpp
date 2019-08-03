@@ -9,11 +9,11 @@
 #include "wins.h"
 #include "kutl.h"
 
-// 00     00   0000000   000000000   0000000  000   000  000   000  000  000   000  
-// 000   000  000   000     000     000       000   000  000 0 000  000  0000  000  
-// 000000000  000000000     000     000       000000000  000000000  000  000 0 000  
-// 000 0 000  000   000     000     000       000   000  000   000  000  000  0000  
-// 000   000  000   000     000      0000000  000   000  00     00  000  000   000  
+// 00     00   0000000   000000000   0000000  000   000
+// 000   000  000   000     000     000       000   000
+// 000000000  000000000     000     000       000000000
+// 000 0 000  000   000     000     000       000   000
+// 000   000  000   000     000      0000000  000   000
 
 bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* id)
 {
@@ -43,7 +43,7 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
         return true;
     }
     
-    if (path && contains(path, wid))
+    if (path && (contains(path, wid) || matchPath(w2s(path), id)))
     {
         return true;
     }
