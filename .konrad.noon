@@ -1,0 +1,3 @@
+build
+    prune
+        wc
