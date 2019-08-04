@@ -39,7 +39,7 @@ action = (act) ->
         when 'minimize'   then log wc 'minimize' 'top'
         when 'taskbar'    then log wc 'taskbar'  'toggle'
         when 'close'      then log wc 'close'    'top'
-        when 'screenzoom' then require('./zoom').start()
+        when 'screenzoom' then require('./zoom').start debug:args.debug
         when 'appswitch'  then onAppSwitch()
         else moveWindow act
         

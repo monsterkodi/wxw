@@ -97,15 +97,13 @@ createWindow = (opt) ->
     win.debug = opt.debug
     
     win.webContents.on 'dom-ready' ->
-        
         info = wc('info' 'taskbar')[0]
         if info.status != 'hidden'
             post.toWin win.id, 'taskbar' true
         else
             post.toWin win.id, 'taskbar' false
         
-    if opt.debug
-        win.webContents.openDevTools()
+    if opt.debug then win.webContents.openDevTools mode:'detach'
 
     win
 

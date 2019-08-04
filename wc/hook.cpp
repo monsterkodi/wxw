@@ -164,8 +164,6 @@ DWORD WINAPI sendInfo(LPVOID lParam)
 
 void initHook(const char* id)
 {
-    cout << "hook " << id << endl;
-        
     initUDP();
                 
     MSG message;
@@ -235,6 +233,5 @@ void initHook(const char* id)
         }
     }
     
-    cout << "...hook " << id << endl;
     closeUDP();
 }
