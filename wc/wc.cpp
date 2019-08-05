@@ -906,7 +906,7 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
             char* swp=swappable[i];
             if (cmp(argv[2],swp))
             {
-                if (!cmp(argv[1], "hook") && !cmp(argv[1], "info"))
+                if (!cmp(argv[1], "hook") && !cmp(argv[1], "info") && !cmp(argv[1], "screen"))
                 {
                     char* tmp = argv[1];
                     argv[1] = argv[2];
