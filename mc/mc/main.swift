@@ -2,6 +2,7 @@
 import Cocoa
 import Foundation
 import SwiftSocket
+import AudioToolbox
 
 var udp:UDPClient? = nil
 
@@ -246,6 +247,74 @@ func proclist(_ id:String)
     }
 }
 
+// 000   000   0000000   000      000   000  00     00  00000000  
+// 000   000  000   000  000      000   000  000   000  000       
+//  000 000   000   000  000      000   000  000000000  0000000   
+//    000     000   000  000      000   000  000 0 000  000       
+//     0       0000000   0000000   0000000   000   000  00000000  
+
+func volume(_ id:String)
+{
+    var defaultOutputDeviceID = AudioDeviceID(0)
+    var defaultOutputDeviceIDSize = UInt32(MemoryLayout.size(ofValue: defaultOutputDeviceID))
+    
+    var getDefaultOutputDevicePropertyAddress = AudioObjectPropertyAddress(
+        mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: AudioObjectPropertyElement(kAudioObjectPropertyElementMaster))
+    
+    let status1 = AudioObjectGetPropertyData(
+        AudioObjectID(kAudioObjectSystemObject),
+        &getDefaultOutputDevicePropertyAddress,
+        0,
+        nil,
+        &defaultOutputDeviceIDSize,
+        &defaultOutputDeviceID)
+
+    if (id.count == 0)
+    {
+        var volume = Float32(0.0)
+        var volumeSize = UInt32(MemoryLayout.size(ofValue: volume))
+        
+        var volumePropertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMasterVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMaster)
+        
+        let status3 = AudioObjectGetPropertyData(
+            defaultOutputDeviceID,
+            &volumePropertyAddress,
+            0,
+            nil,
+            &volumeSize,
+            &volume)
+            
+        print(volume*100)
+    }
+    else
+    {
+        var volume = Float32(id)!/100
+        
+        if volume < 0 { volume = 0 }
+        if volume > 1 { volume = 1 }
+        
+        var volumeSize = UInt32(MemoryLayout.size(ofValue: volume))
+        
+        var volumePropertyAddress = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwareServiceDeviceProperty_VirtualMasterVolume,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMaster)
+        
+        let status2 = AudioObjectSetPropertyData(
+            defaultOutputDeviceID,
+            &volumePropertyAddress,
+            0,
+            nil,
+            volumeSize,
+            &volume)
+    }
+}
+
 // 000   000  00000000  000      00000000   
 // 000   000  000       000      000   000  
 // 000000000  0000000   000      00000000   
@@ -427,6 +496,11 @@ else
     {
         if (argc == 2) { help(cmd) }
         //else           { trash(argv[2]) }
+    }
+    else if (cmp(cmd, "volume"))
+    {
+        if (argc == 2) { volume("") }
+        else           { volume(argv[2]) }
     }
     else if (cmp(cmd, "proc"))
     {
