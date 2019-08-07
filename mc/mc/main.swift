@@ -289,7 +289,7 @@ func volume(_ id:String)
             &volumeSize,
             &volume)
             
-        print(volume*100)
+        print(Int(volume*100))
     }
     else
     {
