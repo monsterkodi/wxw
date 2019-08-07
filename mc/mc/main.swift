@@ -15,6 +15,7 @@ struct winInfo
     var y      = 0
     var width  = 0
     var height = 0
+    var status:String
 }
 
 struct appInfo
@@ -28,7 +29,10 @@ func cmp(_ a:String, _ b:String) -> Bool
     return a==b;
 }
 
-func klog(_ m:String) { print(m) }
+func contains(_ a:String, _ b:String) -> Bool
+{
+    return a.lowercased().contains(b.lowercased())
+}
 
 // 00     00   0000000   000000000   0000000  000   000  
 // 000   000  000   000     000     000       000   000  
@@ -48,18 +52,27 @@ func matchWin(_ id:String) -> [winInfo]
     {
         let bounds = CGRect(dictionaryRepresentation: info["kCGWindowBounds"] as! CFDictionary)!
         let pid = info["kCGWindowOwnerPID"] as! Int32
+        let wid = info["kCGWindowNumber"] as! Int32
         let path = NSRunningApplication(processIdentifier: pid)!.bundleURL!.path
-
+        
+        if id.count > 0 && !contains(path, id) && wid != Int32(id) && id != "top" { continue }
+        
+        var status = "minimized"
+        if info["kCGWindowIsOnscreen"] != nil { status = "normal" }
+        
         infos.append(winInfo(
             title:  info["kCGWindowName"] as! String,
             path:   path,
             pid:    pid,
-            id:     info["kCGWindowNumber"]!.intValue,
+            id:     wid,
             x:      Int(bounds.minX),
             y:      Int(bounds.minY),
             width:  Int(bounds.width),
-            height: Int(bounds.height)
+            height: Int(bounds.height),
+            status: status
             ))
+            
+        if id == "top" { break }
     }
     
     return infos
@@ -74,7 +87,7 @@ func matchApp(_ id:String) -> [appInfo]
         if app.bundleURL == nil { continue }
         if app.bundleURL!.pathExtension != "app" { continue }
         let path = app.bundleURL!.path
-        if id.count > 0 && path != id && !app.bundleURL!.lastPathComponent.contains(id) && app.processIdentifier != id.toInt() { continue }
+        if id.count > 0 && path != id && !contains(app.bundleURL!.lastPathComponent, id) && app.processIdentifier != Int32(id) { continue }
         
         infos.append(appInfo(
             path:   app.bundleURL!.path,
@@ -126,15 +139,15 @@ func sendInfo()
     
     for info in matchWin("")
     {
-        s += String(format:" \"title\": \"%s\",\n", info.title)
-        s += String(format:" \"path\": \"%s\",\n",  info.path)
+        s += "{\"title\": \"" + info.title + "\",\n"
+        s += " \"path\": \"" + info.path + "\",\n"
         s += String(format:" \"pid\": %d,\n",       info.pid)
         s += String(format:" \"id\": %d,\n",        info.id)
         s += String(format:" \"x\": %d,\n",         info.x)
         s += String(format:" \"y\": %d,\n",         info.y)
         s += String(format:" \"width\": %d,\n",     info.width)
-        s += String(format:" \"height\": %d\n",     info.height)
-        
+        s += String(format:" \"height\": %d,\n",     info.height)
+        s += " \"status\": \"" + info.status + "\"\n"
         s += "},\n"
     }
     
@@ -156,10 +169,10 @@ func sendProc()
     s += "{\"event\": \"proc\",\n"
     s += " \"proc\": [\n"
     
-    for application in NSWorkspace.shared.runningApplications
+    for app in matchApp("")
     {
-        s += "{\"path\": \"" + application.bundleURL!.path
-        s += "\", \"pid\": " + String(application.processIdentifier)
+        s += "{\"path\": \"" + app.path
+        s += String(format:"\", \"pid\": %d", app.pid)
         s += " },\n"
     }
     
@@ -174,8 +187,7 @@ func sendProc()
 // 000   000  000   000  000   000  000  000   
 // 000   000   0000000    0000000   000   000  
 
-
-func handler(event: NSEvent!)
+func onInput(event: NSEvent!)
 {
     let s = String(format:"{\"event\":\"mousemove\", \"x\":%.0f, \"y\":%.0f}", NSEvent.mouseLocation.x, NSScreen.main!.frame.size.height - NSEvent.mouseLocation.y)
     _ = udp!.send(string:s)
@@ -183,19 +195,22 @@ func handler(event: NSEvent!)
 
 func initHook(_ id:String)
 {
-    udp = UDPClient(address: "127.0.0.1", port: 65432)        
+    udp = UDPClient(address: "127.0.0.1", port: 65432)      
 
     if cmp(id, "input") 
     {
-        _ = NSEvent.addGlobalMonitorForEvents(matching:NSEvent.EventTypeMask.mouseMoved, handler: handler)
-        NSApplication.shared.run()
-        return
+        _ = NSEvent.addGlobalMonitorForEvents(matching:NSEvent.EventTypeMask.mouseMoved, handler:onInput)
     }
-    while RunLoop.current.run(mode:.defaultRunLoopMode, before:Date.init(timeIntervalSinceNow:0.5)) 
-    { 
-        if cmp(id, "proc") { sendProc() }
-        if cmp(id, "info") { sendInfo() }
+    else if (cmp(id, "proc"))
+    {
+        _ = Timer.scheduledTimer(withTimeInterval: 0.5, repeats:true) {_ in sendProc() }
     }
+    else if (cmp(id, "info"))
+    {
+        _ = Timer.scheduledTimer(withTimeInterval: 0.5, repeats:true) {_ in sendInfo() }
+    }
+    
+    NSApplication.shared.run()
 }
 
 // 000  000   000  00000000   0000000   
@@ -217,6 +232,7 @@ func info(_ id:String)
         print ("    y        ", win.y)
         print ("    width    ", win.width)
         print ("    height   ", win.height)
+        print ("    status   ", win.status)
     }
 }
 
@@ -246,7 +262,7 @@ func help(_ id:String)
         print("no help available for", id)
     }
     
-    klog("")
+    print("")
 }
 
 // 000   000   0000000   0000000    0000000   00000000  
@@ -257,52 +273,38 @@ func help(_ id:String)
 
 func usage()
 {
-    klog("")
-    klog("wxw [command] [args...]")
-    klog("")
-    klog("    commands:")
-    klog("")
-    klog("         info       [id|title]")
-    klog("         raise       id")
-    klog("         minimize    id")
-    klog("         maximize    id")
-    klog("         restore     id")
-    klog("         focus       id")
-    klog("         close       id")
-    klog("         quit        id")
-    klog("         bounds      id [x y w h]")
-    klog("         move        id x y")
-    klog("         size        id w h")
-    klog("         launch      path")
-    klog("         proc       [pid|file]")
-    klog("         terminate  [pid|file]")
-    klog("         mouse")
-    klog("         key        [shift+|ctrl+|alt+]key")
-    klog("         help        command")
-    klog("         trash       count|empty|file")
-    klog("         screen     [size|user]")
-    klog("         screenshot [targetfile]")
-    klog("         icon        path [targetfile]")
-    klog("")
-    klog("    id:")
-    klog("")
-    klog("         process id")
-    klog("         executable path")
-    klog("         window handle")
-    klog("         nickname")
-    klog("")    
-    klog("    nickname:")
-    klog("")    
-    klog("         normal|maximized|minimized")    
-    klog("         top|topmost|front|frontmost|foreground")
-    klog("")
+    print("")
+    print("wxw [command] [args...]")
+    print("")
+    print("    commands:")
+    print("")
+    print("         info        wid")
+    print("         raise       wid")
+    print("         minimize    wid")
+    print("         maximize    wid")
+    print("         restore     wid")
+    print("         focus       wid")
+    print("         close       wid")
+    print("         quit        wid")
+    print("         bounds      wid [x y w h]")
+    print("         move        wid x y")
+    print("         size        wid w h")
+    print("         launch      path")
+    print("         proc       [pid|file]")
+    print("         terminate  [pid|file]")
+    print("         mouse")
+    print("         key        [shift+|ctrl+|alt+]key")
+    print("         help        command")
+    print("         trash       count|empty|file")
+    print("         screen     [size|user]")
+    print("         screenshot [targetfile]")
+    print("         icon        path [targetfile]")
+    print("")
+    print("    wid:")
+    print("")
+    print("         pid, path, id or 'top'")
+    print("")
 }
-
-// let frontmost = NSWorkspace.shared.frontmostApplication!
-// let path = frontmost.bundleURL!.path
-// print("frontmost", path)
-
-// SIWindowInfo *frontWindowInfo = [SIWindowInfo windowInfoFromCGWindowInfoDictionary:[windowInfoList objectAtIndex:0]]
 
 //  0000000   00000000    0000000   000   000  00     00  00000000  000   000  000000000   0000000  
 // 000   000  000   000  000        000   000  000   000  000       0000  000     000     000       
@@ -315,8 +317,7 @@ let argv = CommandLine.arguments
 
 if (argc == 1)
 {
-//    usage()
-    proclist("")
+    usage()
 }
 else
 {
