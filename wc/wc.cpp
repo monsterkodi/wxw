@@ -9,6 +9,8 @@
 #include <shellscalingapi.h>
 #include <WinUser.h>
 #include <shlwapi.h>
+#include <mmdeviceapi.h>
+#include <endpointvolume.h> 
 #include <math.h>
 #include <set>
 #include "taskbar.h"
@@ -542,6 +544,50 @@ HRESULT screen(char *id="size")
     return hr;
 }
 
+// 000   000   0000000   000      000   000  00     00  00000000  
+// 000   000  000   000  000      000   000  000   000  000       
+//  000 000   000   000  000      000   000  000000000  0000000   
+//    000     000   000  000      000   000  000 0 000  000       
+//     0       0000000   0000000   0000000   000   000  00000000  
+
+HRESULT volume(char *id=NULL)
+{
+    HRESULT hr = S_OK;
+
+    CoInitialize(NULL);
+    IMMDeviceEnumerator *deviceEnumerator = NULL;
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_INPROC_SERVER, __uuidof(IMMDeviceEnumerator), (LPVOID *)&deviceEnumerator);
+    IMMDevice *defaultDevice = NULL;
+
+    hr = deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &defaultDevice);
+    deviceEnumerator->Release();
+    deviceEnumerator = NULL;
+
+    IAudioEndpointVolume *endpointVolume = NULL;
+    hr = defaultDevice->Activate(__uuidof(IAudioEndpointVolume), CLSCTX_INPROC_SERVER, NULL, (LPVOID *)&endpointVolume);
+    defaultDevice->Release();
+    defaultDevice = NULL;
+
+    if (id == NULL)
+    {
+        float currentVolume = 0;
+        hr = endpointVolume->GetMasterVolumeLevelScalar(&currentVolume);
+        cout << currentVolume*100 << endl;
+    }
+    else
+    {
+        float newVolume = stoi(id)/100.0f;
+        if (newVolume < 0) newVolume = 0;
+        if (newVolume > 1) newVolume = 1;
+        hr = endpointVolume->SetMasterVolumeLevelScalar((float)newVolume, NULL);
+    }
+  
+    endpointVolume->Release();
+    CoUninitialize();
+    
+    return hr;
+}
+
 // 00000000   0000000   000      0000000    00000000  00000000   
 // 000       000   000  000      000   000  000       000   000  
 // 000000    000   000  000      000   000  0000000   0000000    
@@ -1038,6 +1084,11 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     {
         if (argc == 2) hr = help(cmd);
         else           hr = trash(argv[2]);
+    }
+    else if (cmp(cmd, "volume"))
+    {
+        if (argc == 2) hr = volume();
+        else           hr = volume(argv[2]);
     }
     else if (cmp(cmd, "proc"))
     {
