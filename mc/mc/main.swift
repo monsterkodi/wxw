@@ -3,12 +3,86 @@ import Cocoa
 import Foundation
 import SwiftSocket
 
+var udp:UDPClient? = nil
+
+struct winInfo
+{
+    var title:String
+    var path:String
+    var pid:Int32 = 0
+    var id:Int32  = 0
+    var x      = 0
+    var y      = 0
+    var width  = 0
+    var height = 0
+}
+
+struct appInfo
+{
+    var path:String
+    var pid:Int32 = 0
+}
+
 func cmp(_ a:String, _ b:String) -> Bool
 {
     return a==b;
 }
 
 func klog(_ m:String) { print(m) }
+
+// 00     00   0000000   000000000   0000000  000   000  
+// 000   000  000   000     000     000       000   000  
+// 000000000  000000000     000     000       000000000  
+// 000 0 000  000   000     000     000       000   000  
+// 000   000  000   000     000      0000000  000   000  
+
+func matchWin(_ id:String) -> [winInfo]
+{
+    let options = CGWindowListOption(arrayLiteral: CGWindowListOption.excludeDesktopElements, CGWindowListOption.optionOnScreenOnly)
+    let windowListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
+    let infoList = windowListInfo as NSArray? as? [[String: AnyObject]]
+    
+    var infos:[winInfo] = []
+    
+    for info in infoList!
+    {
+        let bounds = CGRect(dictionaryRepresentation: info["kCGWindowBounds"] as! CFDictionary)!
+        let pid = info["kCGWindowOwnerPID"] as! Int32
+        let path = NSRunningApplication(processIdentifier: pid)!.bundleURL!.path
+
+        infos.append(winInfo(
+            title:  info["kCGWindowName"] as! String,
+            path:   path,
+            pid:    pid,
+            id:     info["kCGWindowNumber"]!.intValue,
+            x:      Int(bounds.minX),
+            y:      Int(bounds.minY),
+            width:  Int(bounds.width),
+            height: Int(bounds.height)
+            ))
+    }
+    
+    return infos
+}
+
+func matchApp(_ id:String) -> [appInfo]
+{
+    var infos:[appInfo] = []    
+
+    for app in NSWorkspace.shared.runningApplications
+    {
+        if app.bundleURL == nil { continue }
+        if app.bundleURL!.pathExtension != "app" { continue }
+        let path = app.bundleURL!.path
+        if id.count > 0 && path != id && !app.bundleURL!.lastPathComponent.contains(id) && app.processIdentifier != id.toInt() { continue }
+        
+        infos.append(appInfo(
+            path:   app.bundleURL!.path,
+            pid:    app.processIdentifier))
+    }
+    
+    return infos
+}
 
 func moveWindow()
 {
@@ -37,14 +111,6 @@ func moveWindow()
 //  AXUIElementSetAttributeValue(windowRef, kAXPositionAttribute, position)
 }
 
-func udpSend(string: String)
-{
-    let client = UDPClient(address: "127.0.0.1", port: 65432)
-    _ = client.send(string: string)
-    // print("\n\n", string)
-    // print("\n")
-}
-
 // 000  000   000  00000000   0000000   
 // 000  0000  000  000       000   000  
 // 000  000 0 000  000000    000   000  
@@ -53,39 +119,28 @@ func udpSend(string: String)
 
 func sendInfo()
 {
-    let options = CGWindowListOption(arrayLiteral: CGWindowListOption.excludeDesktopElements, CGWindowListOption.optionOnScreenOnly)
-    let windowListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
-    let infoList = windowListInfo as NSArray? as? [[String: AnyObject]]
-    
     var s = String("")
     
     s += "{\"event\": \"info\",\n"
     s += " \"info\": [\n"
     
-    for info in infoList!
+    for info in matchWin("")
     {
-        //s += info.description
-        
-        let bounds = CGRect(dictionaryRepresentation: info["kCGWindowBounds"] as! CFDictionary)!
-        
-        s += "{\"title\": \"" + (info["kCGWindowName"] as! String) + "\",\n"
-        if info["kCGWindowOwnerName"] != nil
-        {
-            s += " \"app\": \"" + (info["kCGWindowOwnerName"] as! String) + "\",\n"
-        }
-        s += String(format:" \"pid\": %d,\n", info["kCGWindowOwnerPID"]!.int64Value)
-        s += String(format:" \"num\": %d,\n", info["kCGWindowNumber"]!.int64Value)
-        s += String(format:" \"x\": %d,\n", bounds.minX)
-        s += String(format:" \"y\": %d,\n", bounds.minY)
-        s += String(format:" \"width\": %d,\n", bounds.width)
-        s += String(format:" \"height\": %d\n", bounds.height)
+        s += String(format:" \"title\": \"%s\",\n", info.title)
+        s += String(format:" \"path\": \"%s\",\n",  info.path)
+        s += String(format:" \"pid\": %d,\n",       info.pid)
+        s += String(format:" \"id\": %d,\n",        info.id)
+        s += String(format:" \"x\": %d,\n",         info.x)
+        s += String(format:" \"y\": %d,\n",         info.y)
+        s += String(format:" \"width\": %d,\n",     info.width)
+        s += String(format:" \"height\": %d\n",     info.height)
         
         s += "},\n"
     }
     
     s += "{}]}"
     
-    udpSend(string:s)
+    _ = udp!.send(string:s)
 }
 
 // 00000000   00000000    0000000    0000000  
@@ -110,7 +165,7 @@ func sendProc()
     
     s += "{}]}"
     
-    udpSend(string:s)
+    _ = udp!.send(string:s)
 }
 
 // 000   000   0000000    0000000   000   000  
@@ -120,14 +175,16 @@ func sendProc()
 // 000   000   0000000    0000000   000   000  
 
 
-func handler(event: NSEvent!) 
+func handler(event: NSEvent!)
 {
     let s = String(format:"{\"event\":\"mousemove\", \"x\":%.0f, \"y\":%.0f}", NSEvent.mouseLocation.x, NSScreen.main!.frame.size.height - NSEvent.mouseLocation.y)
-    udpSend(string:s)
+    _ = udp!.send(string:s)
 }
 
 func initHook(_ id:String)
 {
+    udp = UDPClient(address: "127.0.0.1", port: 65432)        
+
     if cmp(id, "input") 
     {
         _ = NSEvent.addGlobalMonitorForEvents(matching:NSEvent.EventTypeMask.mouseMoved, handler: handler)
@@ -141,8 +198,36 @@ func initHook(_ id:String)
     }
 }
 
+// 000  000   000  00000000   0000000   
+// 000  0000  000  000       000   000  
+// 000  000 0 000  000000    000   000  
+// 000  000  0000  000       000   000  
+// 000  000   000  000        0000000   
+
 func info(_ id:String)
 {
+    for win in matchWin(id)
+    {
+        print (".")
+        print ("    title    ", win.title)
+        print ("    path     ", win.path)
+        print ("    pid      ", win.pid)
+        print ("    id       ", win.id)
+        print ("    x        ", win.x)
+        print ("    y        ", win.y)
+        print ("    width    ", win.width)
+        print ("    height   ", win.height)
+    }
+}
+
+func proclist(_ id:String)
+{
+    for app in matchApp(id)
+    {
+        print (".")
+        print ("    path    ", app.path)
+        print ("    pid     ", app.pid)
+    }
 }
 
 // 000   000  00000000  000      00000000   
@@ -230,7 +315,8 @@ let argv = CommandLine.arguments
 
 if (argc == 1)
 {
-    usage()
+//    usage()
+    proclist("")
 }
 else
 {
@@ -343,14 +429,15 @@ else
     }
     else if (cmp(cmd, "proc"))
     {
-        // if (argc == 2) { proclist() }
-        //else           { proclist(argv[2]) }
+        if (argc == 2) { proclist("") }
+        else           { proclist(argv[2]) }
     }
     else if (cmp(cmd, "hook"))
     {
         if (argc == 2) { help(cmd) }
         else { initHook(argv[2]) }
     }
+
 }
     
 

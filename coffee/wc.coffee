@@ -6,9 +6,12 @@
 00     00   0000000
 ###
 
-{ childp, slash, noon, klog, empty, first, kstr, fs } = require 'kxk'
+{ childp, slash, noon, klog, empty, first, kstr, os, fs } = require 'kxk'
 
-wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
+if os.platform() == 'win32'
+    wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
+else if os.platform() == 'darwin'
+    wcexe = slash.resolve slash.join __dirname, '..' 'bin' 'mc'
 
 fakeIcon = (argv) ->
     

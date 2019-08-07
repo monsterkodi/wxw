@@ -1,5 +1,5 @@
 name            wxw
-version         1.74.0
+version         1.75.0
 description     moves my windows
 keywords
                 windows
@@ -9,6 +9,7 @@ scripts
                 build  ./node_modules/.bin/konrad --build
 files
                 bin/wc.exe
+                bin/mc
                 bin/wxw
                 js/wc.js
                 js/wxw.js
