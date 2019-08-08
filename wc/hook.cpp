@@ -21,7 +21,7 @@
 SOCKET udpSocket;
 struct sockaddr_in udpAddr;
 
-bool initUDP(uint32_t port = 66666)
+bool initUDP(uint32_t port = 65432)
 {
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(1, 1), &wsa))
