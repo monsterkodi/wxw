@@ -5,7 +5,7 @@ import SwiftSocket
 import AudioToolbox
 
 extension StringProtocol {
-    
+
     subscript(offset: Int) -> Element {
         return self[index(startIndex, offsetBy: offset)]
     }
@@ -27,7 +27,7 @@ extension StringProtocol {
         return suffix(Swift.max(0, count - range.lowerBound))
     }
 }
-    
+
 extension String {
     mutating func replaceSubrange(_ range: CountableClosedRange<Int>, with: String) -> String {
         self.replaceSubrange(Range(NSMakeRange(range.lowerBound,range.upperBound), in:self)!, with:with)
@@ -78,37 +78,67 @@ func resolve(_ p:String) -> String
         s = "." + s[1...]
         return URL(fileURLWithPath:s, relativeTo:FileManager.default.homeDirectoryForCurrentUser).path
     }
-    
+
     let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     return URL(fileURLWithPath:p, relativeTo:cwd).path
 }
 
-// 00     00   0000000   000000000   0000000  000   000  
-// 000   000  000   000     000     000       000   000  
-// 000000000  000000000     000     000       000000000  
-// 000 0 000  000   000     000     000       000   000  
-// 000   000  000   000     000      0000000  000   000  
+//  0000000    0000000   0000000    0000000   0000000  00000000   000  00000000   000000000
+// 000   000  000       000   000  000       000       000   000  000  000   000     000
+// 000   000  0000000   000000000  0000000   000       0000000    000  00000000      000
+// 000   000       000  000   000       000  000       000   000  000  000           000
+//  0000000   0000000   000   000  0000000    0000000  000   000  000  000           000
+
+func osascript(_ script:String) -> String
+{
+    // print(script)
+    
+    if let osa = NSAppleScript(source:script)
+    {
+        var error: NSDictionary?
+        let result:NSAppleEventDescriptor? = osa.executeAndReturnError(&error)
+        if result == nil
+        {
+            print("error: \(error)")
+        }
+        else
+        {
+            return result!.stringValue!
+        }
+    }
+    else
+    {
+        print("can't create applescript")
+    }
+    return ""
+}
+
+// 00     00   0000000   000000000   0000000  000   000
+// 000   000  000   000     000     000       000   000
+// 000000000  000000000     000     000       000000000
+// 000 0 000  000   000     000     000       000   000
+// 000   000  000   000     000      0000000  000   000
 
 func matchWin(_ id:String) -> [winInfo]
 {
     let options = CGWindowListOption(arrayLiteral: CGWindowListOption.excludeDesktopElements, CGWindowListOption.optionOnScreenOnly)
     let windowListInfo = CGWindowListCopyWindowInfo(options, CGWindowID(0))
     let infoList = windowListInfo as NSArray? as? [[String: AnyObject]]
-    
+
     var infos:[winInfo] = []
-    
+
     for info in infoList!
     {
         let bounds = CGRect(dictionaryRepresentation: info["kCGWindowBounds"] as! CFDictionary)!
         let pid = info["kCGWindowOwnerPID"] as! Int32
         let wid = info["kCGWindowNumber"] as! Int32
         let path = NSRunningApplication(processIdentifier: pid)!.bundleURL!.path
-        
+
         if id.count > 0 && !contains(path, id) && wid != Int32(id) && id != "top" { continue }
-        
+
         var status = "minimized"
         if info["kCGWindowIsOnscreen"] != nil { status = "normal" }
-        
+
         infos.append(winInfo(
             title:  info["kCGWindowName"] as! String,
             path:   path,
@@ -120,16 +150,16 @@ func matchWin(_ id:String) -> [winInfo]
             height: Int(bounds.height),
             status: status
             ))
-            
+
         if id == "top" { break }
     }
-    
+
     return infos
 }
 
 func matchApp(_ id:String) -> [appInfo]
 {
-    var infos:[appInfo] = []    
+    var infos:[appInfo] = []
 
     for app in NSWorkspace.shared.runningApplications
     {
@@ -137,12 +167,12 @@ func matchApp(_ id:String) -> [appInfo]
         if app.bundleURL!.pathExtension != "app" { continue }
         let path = app.bundleURL!.path
         if id.count > 0 && path != id && !contains(app.bundleURL!.lastPathComponent, id) && app.processIdentifier != Int32(id) { continue }
-        
+
         infos.append(appInfo(
             path:   app.bundleURL!.path,
             pid:    app.processIdentifier))
     }
-    
+
     return infos
 }
 
@@ -173,19 +203,19 @@ func moveWindow()
 //  AXUIElementSetAttributeValue(windowRef, kAXPositionAttribute, position)
 }
 
-// 000  000   000  00000000   0000000   
-// 000  0000  000  000       000   000  
-// 000  000 0 000  000000    000   000  
-// 000  000  0000  000       000   000  
-// 000  000   000  000        0000000   
+// 000  000   000  00000000   0000000
+// 000  0000  000  000       000   000
+// 000  000 0 000  000000    000   000
+// 000  000  0000  000       000   000
+// 000  000   000  000        0000000
 
 func sendInfo()
 {
     var s = String("")
-    
+
     s += "{\"event\": \"info\",\n"
     s += " \"info\": [\n"
-    
+
     for info in matchWin("")
     {
         s += "{\"title\": \"" + info.title + "\",\n"
@@ -199,42 +229,42 @@ func sendInfo()
         s += " \"status\": \"" + info.status + "\"\n"
         s += "},\n"
     }
-    
+
     s += "{}]}"
-    
+
     _ = udp!.send(string:s)
 }
 
-// 00000000   00000000    0000000    0000000  
-// 000   000  000   000  000   000  000       
-// 00000000   0000000    000   000  000       
-// 000        000   000  000   000  000       
-// 000        000   000   0000000    0000000  
+// 00000000   00000000    0000000    0000000
+// 000   000  000   000  000   000  000
+// 00000000   0000000    000   000  000
+// 000        000   000  000   000  000
+// 000        000   000   0000000    0000000
 
 func sendProc()
 {
     var s = String("")
-    
+
     s += "{\"event\": \"proc\",\n"
     s += " \"proc\": [\n"
-    
+
     for app in matchApp("")
     {
         s += "{\"path\": \"" + app.path
         s += String(format:"\", \"pid\": %d", app.pid)
         s += " },\n"
     }
-    
+
     s += "{}]}"
-    
+
     _ = udp!.send(string:s)
 }
 
-// 000   000   0000000    0000000   000   000  
-// 000   000  000   000  000   000  000  000   
-// 000000000  000   000  000   000  0000000    
-// 000   000  000   000  000   000  000  000   
-// 000   000   0000000    0000000   000   000  
+// 000   000   0000000    0000000   000   000
+// 000   000  000   000  000   000  000  000
+// 000000000  000   000  000   000  0000000
+// 000   000  000   000  000   000  000  000
+// 000   000   0000000    0000000   000   000
 
 func onInput(event: NSEvent!)
 {
@@ -244,9 +274,9 @@ func onInput(event: NSEvent!)
 
 func initHook(_ id:String)
 {
-    udp = UDPClient(address: "127.0.0.1", port: 65432)      
+    udp = UDPClient(address: "127.0.0.1", port: 65432)
 
-    if cmp(id, "input") 
+    if cmp(id, "input")
     {
         _ = NSEvent.addGlobalMonitorForEvents(matching:NSEvent.EventTypeMask.mouseMoved, handler:onInput)
     }
@@ -258,18 +288,39 @@ func initHook(_ id:String)
     {
         _ = Timer.scheduledTimer(withTimeInterval: 0.5, repeats:true) {_ in sendInfo() }
     }
-    
+
     NSApplication.shared.run()
 }
 
-// 000  000   000  00000000   0000000   
-// 000  0000  000  000       000   000  
-// 000  000 0 000  000000    000   000  
-// 000  000  0000  000       000   000  
-// 000  000   000  000        0000000   
+// 000  000   000  00000000   0000000
+// 000  0000  000  000       000   000
+// 000  000 0 000  000000    000   000
+// 000  000  0000  000       000   000
+// 000  000   000  000        0000000
 
 func info(_ id:String)
 {
+    print(osascript(
+    """
+    tell application \"System Events\"
+        repeat with theProcess in (processes whose background only = false)
+            log \"\" & name of theProcess
+            set allWindows to (windows of theProcess)
+            repeat with theWindow in allWindows
+                set p to position of theWindow
+                set s to size of theWindow
+                set x to p's item 1 as text
+                set y to p's item 2 as text
+                set w to s's item 1 as text
+                set h to s's item 2 as text
+                set n to theWindow's name
+                log x & \" \" & y & \" \" & w & \" \" & h & \" \" & n
+            end repeat
+        end repeat
+    end tell
+    """
+    ))
+
     for win in matchWin(id)
     {
         print (".")
@@ -295,23 +346,23 @@ func proclist(_ id:String)
     }
 }
 
-// 000   000   0000000   000      000   000  00     00  00000000  
-// 000   000  000   000  000      000   000  000   000  000       
-//  000 000   000   000  000      000   000  000000000  0000000   
-//    000     000   000  000      000   000  000 0 000  000       
-//     0       0000000   0000000   0000000   000   000  00000000  
+// 000   000   0000000   000      000   000  00     00  00000000
+// 000   000  000   000  000      000   000  000   000  000
+//  000 000   000   000  000      000   000  000000000  0000000
+//    000     000   000  000      000   000  000 0 000  000
+//     0       0000000   0000000   0000000   000   000  00000000
 
 func volume(_ id:String)
 {
     var defaultOutputDeviceID = AudioDeviceID(0)
     var defaultOutputDeviceIDSize = UInt32(MemoryLayout.size(ofValue: defaultOutputDeviceID))
-    
+
     var getDefaultOutputDevicePropertyAddress = AudioObjectPropertyAddress(
         mSelector: kAudioHardwarePropertyDefaultOutputDevice,
         mScope: kAudioObjectPropertyScopeGlobal,
         mElement: AudioObjectPropertyElement(kAudioObjectPropertyElementMaster))
-    
-    let status1 = AudioObjectGetPropertyData(
+
+    _ = AudioObjectGetPropertyData(
         AudioObjectID(kAudioObjectSystemObject),
         &getDefaultOutputDevicePropertyAddress,
         0,
@@ -323,37 +374,37 @@ func volume(_ id:String)
     {
         var volume = Float32(0.0)
         var volumeSize = UInt32(MemoryLayout.size(ofValue: volume))
-        
+
         var volumePropertyAddress = AudioObjectPropertyAddress(
             mSelector: kAudioHardwareServiceDeviceProperty_VirtualMasterVolume,
             mScope: kAudioDevicePropertyScopeOutput,
             mElement: kAudioObjectPropertyElementMaster)
-        
-        let status3 = AudioObjectGetPropertyData(
+
+        _ = AudioObjectGetPropertyData(
             defaultOutputDeviceID,
             &volumePropertyAddress,
             0,
             nil,
             &volumeSize,
             &volume)
-            
+
         print(Int(volume*100))
     }
     else
     {
         var volume = Float32(id)!/100
-        
+
         if volume < 0 { volume = 0 }
         if volume > 1 { volume = 1 }
-        
-        var volumeSize = UInt32(MemoryLayout.size(ofValue: volume))
-        
+
+        let volumeSize = UInt32(MemoryLayout.size(ofValue: volume))
+
         var volumePropertyAddress = AudioObjectPropertyAddress(
             mSelector: kAudioHardwareServiceDeviceProperty_VirtualMasterVolume,
             mScope: kAudioDevicePropertyScopeOutput,
             mElement: kAudioObjectPropertyElementMaster)
-        
-        let status2 = AudioObjectSetPropertyData(
+
+        _ = AudioObjectSetPropertyData(
             defaultOutputDeviceID,
             &volumePropertyAddress,
             0,
@@ -363,30 +414,11 @@ func volume(_ id:String)
     }
 }
 
-// 000000000  00000000    0000000    0000000  000   000  
-//    000     000   000  000   000  000       000   000  
-//    000     0000000    000000000  0000000   000000000  
-//    000     000   000  000   000       000  000   000  
-//    000     000   000  000   000  0000000   000   000  
-
-func osascript(_ script:String)
-{
-    // print(script)
-    let osa = NSAppleScript(source:script)
-    if osa != nil
-    {
-        var info:AutoreleasingUnsafeMutablePointer<NSDictionary?>? = nil
-        let result = osa!.executeAndReturnError(info)
-        if (result == nil)
-        {
-            print("error:", info)
-        }
-    }
-    else
-    {
-        print("can't create applescript")
-    }
-}
+// 000000000  00000000    0000000    0000000  000   000
+//    000     000   000  000   000  000       000   000
+//    000     0000000    000000000  0000000   000000000
+//    000     000   000  000   000       000  000   000
+//    000     000   000  000   000  0000000   000   000
 
 func trash (_ id:String)
 {
@@ -410,11 +442,11 @@ func trash (_ id:String)
     }
 }
 
-// 000   000  00000000  000      00000000   
-// 000   000  000       000      000   000  
-// 000000000  0000000   000      00000000   
-// 000   000  000       000      000        
-// 000   000  00000000  0000000  000        
+// 000   000  00000000  000      00000000
+// 000   000  000       000      000   000
+// 000000000  0000000   000      00000000
+// 000   000  000       000      000
+// 000   000  00000000  0000000  000
 
 func help(_ id:String)
 {
@@ -425,15 +457,15 @@ func help(_ id:String)
     {
         print("no help available for", id)
     }
-    
+
     print("")
 }
 
-// 000   000   0000000   0000000    0000000   00000000  
-// 000   000  000       000   000  000        000       
-// 000   000  0000000   000000000  000  0000  0000000   
-// 000   000       000  000   000  000   000  000       
-//  0000000   0000000   000   000   0000000   00000000  
+// 000   000   0000000   0000000    0000000   00000000
+// 000   000  000       000   000  000        000
+// 000   000  0000000   000000000  000  0000  0000000
+// 000   000       000  000   000  000   000  000
+//  0000000   0000000   000   000   0000000   00000000
 
 func usage()
 {
@@ -470,23 +502,24 @@ func usage()
     print("")
 }
 
-//  0000000   00000000    0000000   000   000  00     00  00000000  000   000  000000000   0000000  
-// 000   000  000   000  000        000   000  000   000  000       0000  000     000     000       
-// 000000000  0000000    000  0000  000   000  000000000  0000000   000 0 000     000     0000000   
-// 000   000  000   000  000   000  000   000  000 0 000  000       000  0000     000          000  
-// 000   000  000   000   0000000    0000000   000   000  00000000  000   000     000     0000000   
+//  0000000   00000000    0000000   000   000  00     00  00000000  000   000  000000000   0000000
+// 000   000  000   000  000        000   000  000   000  000       0000  000     000     000
+// 000000000  0000000    000  0000  000   000  000000000  0000000   000 0 000     000     0000000
+// 000   000  000   000  000   000  000   000  000 0 000  000       000  0000     000          000
+// 000   000  000   000   0000000    0000000   000   000  00000000  000   000     000     0000000
 
 let argc = CommandLine.arguments.count
 let argv = CommandLine.arguments
 
 if (argc == 1)
 {
-    usage()
+    //usage()
+    info("ko.app")
 }
 else
 {
     let cmd = CommandLine.arguments[1]
-        
+
     if (cmp(cmd, "help"))
     {
         if (argc == 2) { usage() }
@@ -609,6 +642,3 @@ else
     }
 
 }
-    
-
-
