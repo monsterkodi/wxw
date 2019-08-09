@@ -4,6 +4,37 @@ import Foundation
 import SwiftSocket
 import AudioToolbox
 
+extension StringProtocol {
+    
+    subscript(offset: Int) -> Element {
+        return self[index(startIndex, offsetBy: offset)]
+    }
+    subscript(_ range: Range<Int>) -> SubSequence {
+        return prefix(range.lowerBound + range.count)
+            .suffix(range.count)
+    }
+    subscript(range: ClosedRange<Int>) -> SubSequence {
+        return prefix(range.lowerBound + range.count)
+            .suffix(range.count)
+    }
+    subscript(range: PartialRangeThrough<Int>) -> SubSequence {
+        return prefix(range.upperBound.advanced(by: 1))
+    }
+    subscript(range: PartialRangeUpTo<Int>) -> SubSequence {
+        return prefix(range.upperBound)
+    }
+    subscript(range: PartialRangeFrom<Int>) -> SubSequence {
+        return suffix(Swift.max(0, count - range.lowerBound))
+    }
+}
+    
+extension String {
+    mutating func replaceSubrange(_ range: CountableClosedRange<Int>, with: String) -> String {
+        self.replaceSubrange(Range(NSMakeRange(range.lowerBound,range.upperBound), in:self)!, with:with)
+        return self
+    }
+}
+
 var udp:UDPClient? = nil
 
 struct winInfo
@@ -33,6 +64,23 @@ func cmp(_ a:String, _ b:String) -> Bool
 func contains(_ a:String, _ b:String) -> Bool
 {
     return a.lowercased().contains(b.lowercased())
+}
+
+func resolve(_ p:String) -> String
+{
+    if p[0] == "/"
+    {
+        return p
+    }
+    else if p[0] == "~"
+    {
+        var s = p
+        s = "." + s[1...]
+        return URL(fileURLWithPath:s, relativeTo:FileManager.default.homeDirectoryForCurrentUser).path
+    }
+    
+    let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    return URL(fileURLWithPath:p, relativeTo:cwd).path
 }
 
 // 00     00   0000000   000000000   0000000  000   000  
@@ -315,6 +363,53 @@ func volume(_ id:String)
     }
 }
 
+// 000000000  00000000    0000000    0000000  000   000  
+//    000     000   000  000   000  000       000   000  
+//    000     0000000    000000000  0000000   000000000  
+//    000     000   000  000   000       000  000   000  
+//    000     000   000  000   000  0000000   000   000  
+
+func osascript(_ script:String)
+{
+    // print(script)
+    let osa = NSAppleScript(source:script)
+    if osa != nil
+    {
+        var info:AutoreleasingUnsafeMutablePointer<NSDictionary?>? = nil
+        let result = osa!.executeAndReturnError(info)
+        if (result == nil)
+        {
+            print("error:", info)
+        }
+    }
+    else
+    {
+        print("can't create applescript")
+    }
+}
+
+func trash (_ id:String)
+{
+    if (cmp(id, "empty"))
+    {
+        osascript("tell app \"Finder\" to empty")
+    }
+    else if (cmp(id, "count"))
+    {
+    }
+    else if (id.count > 0)
+    {
+        let abs = resolve(id)
+        osascript(
+        """
+        tell application \"Finder\"
+            set posixpath to POSIX file \"\(abs)\"
+            delete posixpath
+        end tell
+        """)
+    }
+}
+
 // 000   000  00000000  000      00000000   
 // 000   000  000       000      000   000  
 // 000000000  0000000   000      00000000   
@@ -495,7 +590,7 @@ else
     else if (cmp(cmd, "trash"))
     {
         if (argc == 2) { help(cmd) }
-        //else           { trash(argv[2]) }
+        else           { trash(argv[2]) }
     }
     else if (cmp(cmd, "volume"))
     {
