@@ -199,6 +199,11 @@ func raise(_ id:String)
         if (win.status != "minimized")
         {
             AXUIElementPerformAction(win.win, kAXRaiseAction as CFString)
+            
+            if let app = NSRunningApplication(processIdentifier:win.pid)
+            {
+                app.activate(options:NSApplication.ActivationOptions(rawValue:0))
+            }
         }
     }        
 }
@@ -233,6 +238,12 @@ func launch(_ id:String)
 
 func close(_ id:String)
 {
+    for win in matchWin(id)
+    {
+        var buttonRef:CFTypeRef? = nil
+        AXUIElementCopyAttributeValue(win.win, kAXCloseButtonAttribute as CFString, &buttonRef)
+        AXUIElementPerformAction(buttonRef as! AXUIElement, kAXPressAction as CFString)
+    }
 }
 
 func quit(_ id:String)
@@ -244,14 +255,4 @@ func quit(_ id:String)
             app.terminate()
         }
     }
-}
-
-func kill(_ id:String)
-{
-    print("kill", id)
-}
-
-func terminate(_ id:String)
-{
-    print("terminate", id)
 }

@@ -52,3 +52,16 @@ func allProcs() -> [procInfo]
 {
     return matchProc("")
 }
+
+func terminate(_ id:String)
+{
+    for proc in matchProc(id)
+    {
+        if let app = NSRunningApplication(processIdentifier:proc.pid)
+        {
+            print("terminate", proc.pid)
+            app.terminate()
+        }
+    }
+}
+

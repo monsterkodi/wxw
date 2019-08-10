@@ -30,11 +30,12 @@ func sendInfo()
         s += "{\"title\": \"" + info.title + "\",\n"
         s += " \"path\": \"" + info.path + "\",\n"
         s += String(format:" \"pid\": %d,\n",       info.pid)
-        s += String(format:" \"id\": %d,\n",        info.id)
+        s += " \"id\": \"" + info.id + "\",\n"
         s += String(format:" \"x\": %d,\n",         info.x)
         s += String(format:" \"y\": %d,\n",         info.y)
         s += String(format:" \"width\": %d,\n",     info.width)
-        s += String(format:" \"height\": %d,\n",     info.height)
+        s += String(format:" \"height\": %d,\n",    info.height)
+        s += String(format:" \"index\": %d,\n",     info.index)
         s += " \"status\": \"" + info.status + "\"\n"
         s += "},\n"
     }
@@ -97,6 +98,4 @@ func initHook(_ id:String)
     {
         _ = Timer.scheduledTimer(withTimeInterval: 0.5, repeats:true) {_ in sendInfo() }
     }
-
-    NSApplication.shared.run()
 }

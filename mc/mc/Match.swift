@@ -36,6 +36,8 @@ func matchWin(_ id:String) -> [winInfo]
         
     var zindex = 0
     
+    let cgWins = matchCGWin("")
+    
     for proc in allProcs()
     {
         let appRef = AXUIElementCreateApplication(proc.pid)
@@ -69,7 +71,12 @@ func matchWin(_ id:String) -> [winInfo]
                 AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &ref);
                 let title = ref as? String ?? "";
 
-                AXUIElementCopyAttributeValue(window, kAXFocusedAttribute as CFString, &ref);
+                // AXUIElementCopyAttributeValue(window, kAXFocusedAttribute as CFString, &ref);
+                // let focus = ref as! Bool
+                // if focus
+                // {
+                    // status += " top"
+                // }
 
                 var pid:Int32 = 0
                 AXUIElementGetPid(window, &pid)
@@ -86,9 +93,7 @@ func matchWin(_ id:String) -> [winInfo]
                     continue
                 }
                 
-                // print ("info", title, index, status, point, size, pid, index, proc.path, proc.pid)
-                
-                infos.append(winInfo(
+                var wi = winInfo(
                     title:  title,
                     path:   proc.path,
                     pid:    proc.pid,
@@ -97,16 +102,86 @@ func matchWin(_ id:String) -> [winInfo]
                     y:      Int(point.y),
                     width:  Int(size.width),
                     height: Int(size.height),
-                    index:  zindex,
+                    index:  -1,
                     status: status,
                     win:    window
-                    ))
+                    )
+                
+                if let cg = winForWin(wi, cgWins)
+                {
+                    wi.index = cg.index
+                    
+                    if (cg.index == 0 && id == "top") 
+                    {
+                        return [wi]
+                    }
+                }
+                
+                // print ("info", title, index, status, point, size, pid, index, proc.path, proc.pid)
+                
+                infos.append(wi)
                     
                 zindex += 1
             }
         }
     }   
     
+    return infos
+}
+
+func winForWin(_ info:winInfo, _ infos:[winInfo]) -> winInfo?
+{
+    for win in infos
+    {
+        if win.x == info.x && win.y == info.y && win.width == info.width && win.height == info.height && win.pid == info.pid // && win.title == info.title
+        {
+            return win
+        }
+    }
+    return nil
+}
+
+func matchCGWin(_ id:String) -> [winInfo]
+{
+    var infos:[winInfo] = []
+
+    var index = 0
+    
+    let options = CGWindowListOption(arrayLiteral: .excludeDesktopElements, .optionOnScreenOnly)
+    if let infoList = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[ String : Any]]
+    {
+        for info in infoList
+        {
+            let bounds = CGRect(dictionaryRepresentation: info["kCGWindowBounds"] as! CFDictionary)!
+            let pid = info["kCGWindowOwnerPID"] as! Int32
+            let wid = info["kCGWindowNumber"] as! Int32
+            let path = NSRunningApplication(processIdentifier: pid)!.bundleURL!.path
+    
+            if id.count > 0 && !contains(path, id) && wid != Int32(id) && id != "top" && (Int(id) ?? 0) != pid { continue }
+    
+            var status = "minimized"
+            if info["kCGWindowIsOnscreen"] != nil { status = "normal" }
+    
+            infos.append(winInfo(
+                title:  info["kCGWindowName"] as! String,
+                path:   path,
+                pid:    pid,
+                id:     String(wid),
+                x:      Int(bounds.minX),
+                y:      Int(bounds.minY),
+                width:  Int(bounds.width),
+                height: Int(bounds.height),
+                index:  index,
+                status: status,
+                win:    AXUIElementCreateSystemWide()
+                ))
+    
+            index += 1
+                
+            if id == "top" { break }
+        }
+    }
+    //print(infos)
     return infos
 }
 

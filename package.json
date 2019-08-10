@@ -12,6 +12,7 @@
   },
   "files": [
     "bin/wc.exe",
+    "bin/mc.app",
     "bin/mc",
     "bin/wxw",
     "js/wc.js",

@@ -9,6 +9,7 @@ scripts
                 build  ./node_modules/.bin/konrad --build
 files
                 bin/wc.exe
+                bin/mc.app
                 bin/mc
                 bin/wxw
                 js/wc.js

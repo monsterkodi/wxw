@@ -103,7 +103,7 @@ func usage()
 // 000   000  000   000  000   000  000   000  000 0 000  000       000  0000     000          000
 // 000   000  000   000   0000000    0000000   000   000  00000000  000   000     000     0000000
 
-func appMain()
+func appMain() -> Bool
 {
     let argc = CommandLine.arguments.count
     let argv = CommandLine.arguments
@@ -149,7 +149,7 @@ func appMain()
         else if (cmp(cmd, "focus"))
         {
             if (argc == 2) { help(cmd) }
-            else           { focus(argv[2]) }
+            else           { _ = focus(argv[2]) }
         }
         else if (cmp(cmd, "launch"))
         {
@@ -199,8 +199,8 @@ func appMain()
         }
         else if (cmp(cmd, "screen"))
         {
-            if (argc == 2) { screen("size") }
-            else           { screen(argv[2]) }
+            if (argc == 2) { _ = screen("size") }
+            else           { _ = screen(argv[2]) }
         }
         else if (cmp(cmd, "icon"))
         {
@@ -235,7 +235,9 @@ func appMain()
         {
             if (argc == 2) { help(cmd) }
             else { initHook(argv[2]) }
+            return false
         }
     }
+    return true
 }
 
