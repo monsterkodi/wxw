@@ -20,7 +20,7 @@ struct winInfo
     var title:String
     var path:String
     var pid:Int32 = 0
-    var id:Int32  = 0
+    var id:String
     var x      = 0
     var y      = 0
     var width  = 0
@@ -54,10 +54,10 @@ func screen(_ id:String) -> bounds
 // 000  000   000  
 // 000  0000000    
 
-func winWithId(_ id:Int32, _ infos:[winInfo]?) -> winInfo?
+func winWithId(_ id:String, _ infos:[winInfo]?) -> winInfo?
 {
     for w in infos ?? allWins() {
-        if w.id == id {
+        if cmp(w.id, id) {
             return w
         }
     }
@@ -70,11 +70,11 @@ func winWithId(_ id:Int32, _ infos:[winInfo]?) -> winInfo?
 // 000  000  0000  000   000  000        000 000   
 // 000  000   000  0000000    00000000  000   000  
 
-func winIndex(pid:Int32, id:Int32) -> Int
+func winIndex(pid:Int32, id:String) -> Int
 {
     for info in matchWin(String(pid))
     {
-        if info.id == id
+        if cmp(info.id, id)
         {
             return info.index
         }
@@ -88,7 +88,7 @@ func winIndex(pid:Int32, id:Int32) -> Int
 // 000   000  000   000  000   000  000  0000  000   000       000  
 // 0000000     0000000    0000000   000   000  0000000    0000000   
 
-func winBounds(_ id:Int32, _ infos:[winInfo]?) -> bounds?
+func winBounds(_ id:String, _ infos:[winInfo]?) -> bounds?
 {
     if let w = winWithId(id, infos)
     {
@@ -125,7 +125,7 @@ func setBounds(_ id:String, _ x:String, _ y:String, _ width:String, _ height:Str
 // 000 0 000  000   000     000     000     
 // 000   000   0000000       0      00000000
 
-func moveWin(id:Int32, x:Int, y:Int, width:Int, height:Int, infos:[winInfo]?)
+func moveWin(id:String, x:Int, y:Int, width:Int, height:Int, infos:[winInfo]?)
 {
     if let win = winWithId(id, infos)
     {
