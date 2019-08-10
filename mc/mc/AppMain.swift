@@ -164,17 +164,17 @@ func appMain()
         else if (cmp(cmd, "quit"))
         {
             if (argc == 2) { help(cmd) }
-            // else           { quit(argv[2]) }
+            else           { quit(argv[2]) }
         }
         else if (cmp(cmd, "terminate"))
         {
             if (argc == 2) { help(cmd) }
-            //else           { terminate(argv[2]) }
+            else           { terminate(argv[2]) }
         }
         else if (cmp(cmd, "kill"))
         {
             if (argc == 2) { help("terminate") }
-            //else           { terminate(argv[2]) }
+            else           { terminate(argv[2]) }
         }
         else if (cmp(cmd, "bounds"))
         {

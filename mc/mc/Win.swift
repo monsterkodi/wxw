@@ -237,4 +237,21 @@ func close(_ id:String)
 
 func quit(_ id:String)
 {
+    for win in matchWin(id)
+    {
+        if let app = NSRunningApplication(processIdentifier:win.pid)
+        {
+            app.terminate()
+        }
+    }
+}
+
+func kill(_ id:String)
+{
+    print("kill", id)
+}
+
+func terminate(_ id:String)
+{
+    print("terminate", id)
 }
