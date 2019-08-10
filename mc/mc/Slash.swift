@@ -31,6 +31,24 @@ func resolve(_ p:String) -> String
     return URL(fileURLWithPath:p, relativeTo:cwd).path
 }
 
+// 00000000  000  000      00000000  
+// 000       000  000      000       
+// 000000    000  000      0000000   
+// 000       000  000      000       
+// 000       000  0000000  00000000  
+
+func file(_ p:String) -> String
+{
+    let url = URL(fileURLWithPath: p)
+    return url.pathComponents.last ?? ""
+}
+
+func base(_ p:String) -> String
+{
+    let url = URL(fileURLWithPath: p)
+    return url.deletingPathExtension().pathComponents.last ?? ""
+}
+
 //       000   0000000   000  000   000  
 //       000  000   000  000  0000  000  
 //       000  000   000  000  000 0 000  

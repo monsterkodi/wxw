@@ -27,9 +27,9 @@ func info(_ id:String)
     }
 }
 
-func proclist(_ id:String)
+func proc(_ id:String)
 {
-    for app in matchApp(id)
+    for app in matchProc(id)
     {
         print (".")
         print ("    path    ", app.path)
@@ -229,8 +229,8 @@ func appMain()
         }
         else if (cmp(cmd, "proc"))
         {
-            if (argc == 2) { proclist("") }
-            else           { proclist(argv[2]) }
+            if (argc == 2) { proc("") }
+            else           { proc(argv[2]) }
         }
         else if (cmp(cmd, "hook"))
         {

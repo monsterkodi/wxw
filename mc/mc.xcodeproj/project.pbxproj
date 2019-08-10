@@ -21,6 +21,7 @@
 		C35EDAD422FEE46100CB784E /* Match.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD022FEE46100CB784E /* Match.swift */; };
 		C35EDAD522FEE46100CB784E /* Volume.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD122FEE46100CB784E /* Volume.swift */; };
 		C35EDAD722FEE5EA00CB784E /* Win.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD622FEE5EA00CB784E /* Win.swift */; };
+		C35EDAD922FF036C00CB784E /* Proc.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD822FF036C00CB784E /* Proc.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -55,6 +56,7 @@
 		C35EDAD022FEE46100CB784E /* Match.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Match.swift; sourceTree = "<group>"; };
 		C35EDAD122FEE46100CB784E /* Volume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Volume.swift; sourceTree = "<group>"; };
 		C35EDAD622FEE5EA00CB784E /* Win.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Win.swift; sourceTree = "<group>"; };
+		C35EDAD822FF036C00CB784E /* Proc.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Proc.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				C35EDAD622FEE5EA00CB784E /* Win.swift */,
+				C35EDAD822FF036C00CB784E /* Proc.swift */,
 				C35EDAD022FEE46100CB784E /* Match.swift */,
 				C35EDACE22FEE46100CB784E /* OsaScript.swift */,
 				C35EDACF22FEE46100CB784E /* Trash.swift */,
@@ -225,6 +228,7 @@
 			files = (
 				C35EDAD322FEE46100CB784E /* Trash.swift in Sources */,
 				C357225822FE0A1200B39242 /* AppMain.swift in Sources */,
+				C35EDAD922FF036C00CB784E /* Proc.swift in Sources */,
 				C35EDACB22FEDF4500CB784E /* Slash.swift in Sources */,
 				C35EDAD522FEE46100CB784E /* Volume.swift in Sources */,
 				C35EDAD422FEE46100CB784E /* Match.swift in Sources */,

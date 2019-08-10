@@ -9,12 +9,6 @@
 import Cocoa
 import Foundation
 
-struct appInfo
-{
-    var path:String
-    var pid:Int32 = 0
-}
-
 // 000   000  000  000   000  
 // 000 0 000  000  0000  000  
 // 000000000  000  000 0 000  
@@ -67,29 +61,4 @@ func matchWin(_ id:String) -> [winInfo]
 func allWins() -> [winInfo]
 {
     return matchWin("")
-}
-
-//  0000000   00000000   00000000   
-// 000   000  000   000  000   000  
-// 000000000  00000000   00000000   
-// 000   000  000        000        
-// 000   000  000        000        
-
-func matchApp(_ id:String) -> [appInfo]
-{
-    var infos:[appInfo] = []
-
-    for app in NSWorkspace.shared.runningApplications
-    {
-        if app.bundleURL == nil { continue }
-        if app.bundleURL!.pathExtension != "app" { continue }
-        let path = app.bundleURL!.path
-        if id.count > 0 && path != id && !contains(app.bundleURL!.lastPathComponent, id) && app.processIdentifier != Int32(id) { continue }
-
-        infos.append(appInfo(
-            path:   app.bundleURL!.path,
-            pid:    app.processIdentifier))
-    }
-
-    return infos
 }

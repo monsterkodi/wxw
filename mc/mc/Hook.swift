@@ -57,7 +57,7 @@ func sendProc()
     s += "{\"event\": \"proc\",\n"
     s += " \"proc\": [\n"
 
-    for app in matchApp("")
+    for app in matchProc("")
     {
         s += "{\"path\": \"" + app.path
         s += String(format:"\", \"pid\": %d", app.pid)
