@@ -13,6 +13,14 @@
 		C357224F22FE090300B39242 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = C357224D22FE090300B39242 /* MainMenu.xib */; };
 		C357225822FE0A1200B39242 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = C357225722FE0A1200B39242 /* AppMain.swift */; };
 		C357225A22FE0CD700B39242 /* mc.app in CopyFiles */ = {isa = PBXBuildFile; fileRef = C357224622FE090300B39242 /* mc.app */; };
+		C35EDAC922FEDDDF00CB784E /* Hook.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAC822FEDDDF00CB784E /* Hook.swift */; };
+		C35EDACB22FEDF4500CB784E /* Slash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDACA22FEDF4500CB784E /* Slash.swift */; };
+		C35EDACD22FEE37000CB784E /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDACC22FEE36F00CB784E /* String.swift */; };
+		C35EDAD222FEE46100CB784E /* OsaScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDACE22FEE46100CB784E /* OsaScript.swift */; };
+		C35EDAD322FEE46100CB784E /* Trash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDACF22FEE46100CB784E /* Trash.swift */; };
+		C35EDAD422FEE46100CB784E /* Match.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD022FEE46100CB784E /* Match.swift */; };
+		C35EDAD522FEE46100CB784E /* Volume.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD122FEE46100CB784E /* Volume.swift */; };
+		C35EDAD722FEE5EA00CB784E /* Win.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD622FEE5EA00CB784E /* Win.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,6 +47,14 @@
 		C357225022FE090300B39242 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C357225122FE090300B39242 /* mc.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = mc.entitlements; sourceTree = "<group>"; };
 		C357225722FE0A1200B39242 /* AppMain.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppMain.swift; sourceTree = "<group>"; };
+		C35EDAC822FEDDDF00CB784E /* Hook.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Hook.swift; sourceTree = "<group>"; };
+		C35EDACA22FEDF4500CB784E /* Slash.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Slash.swift; sourceTree = "<group>"; };
+		C35EDACC22FEE36F00CB784E /* String.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = String.swift; sourceTree = "<group>"; };
+		C35EDACE22FEE46100CB784E /* OsaScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OsaScript.swift; sourceTree = "<group>"; };
+		C35EDACF22FEE46100CB784E /* Trash.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Trash.swift; sourceTree = "<group>"; };
+		C35EDAD022FEE46100CB784E /* Match.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Match.swift; sourceTree = "<group>"; };
+		C35EDAD122FEE46100CB784E /* Volume.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Volume.swift; sourceTree = "<group>"; };
+		C35EDAD622FEE5EA00CB784E /* Win.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Win.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,7 +107,15 @@
 		C357224822FE090300B39242 /* mc */ = {
 			isa = PBXGroup;
 			children = (
+				C35EDAD622FEE5EA00CB784E /* Win.swift */,
+				C35EDAD022FEE46100CB784E /* Match.swift */,
+				C35EDACE22FEE46100CB784E /* OsaScript.swift */,
+				C35EDACF22FEE46100CB784E /* Trash.swift */,
+				C35EDAD122FEE46100CB784E /* Volume.swift */,
+				C35EDACC22FEE36F00CB784E /* String.swift */,
+				C35EDACA22FEDF4500CB784E /* Slash.swift */,
 				C357224922FE090300B39242 /* AppDelegate.swift */,
+				C35EDAC822FEDDDF00CB784E /* Hook.swift */,
 				C357225722FE0A1200B39242 /* AppMain.swift */,
 				C357224B22FE090300B39242 /* Assets.xcassets */,
 				C357224D22FE090300B39242 /* MainMenu.xib */,
@@ -199,7 +223,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C35EDAD322FEE46100CB784E /* Trash.swift in Sources */,
 				C357225822FE0A1200B39242 /* AppMain.swift in Sources */,
+				C35EDACB22FEDF4500CB784E /* Slash.swift in Sources */,
+				C35EDAD522FEE46100CB784E /* Volume.swift in Sources */,
+				C35EDAD422FEE46100CB784E /* Match.swift in Sources */,
+				C35EDAD222FEE46100CB784E /* OsaScript.swift in Sources */,
+				C35EDACD22FEE37000CB784E /* String.swift in Sources */,
+				C35EDAC922FEDDDF00CB784E /* Hook.swift in Sources */,
+				C35EDAD722FEE5EA00CB784E /* Win.swift in Sources */,
 				C357224A22FE090300B39242 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
