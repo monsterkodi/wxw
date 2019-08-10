@@ -24,6 +24,17 @@ struct winInfo
     var win:AXUIElement
 }
 
+struct cgInfo
+{
+    var pid:Int32 = 0
+    var id:String
+    var x      = 0
+    var y      = 0
+    var width  = 0
+    var height = 0
+    var index  = 0
+}
+
 // 000   000  000  000   000  
 // 000 0 000  000  0000  000  
 // 000000000  000  000 0 000  
@@ -36,7 +47,7 @@ func matchWin(_ id:String) -> [winInfo]
         
     var zindex = 0
     
-    let cgWins = matchCGWin("")
+    var cgs = cgWins()
     
     for proc in allProcs()
     {
@@ -70,20 +81,10 @@ func matchWin(_ id:String) -> [winInfo]
                 
                 AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &ref);
                 let title = ref as? String ?? "";
-
-                // AXUIElementCopyAttributeValue(window, kAXFocusedAttribute as CFString, &ref);
-                // let focus = ref as! Bool
-                // if focus
-                // {
-                    // status += " top"
-                // }
-
-                var pid:Int32 = 0
-                AXUIElementGetPid(window, &pid)
                 
-                let wid = "\(pid):\(index)"
+                let wid = "\(proc.pid):\(index)"
                 
-                if id.count > 0 && !contains(proc.path, id) && id != wid && id != "top" && (Int(id) ?? 0) != pid 
+                if id.count > 0 && id != wid && id != "top" && (Int(id) ?? 0) != proc.pid && !contains(proc.path, id) 
                 { 
                     continue 
                 }
@@ -107,7 +108,7 @@ func matchWin(_ id:String) -> [winInfo]
                     win:    window
                     )
                 
-                if let cg = winForWin(wi, cgWins)
+                if let cg = winForWin(wi, &cgs)
                 {
                     wi.index = cg.index
                     
@@ -117,7 +118,7 @@ func matchWin(_ id:String) -> [winInfo]
                     }
                 }
                 
-                // print ("info", title, index, status, point, size, pid, index, proc.path, proc.pid)
+                //print ("info", wi)
                 
                 infos.append(wi)
                     
@@ -129,7 +130,7 @@ func matchWin(_ id:String) -> [winInfo]
     return infos
 }
 
-func winForWin(_ info:winInfo, _ infos:[winInfo]) -> winInfo?
+func winForWin(_ info:winInfo, _ infos:inout [cgInfo]) -> cgInfo?
 {
     for win in infos
     {
@@ -141,9 +142,9 @@ func winForWin(_ info:winInfo, _ infos:[winInfo]) -> winInfo?
     return nil
 }
 
-func matchCGWin(_ id:String) -> [winInfo]
+func cgWins() -> [cgInfo]
 {
-    var infos:[winInfo] = []
+    var infos:[cgInfo] = []
 
     var index = 0
     
@@ -155,33 +156,20 @@ func matchCGWin(_ id:String) -> [winInfo]
             let bounds = CGRect(dictionaryRepresentation: info["kCGWindowBounds"] as! CFDictionary)!
             let pid = info["kCGWindowOwnerPID"] as! Int32
             let wid = info["kCGWindowNumber"] as! Int32
-            let path = NSRunningApplication(processIdentifier: pid)!.bundleURL!.path
     
-            if id.count > 0 && !contains(path, id) && wid != Int32(id) && id != "top" && (Int(id) ?? 0) != pid { continue }
-    
-            var status = "minimized"
-            if info["kCGWindowIsOnscreen"] != nil { status = "normal" }
-    
-            infos.append(winInfo(
-                title:  info["kCGWindowName"] as! String,
-                path:   path,
+            infos.append(cgInfo(
                 pid:    pid,
                 id:     String(wid),
                 x:      Int(bounds.minX),
                 y:      Int(bounds.minY),
                 width:  Int(bounds.width),
                 height: Int(bounds.height),
-                index:  index,
-                status: status,
-                win:    AXUIElementCreateSystemWide()
+                index:  index
                 ))
     
             index += 1
-                
-            if id == "top" { break }
         }
     }
-    //print(infos)
     return infos
 }
 

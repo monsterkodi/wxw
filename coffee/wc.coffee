@@ -11,7 +11,7 @@
 if os.platform() == 'win32'
     wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
 else if os.platform() == 'darwin'
-    wcexe = slash.resolve slash.join __dirname, '..' 'bin' 'mc'
+    wcexe = slash.resolve slash.join __dirname, '..' 'bin' 'mc.app' 'Contents' 'MacOS' 'mc'
 
 fakeIcon = (argv) ->
     
@@ -84,7 +84,7 @@ exec = (argv...) ->
             if fakeIcon argv then return ''
             
         if cmd in ['launch' 'raise' 'focus' 'hook']
-            return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true stdio:'inherit'
+            return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true #stdio:'inherit'
         else
             args = (kstr(s) for s in argv).join " "
             outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
