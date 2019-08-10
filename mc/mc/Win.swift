@@ -196,12 +196,9 @@ func raise(_ id:String)
 {
     for win in matchWin(id)
     {
-        print("win", win)
-        AXUIElementSetAttributeValue(win.win, kAXMinimizedAttribute as CFString, kCFBooleanFalse);
-        if let app = NSRunningApplication(processIdentifier:win.pid)
+        if (win.status != "minimized")
         {
-            print("raise", app)
-            app.activate(options:.activateAllWindows)
+            AXUIElementPerformAction(win.win, kAXRaiseAction as CFString)
         }
     }        
 }
