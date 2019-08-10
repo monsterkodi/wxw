@@ -9,26 +9,6 @@
 import Foundation
 import Cocoa
 
-// 000  000   000  00000000   0000000   
-// 000  0000  000  000       000   000  
-// 000  000 0 000  000000    000   000  
-// 000  000  0000  000       000   000  
-// 000  000   000  000        0000000   
-
-struct winInfo
-{
-    var title:String
-    var path:String
-    var pid:Int32 = 0
-    var id:String
-    var x      = 0
-    var y      = 0
-    var width  = 0
-    var height = 0
-    var index  = 0
-    var status:String
-}
-
 struct bounds
 {
     var x:Int
@@ -129,30 +109,16 @@ func moveWin(id:String, x:Int, y:Int, width:Int, height:Int, infos:[winInfo]?)
 {
     if let win = winWithId(id, infos)
     {
-        let appRef = AXUIElementCreateApplication(win.pid)
+        var position: CFTypeRef
+        var size: CFTypeRef
+        var newPoint = CGPoint(x: x, y: y)
+        var newSize = CGSize(width: width, height: height)
 
-        var value: AnyObject?
-        _ = AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &value)
+        position = AXValueCreate(AXValueType(rawValue: kAXValueCGPointType)!,&newPoint)!;
+        AXUIElementSetAttributeValue(win.win, kAXPositionAttribute as CFString, position);
 
-        if let windowList = value as? [AXUIElement]
-        {
-            let index = winIndex(pid:win.pid, id:win.id)
-            if index < windowList.count
-            {
-                let window = windowList[index]
-
-                var position : CFTypeRef
-                var size : CFTypeRef
-                var newPoint = CGPoint(x: x, y: y)
-                var newSize = CGSize(width: width, height: height)
-
-                position = AXValueCreate(AXValueType(rawValue: kAXValueCGPointType)!,&newPoint)!;
-                AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, position);
-
-                size = AXValueCreate(AXValueType(rawValue: kAXValueCGSizeType)!,&newSize)!;
-                AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, size);
-            }
-        }
+        size = AXValueCreate(AXValueType(rawValue: kAXValueCGSizeType)!,&newSize)!;
+        AXUIElementSetAttributeValue(win.win, kAXSizeAttribute as CFString, size);
     }
 }
 
@@ -167,7 +133,8 @@ func move(_ id:String, _ x:String, _ y:String)
     let infos = allWins()
     for info in matchWin(id)
     {
-        if let bounds = winBounds(info.id, infos) {
+        if let bounds = winBounds(info.id, infos) 
+        {
             moveWin(id:info.id, x:Int(x) ?? 0, y:Int(y) ?? 0, width:bounds.width, height:bounds.height, infos:infos)
         }
     }
@@ -184,7 +151,8 @@ func size(_ id:String, _ width:String, _ height:String)
     let infos = allWins()
     for info in matchWin(id)
     {
-        if let bounds = winBounds(info.id, infos) {
+        if let bounds = winBounds(info.id, infos) 
+        {
             moveWin(id:info.id, x:bounds.x, y:bounds.y, width:Int(width) ?? 500, height:Int(height) ?? 500, infos:infos)
         }
     }
@@ -196,44 +164,26 @@ func size(_ id:String, _ width:String, _ height:String)
 // 000 0 000  000  000  0000  000  000 0 000  000   000   000 000   
 // 000   000  000  000   000  000  000   000  000   000  000   000  
 
-func minimize(_ id:String)
-{    
-    let infos = allWins()
-    for info in matchWin(id)
-    {
-        if let win = winWithId(info.id, infos)
-        {
-            let appRef = AXUIElementCreateApplication(win.pid)
-    
-            var value: AnyObject?
-            _ = AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &value)
-    
-            if let windowList = value as? [AXUIElement]
-            {
-                let index = winIndex(pid:win.pid, id:win.id)
-                if index < windowList.count
-                {
-                    let window = windowList[index]
-                    AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanTrue);
-                }
-            }
-        }
-    }    
-}
-
 func maximize(_ id:String)
 {
     let s = screen("size")
     setBounds(id, "0", "0", String(s.width), String(s.height))
 }
 
-func restore(_ id:String)
+func minimize(_ id:String)
 {    
-    _ = osascript(
-    """
-    use application \"System Events\"
-    set value of attribute \"AXMinimized\" of (every window of process \"\(id)\" whose value of attribute \"AXMinimized\" is true) to false
-    """)
+    for win in matchWin(id)
+    {
+        AXUIElementSetAttributeValue(win.win, kAXMinimizedAttribute as CFString, kCFBooleanTrue);
+    }    
+}
+
+func restore(_ id:String)
+{
+    for win in matchWin(id)
+    {
+        AXUIElementSetAttributeValue(win.win, kAXMinimizedAttribute as CFString, kCFBooleanFalse);
+    }        
 }
 
 // 00000000    0000000   000   0000000  00000000  
@@ -244,14 +194,38 @@ func restore(_ id:String)
 
 func raise(_ id:String)
 {
+    for win in matchWin(id)
+    {
+        print("win", win)
+        AXUIElementSetAttributeValue(win.win, kAXMinimizedAttribute as CFString, kCFBooleanFalse);
+        if let app = NSRunningApplication(processIdentifier:win.pid)
+        {
+            print("raise", app)
+            app.activate(options:.activateAllWindows)
+        }
+    }        
 }
 
-func focus(_ id:String)
+func focus(_ id:String) -> Bool
 {
+    for win in matchWin(id)
+    {
+        AXUIElementSetAttributeValue(win.win, kAXMinimizedAttribute as CFString, kCFBooleanFalse);
+        if let app = NSRunningApplication(processIdentifier:win.pid)
+        {
+            app.activate(options:.activateIgnoringOtherApps)
+        }
+        return true
+    }        
+    return false
 }
 
 func launch(_ id:String)
 {
+    if (!focus(id))
+    {
+        print("launch", id)
+    }
 }
 
 //  0000000  000       0000000    0000000  00000000  

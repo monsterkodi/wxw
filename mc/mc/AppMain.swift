@@ -111,7 +111,6 @@ func appMain()
     if (argc == 1)
     {
         usage()
-        //info("ko.app")
     }
     else
     {
@@ -200,8 +199,8 @@ func appMain()
         }
         else if (cmp(cmd, "screen"))
         {
-            //if (argc == 2) { screen("size") }
-            //else           { screen(argv[2]) }
+            if (argc == 2) { screen("size") }
+            else           { screen(argv[2]) }
         }
         else if (cmp(cmd, "icon"))
         {
