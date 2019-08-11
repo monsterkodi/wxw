@@ -240,6 +240,11 @@ func launch(_ id:String)
     if (!focus(id))
     {
         print("launch", id)
+        
+        let task = Process()
+        task.launchPath = "/usr/bin/open"
+        task.arguments = [id]
+        task.launch()
     }
 }
 
@@ -261,10 +266,16 @@ func close(_ id:String)
 
 func quit(_ id:String)
 {
+    var pids:Set<Int32> = []
     for win in matchWin(id)
     {
-        if let app = NSRunningApplication(processIdentifier:win.pid)
+        pids.insert(win.pid)
+    }
+    for pid in pids
+    {
+        if let app = NSRunningApplication(processIdentifier:pid)
         {
+            print("terminated", pid)
             app.terminate()
         }
     }

@@ -44,6 +44,11 @@ extension String
         return self
     }
     
+    func replace(_ substr:String, with:String) -> String
+    {
+        return self.replacingOccurrences(of:substr, with:with, options:.literal, range:nil)
+    }
+    
     func startsWith(_ prefix:String) -> Bool
     {
         return self.hasPrefix(prefix)
@@ -71,3 +76,4 @@ func contains(_ a:String, _ b:String) -> Bool
 {
     return a.lowercased().contains(b.lowercased())
 }
+

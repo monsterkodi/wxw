@@ -4,7 +4,7 @@
 #      000  000   000  000     000     000       000   000  
 # 0000000   00     00  000     000      0000000  000   000  
 
-{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, valid, last, klog, keyinfo, os, $ } = require 'kxk'
+{ childp, post, stopEvent, karg, slash, drag, elem, prefs, clamp, kpos, empty, valid, last, klog, kerror, keyinfo, os, $ } = require 'kxk'
 
 wc = require './wc'
 electron = require 'electron'
@@ -28,9 +28,10 @@ getApps = ->
             bi = b.index
             if bi < 0 then bi = 9999
             ai - bi
-    
+                
     for info in infos
         continue if info.title == 'wxw-switch'
+        continue if info.path.indexOf('wxw/node_modules/electron/dist/Electron.app') > 0
         file = slash.file info.path
         if file == 'ApplicationFrameHost.exe'
             name = last info.title.split ' ?- '
@@ -40,6 +41,15 @@ getApps = ->
                 apps.push info.title
         else
             apps.push info.path if info.path not in apps
+            
+    if os.platform() == 'darwin'
+        for proc in wc 'proc'
+            if proc.path not in apps
+                continue if proc.path.indexOf('wxw/node_modules/electron/dist/Electron.app') > 0
+                continue if slash.base(proc.path) == 'kappo'
+                if slash.fileExists pngPath proc.path
+                    apps.push proc.path
+            
     # klog 'apps' apps
     apps
     
@@ -203,7 +213,10 @@ activate = ->
                     return
             childp.spawn 'start', [{Calculator:'calculator:' Settings:'ms-settings:' 'Microsoft Store':'ms-windows-store:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'
         else
-            wc 'focus' activeApp.id 
+            if empty wc('info', activeApp.id)
+                wc 'launch' activeApp.id
+            else
+                wc 'focus' activeApp.id 
 
 # 000   000  000   0000000   000   000  000      000   0000000   000   000  000000000  
 # 000   000  000  000        000   000  000      000  000        000   000     000     
@@ -229,8 +242,7 @@ prevApp = -> highlight activeApp.previousSibling ? $('.apps').lastChild
 
 quitApp = -> 
     
-    # klog 'wxw quit' "\"#{activeApp.id}\""
-    wc = require './wc'
+    klog 'wxw quit' "\"#{activeApp.id}\""
     if valid wc 'quit' "\"#{activeApp.id}\""
         oldActive = activeApp
         nextApp()
@@ -240,7 +252,7 @@ quitApp = ->
         win = electron.remote.getCurrentWindow()
         win.setBounds wr
     else
-        error "can't quit?"
+        kerror "can't quit?"
     
 # 00     00   0000000   000   000   0000000  00000000  
 # 000   000  000   000  000   000  000       000       
@@ -264,6 +276,8 @@ onKeyDown = (event) ->
     
     { mod, key, char, combo } = keyinfo.forEvent event
     
+    # klog 'onKeyDown' combo
+    
     win = electron.remote.getCurrentWindow()
      
     switch key
@@ -275,7 +289,8 @@ onKeyDown = (event) ->
     switch combo
         when 'alt+ctrl+i'     then return win.webContents.openDevTools()
         when 'ctrl+shift+tab' then return prevApp()
-        when 'ctrl+q'         then return quitApp()
+        when 'ctrl+q'         then return stopEvent event, quitApp()
+        when 'command+q'      then return stopEvent event, quitApp()
         when 'alt+ctrl+q'     then return electron.remote.app.quit()
         when 'alt+ctrl+/'     then return post.toMain 'showAbout'
         # else klog 'combo' combo
@@ -284,7 +299,9 @@ onKeyUp = (event) ->
     
     { mod, key, char, combo } = keyinfo.forEvent event
         
-    if empty combo
+    # klog 'onKeyUp' combo, 'key', key, 'wc', wc('key').trim()
+    
+    if empty(combo) and empty wc('key').trim()
         activate()
 
 # 000   000  00000000  000   000  000000000   0000000   00000000   00000000   

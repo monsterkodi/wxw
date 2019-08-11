@@ -98,8 +98,7 @@ moveWindow = (dir) ->
                 when 'down'  then h = ar.h/2+d; y = ar.h/2-b
                 when 'up'    then w = ar.w+d;   x = -b
         
-        # klog dir, info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h), info.path
-        klog 'wxw bounds' info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h)
+        # klog 'wxw bounds' info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h)
         wc 'bounds' info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h)
 
 #  0000000  000   000  000  000000000   0000000  000   000  
@@ -158,7 +157,7 @@ app.on 'ready' ->
         click: showAbout
     ]
     
-    # app.dock?.hide()
+    app.dock?.hide()
     
     keys = 
         left:       'alt+ctrl+left'
@@ -178,6 +177,7 @@ app.on 'ready' ->
         screenzoom: 'alt+z'
         
     prefs.init defaults:keys
+    prefs.save()
     
     for a in _.keys keys
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)

@@ -371,7 +371,7 @@ func appMain() -> Bool
         }
         else if (cmp(cmd, "mouse"))
         {
-            mouse()
+            _ = mouse()
         }
         else if (cmp(cmd, "trash"))
         {

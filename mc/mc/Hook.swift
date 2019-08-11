@@ -27,7 +27,7 @@ func sendInfo()
 
     for info in matchWin("")
     {
-        s += "{\"title\": \"" + info.title + "\",\n"
+        s += "{\"title\": \"" + info.title.replace("\"", with:"\\\"") + "\",\n"
         s += " \"path\": \"" + info.path + "\",\n"
         s += String(format:" \"pid\": %d,\n",       info.pid)
         s += " \"id\": \"" + info.id + "\",\n"
