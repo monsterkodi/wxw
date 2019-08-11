@@ -1,6 +1,7 @@
 node_modules
 screenshot.png
 *win32-x64
+*darwin-x64
 inno
 wc/.vs
 wc/wc/x64

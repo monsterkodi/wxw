@@ -6,7 +6,7 @@
 00     00  000   000  00     00  
 ###
 
-if not module.parent?.filename? or module.parent.filename.endsWith 'default_app.asar\\main.js'
+if not module.parent?.filename? or module.parent.filename.endsWith('default_app.asar\\main.js') or module.parent.filename.endsWith 'default_app.asar/main.js'
     
     require './app'
 

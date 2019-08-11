@@ -43,6 +43,8 @@ struct cgInfo
 
 func matchWin(_ id:String) -> [winInfo]
 {
+    _ = isTrusted()
+    
     var infos:[winInfo] = []
         
     var zindex = 0
@@ -89,7 +91,7 @@ func matchWin(_ id:String) -> [winInfo]
                     continue 
                 }
                 
-                if (title.count == 0 && cmp(base(proc.path), "Finder")) 
+                if (title.count == 0 && cmp(basename(proc.path), "Finder")) 
                 {
                     continue
                 }

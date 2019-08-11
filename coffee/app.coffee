@@ -6,7 +6,7 @@
 00     00  000   000  00     00        000   000  000        000        
 ###
 
-{ post, prefs, about, slash, childp, karg, klog, _ } = require 'kxk'
+{ post, prefs, about, slash, childp, karg, klog, os, _ } = require 'kxk'
 
 wc       = require './wc'
 pkg      = require '../package.json'
@@ -34,6 +34,8 @@ post.on 'winlog', (text) -> klog ">>> " + text
 
 action = (act) ->
 
+    # klog 'act' act
+    
     switch act
         when 'maximize'   then log wc 'maximize' 'top'
         when 'minimize'   then log wc 'minimize' 'top'
@@ -61,12 +63,14 @@ moveWindow = (dir) ->
         
         return if base in ['kachel' 'kappo']
         
-        if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'space' 'ruler']
-            b = 0  # sane window border
-        else if base in ['devenv']
-            b = -1  # wtf?
-        else
-            b = 10 # transparent window border
+        b = 0
+        if os.platform() == 'win32'
+            if base in ['electron' 'ko' 'konrad' 'clippo' 'klog' 'kaligraf' 'kalk' 'uniko' 'knot' 'space' 'ruler']
+                b = 0  # sane window border
+            else if base in ['devenv']
+                b = -1  # wtf?
+            else
+                b = 10 # transparent window border
         
         wr = x:info.x, y:info.y, w:info.width, h:info.height
         d = 2*b
@@ -89,12 +93,14 @@ moveWindow = (dir) ->
         
         if sl and sr and st and sb
             switch dir
-                when 'left'  then w  = ar.w/4+d
-                when 'right' then w  = ar.w/4+d; x = 3*ar.w/4-b
-                when 'down'  then h  = ar.h/2+d; y = ar.h/2-b
-                when 'up'    then w  = ar.w+d;   x = -b
+                when 'left'  then w = ar.w/4+d
+                when 'right' then w = ar.w/4+d; x = 3*ar.w/4-b
+                when 'down'  then h = ar.h/2+d; y = ar.h/2-b
+                when 'up'    then w = ar.w+d;   x = -b
         
-        wc 'bounds' info.hwnd, x, y, w, h
+        # klog dir, info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h), info.path
+        klog 'wxw bounds' info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h)
+        wc 'bounds' info.id, parseInt(x), parseInt(y), parseInt(w), parseInt(h)
 
 #  0000000  000   000  000  000000000   0000000  000   000  
 # 000       000 0 000  000     000     000       000   000  
@@ -106,12 +112,11 @@ getSwitch = ->
     
     if not swtch or swtch.isDestroyed()
         swtch = require('./switch').start()
-        swtch.on 'close' -> 
-            swtch = null
+        swtch.on 'close' -> swtch = null
     swtch
         
 onAppSwitch = -> 
-    
+
     getSwitch()
     post.toWin swtch.id, 'nextApp'
 
@@ -153,22 +158,22 @@ app.on 'ready' ->
         click: showAbout
     ]
     
-    app.dock?.hide()
+    # app.dock?.hide()
     
     keys = 
-        left:       'ctrl+alt+left'
-        right:      'ctrl+alt+right'
-        up:         'ctrl+alt+up'
-        down:       'ctrl+alt+down'
-        topleft:    'ctrl+alt+1'
-        botleft:    'ctrl+alt+2'
-        topright:   'ctrl+alt+3'
-        botright:   'ctrl+alt+4'
-        top:        'ctrl+alt+5'
-        bot:        'ctrl+alt+6'
-        minimize:   'ctrl+alt+m'
-        close:      'ctrl+alt+w'
-        taskbar:    'ctrl+alt+t'
+        left:       'alt+ctrl+left'
+        right:      'alt+ctrl+right'
+        up:         'alt+ctrl+up'
+        down:       'alt+ctrl+down'
+        topleft:    'alt+ctrl+1'
+        botleft:    'alt+ctrl+2'
+        topright:   'alt+ctrl+3'
+        botright:   'alt+ctrl+4'
+        top:        'alt+ctrl+5'
+        bot:        'alt+ctrl+6'
+        minimize:   'alt+ctrl+m'
+        close:      'alt+ctrl+w'
+        taskbar:    'alt+ctrl+t'
         appswitch:  'ctrl+tab'
         screenzoom: 'alt+z'
         
@@ -178,6 +183,8 @@ app.on 'ready' ->
         electron.globalShortcut.register prefs.get(a), ((a) -> -> action a)(a)
         
     getSwitch()
+    
+    app.on 'activate' -> onAppSwitch()
   
 if app.requestSingleInstanceLock?
     

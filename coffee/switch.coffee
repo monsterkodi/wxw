@@ -4,7 +4,7 @@
 #      000  000   000  000     000     000       000   000  
 # 0000000   00     00  000     000      0000000  000   000  
 
-{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, valid, last, klog, keyinfo, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, elem, prefs, clamp, kpos, empty, valid, last, klog, keyinfo, os, $ } = require 'kxk'
 
 wc = require './wc'
 electron = require 'electron'
@@ -20,6 +20,15 @@ getApps = ->
 
     infos = wc 'info'
     apps = []
+    
+    if os.platform() == 'darwin'
+        infos.sort (a,b) -> 
+            ai = a.index 
+            if ai < 0 then ai = 9999
+            bi = b.index
+            if bi < 0 then bi = 9999
+            ai - bi
+    
     for info in infos
         continue if info.title == 'wxw-switch'
         file = slash.file info.path
@@ -31,6 +40,7 @@ getApps = ->
                 apps.push info.title
         else
             apps.push info.path if info.path not in apps
+    # klog 'apps' apps
     apps
     
 # 00000000   000   000   0000000   
@@ -136,6 +146,7 @@ start = (opt={}) ->
         <script>
             var pth = process.resourcesPath + "/app/js/switch.js";
             if (process.resourcesPath.indexOf("node_modules\\\\electron\\\\dist\\\\resources")>=0) { pth = process.cwd() + "/js/switch.js"; }
+            if (process.resourcesPath.indexOf("node_modules/electron/dist/Electron.app")>=0) { pth = process.cwd() + "/js/switch.js"; }
             console.log(pth, process.resourcesPath);
             require(pth).initWin();
         </script>
@@ -147,7 +158,8 @@ start = (opt={}) ->
 
     win.debug = opt.debug
     
-    if opt.debug then win.webContents.openDevTools()
+    if opt.debug then win.webContents.openDevTools mode:'detach'
+    # win.webContents.openDevTools mode:'detach'
     
     win
         
@@ -271,6 +283,7 @@ onKeyDown = (event) ->
 onKeyUp = (event) ->        
     
     { mod, key, char, combo } = keyinfo.forEvent event
+        
     if empty combo
         activate()
 
@@ -287,20 +300,31 @@ onNextApp = ->
     if win.isVisible()
         nextApp()
     else
-        win.setPosition -10000,-10000 # move window offscreen before show
-        win.show()
         a =$ '.apps'
         a.innerHTML = ''
         
-        restore = -> 
+        if os.platform() == 'win32'
+            win.setPosition -10000,-10000 # move window offscreen before show
+            win.show()
             
-            wr = winRect apps.length
-            win.setBounds wr
-            win.focus()
+            restore = -> 
                 
-        setTimeout restore, 30 # give windows some time to do it's flickering
-        
-        loadApps()
+                wr = winRect apps.length
+                win.setBounds wr
+                win.focus()
+                    
+            setTimeout restore, 30 # give windows some time to do it's flickering
+            loadApps()
+        else
+            loadApps()
+            
+            if empty wc('key').trim()
+                activate()
+            else
+                wr = winRect apps.length
+                win.setBounds wr
+                win.show()
+                win.focus()
         
 # 000  000   000  000  000000000    000   000  000  000   000  
 # 000  0000  000  000     000       000 0 000  000  0000  000  

@@ -31,22 +31,47 @@ func resolve(_ p:String) -> String
     return URL(fileURLWithPath:p, relativeTo:cwd).path
 }
 
+func ensureDir(_ p:String) -> Bool
+{
+    if !FileManager.default.fileExists(atPath: p) 
+    {
+        do 
+        {
+            try FileManager.default.createDirectory(atPath: p, withIntermediateDirectories: true, attributes: nil)
+            return true
+        } 
+        catch 
+        {
+            print(error.localizedDescription);
+        }
+        return false
+    }
+
+    return true
+}
+
 // 00000000  000  000      00000000  
 // 000       000  000      000       
 // 000000    000  000      0000000   
 // 000       000  000      000       
 // 000       000  0000000  00000000  
 
-func file(_ p:String) -> String
+func filename(_ p:String) -> String
 {
     let url = URL(fileURLWithPath: p)
     return url.pathComponents.last ?? ""
 }
 
-func base(_ p:String) -> String
+func basename(_ p:String) -> String
 {
     let url = URL(fileURLWithPath: p)
     return url.deletingPathExtension().pathComponents.last ?? ""
+}
+
+func dirname(_ p:String) -> String
+{
+    let url = URL(fileURLWithPath: p)
+    return url.deletingLastPathComponent().path
 }
 
 //       000   0000000   000  000   000  
@@ -68,11 +93,17 @@ func join(_ dir:String, _ pth:String) -> String
 
 func folder(_ id:String) -> String
 {
-    if cmp(id, "home") {
+    if cmp(id, "home")
+    {
         return FileManager.default.homeDirectoryForCurrentUser.path
     }
-    if cmp(id, "trash") {
+    if cmp(id, "trash")
+    {
         return join(folder("home"), ".Trash")
+    }
+    if cmp(id, "desktop")
+    {
+        return join(folder("home"), "Desktop")
     }
     return ""
 }

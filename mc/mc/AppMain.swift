@@ -3,6 +3,148 @@ import Cocoa
 import Foundation
 import SwiftSocket
 
+func isTrusted() -> Bool
+{
+    let checkOptPrompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as NSString
+    let options = [checkOptPrompt: true]
+    let trusted = AXIsProcessTrustedWithOptions(options as CFDictionary)
+    
+    if !trusted
+    {
+        print("not trusted")
+    }
+    return trusted
+}
+
+// 00     00   0000000   000   000   0000000  00000000  
+// 000   000  000   000  000   000  000       000       
+// 000000000  000   000  000   000  0000000   0000000   
+// 000 0 000  000   000  000   000       000  000       
+// 000   000   0000000    0000000   0000000   00000000  
+
+func mouse() -> NSPoint
+{
+    let mouseLoc = NSEvent.mouseLocation
+    print ("x ", Int(mouseLoc.x))
+    print ("y ", screenSize().height - Int(mouseLoc.y))
+    return mouseLoc
+}
+
+func getKey()
+{
+    let flags = NSEvent.modifierFlags
+    var mods:[String] = []
+    if (flags.isSuperset(of: NSEvent.ModifierFlags.option))  { mods.append("alt") }
+    if (flags.isSuperset(of: NSEvent.ModifierFlags.control)) { mods.append("ctrl")}
+    if (flags.isSuperset(of: NSEvent.ModifierFlags.command)) { mods.append("cmd")}
+    if (flags.isSuperset(of: NSEvent.ModifierFlags.shift))   { mods.append("shift")}
+
+    print(mods.joined(separator:"+"))
+}
+
+//  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
+// 000       000       000   000  000       000       0000  000  000       000   000  000   000     000     
+// 0000000   000       0000000    0000000   0000000   000 0 000  0000000   000000000  000   000     000     
+//      000  000       000   000  000       000       000  0000       000  000   000  000   000     000     
+// 0000000    0000000  000   000  00000000  00000000  000   000  0000000   000   000   0000000      000     
+
+func screenshot(_ id:String)
+{
+    let displayID = CGMainDisplayID()
+    let imageRef  = CGDisplayCreateImage(displayID)
+    
+    let bitmapRep = NSBitmapImageRep(cgImage: imageRef!)
+    let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
+    
+    var fileUrl:URL
+    if (id.count > 0)
+    {
+        fileUrl = URL(fileURLWithPath:resolve(id))
+    }
+    else
+    {
+        fileUrl = URL(fileURLWithPath:join(folder("desktop"), "screenshot.png"))
+    }
+    
+    do 
+    {
+        try pngData.write(to: fileUrl, options: .atomic)
+    }
+    catch 
+    {
+        print(error.localizedDescription)
+    }
+}
+
+// 000   0000000   0000000   000   000  
+// 000  000       000   000  0000  000  
+// 000  000       000   000  000 0 000  
+// 000  000       000   000  000  0000  
+// 000   0000000   0000000   000   000  
+
+func icon(_ id:String, _ target:String)
+{
+    print("target:", target)
+    for proc in matchProc(id)
+    {
+        if let app = NSRunningApplication(processIdentifier:proc.pid)
+        {
+            let icon = app.icon!
+                
+            let bitmapRep = NSBitmapImageRep(data: icon.tiffRepresentation!)!
+            let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
+            
+            var fileUrl:URL
+            if (target.count > 0)
+            {
+                fileUrl = URL(fileURLWithPath:resolve(target))
+            }
+            else
+            {
+                fileUrl = URL(fileURLWithPath:join(resolve("."), basename(proc.path)+".png"))
+            }
+            
+            do 
+            {
+                if ensureDir(dirname(fileUrl.path))
+                {
+                    print("write:", fileUrl.path)
+                    try pngData.write(to:fileUrl, options: .atomic)
+                    print(fileUrl.path)
+                }
+            }
+            catch 
+            {
+                print(error.localizedDescription)
+            }
+        }
+    }
+
+    // let path = resolve(id)
+    // print("path:", path)
+    // let icon = NSWorkspace.shared.icon(forFile:path)
+    // print("icon:", icon)
+//         
+    // let bitmapRep = NSBitmapImageRep(data: icon.tiffRepresentation!)!
+    // let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
+//     
+    // var fileUrl:URL
+    // if (target != nil && target!.count > 0)
+    // {
+        // fileUrl = URL(fileURLWithPath:resolve(target!))
+    // }
+    // else
+    // {
+        // fileUrl = URL(fileURLWithPath:join(folder("desktop"), "icon.png"))
+    // }
+//     
+    // do 
+    // {
+        // try pngData.write(to:fileUrl, options: .atomic)
+    // }
+    // catch {print("error: \(error)")}
+}
+
 // 000  000   000  00000000   0000000
 // 000  0000  000  000       000   000
 // 000  000 0 000  000000    000   000
@@ -108,6 +250,9 @@ func appMain() -> Bool
     let argc = CommandLine.arguments.count
     let argv = CommandLine.arguments
 
+    // print("argc:", argc)
+    // print("argv:", argv)
+    
     if (argc == 1)
     {
         usage()
@@ -194,8 +339,8 @@ func appMain() -> Bool
         }
         else if (cmp(cmd, "screenshot"))
         {
-            //if (argc == 2) { screenshot() }
-            //else           { screenshot(argv[2]) }
+            if (argc == 2) { screenshot("") }
+            else           { screenshot(argv[2]) }
         }
         else if (cmp(cmd, "screen"))
         {
@@ -205,16 +350,28 @@ func appMain() -> Bool
         else if (cmp(cmd, "icon"))
         {
             if (argc == 2) { help(cmd) }
-            //else           { icon(argv[2], (argc >= 4) ? argv[3] : NULL) }
+            else           
+            { 
+                var target = ""
+                for i in 3..<argc 
+                {
+                    target += argv[i]
+                    if i < argc-1
+                    {
+                        target += " "
+                    }
+                }
+                icon(argv[2], target) 
+            }
         }
         else if (cmp(cmd, "key"))
         {
-            if (argc == 2) { help(cmd) }
+            if (argc == 2) { getKey() }
             //else           { key(argv[2], (argc >= 4) ? argv[3] : "tap") }
         }
         else if (cmp(cmd, "mouse"))
         {
-            //mouse()
+            mouse()
         }
         else if (cmp(cmd, "trash"))
         {

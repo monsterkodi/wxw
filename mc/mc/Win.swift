@@ -23,9 +23,16 @@ struct bounds
 //      000  000       000   000  000       000       000  0000  
 // 0000000    0000000  000   000  00000000  00000000  000   000  
 
-func screen(_ id:String) -> bounds
+func screen(_ id:String)
 {
-    return bounds(x:0, y:0, width:Int(NSScreen.main!.frame.size.width), height:Int(NSScreen.main!.frame.size.width))
+    let bounds = screenSize()
+    print("width    \(bounds.width)")
+    print("height   \(bounds.height)")
+}
+
+func screenSize() -> bounds
+{
+    return bounds(x:0, y:0, width:Int(NSScreen.main!.frame.size.width), height:Int(NSScreen.main!.frame.size.height))
 }
 
 // 000  0000000    
@@ -91,7 +98,7 @@ func getBounds(_ id:String)
 }
 
 func setBounds(_ id:String, _ x:String, _ y:String, _ width:String, _ height:String)
-{
+{    
     let infos = allWins()
     for info in matchWin(id)
     {
@@ -166,7 +173,7 @@ func size(_ id:String, _ width:String, _ height:String)
 
 func maximize(_ id:String)
 {
-    let s = screen("size")
+    let s = screenSize()
     setBounds(id, "0", "0", String(s.width), String(s.height))
 }
 

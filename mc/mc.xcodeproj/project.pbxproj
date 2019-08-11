@@ -12,7 +12,6 @@
 		C357224C22FE090300B39242 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C357224B22FE090300B39242 /* Assets.xcassets */; };
 		C357224F22FE090300B39242 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = C357224D22FE090300B39242 /* MainMenu.xib */; };
 		C357225822FE0A1200B39242 /* AppMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = C357225722FE0A1200B39242 /* AppMain.swift */; };
-		C357225A22FE0CD700B39242 /* mc.app in CopyFiles */ = {isa = PBXBuildFile; fileRef = C357224622FE090300B39242 /* mc.app */; };
 		C35EDAC922FEDDDF00CB784E /* Hook.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAC822FEDDDF00CB784E /* Hook.swift */; };
 		C35EDACB22FEDF4500CB784E /* Slash.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDACA22FEDF4500CB784E /* Slash.swift */; };
 		C35EDACD22FEE37000CB784E /* String.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDACC22FEE36F00CB784E /* String.swift */; };
@@ -23,19 +22,6 @@
 		C35EDAD722FEE5EA00CB784E /* Win.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD622FEE5EA00CB784E /* Win.swift */; };
 		C35EDAD922FF036C00CB784E /* Proc.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35EDAD822FF036C00CB784E /* Proc.swift */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		C357225922FE0CB600B39242 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /Users/kodi/s/wxw/bin;
-			dstSubfolderSpec = 0;
-			files = (
-				C357225A22FE0CD700B39242 /* mc.app in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		25EC76E5CA22197B5A20CA63 /* libPods-mc.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-mc.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -109,7 +95,8 @@
 		C357224822FE090300B39242 /* mc */ = {
 			isa = PBXGroup;
 			children = (
-				C35EDAD622FEE5EA00CB784E /* Win.swift */,
+				C357225722FE0A1200B39242 /* AppMain.swift */,
+				C357224922FE090300B39242 /* AppDelegate.swift */,
 				C35EDAD822FF036C00CB784E /* Proc.swift */,
 				C35EDAD022FEE46100CB784E /* Match.swift */,
 				C35EDACE22FEE46100CB784E /* OsaScript.swift */,
@@ -117,9 +104,8 @@
 				C35EDAD122FEE46100CB784E /* Volume.swift */,
 				C35EDACC22FEE36F00CB784E /* String.swift */,
 				C35EDACA22FEDF4500CB784E /* Slash.swift */,
-				C357224922FE090300B39242 /* AppDelegate.swift */,
 				C35EDAC822FEDDDF00CB784E /* Hook.swift */,
-				C357225722FE0A1200B39242 /* AppMain.swift */,
+				C35EDAD622FEE5EA00CB784E /* Win.swift */,
 				C357224B22FE090300B39242 /* Assets.xcassets */,
 				C357224D22FE090300B39242 /* MainMenu.xib */,
 				C357225022FE090300B39242 /* Info.plist */,
@@ -139,7 +125,7 @@
 				C357224222FE090300B39242 /* Sources */,
 				C357224322FE090300B39242 /* Frameworks */,
 				C357224422FE090300B39242 /* Resources */,
-				C357225922FE0CB600B39242 /* CopyFiles */,
+				C351537A2300624200377EBC /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -201,6 +187,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		C351537A2300624200377EBC /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cp -rp /Users/kodi/Library/Developer/Xcode/DerivedData/mc-aswfcovfllshgydsahexplaieako/Build/Products/Release/mc.app /Users/kodi/s/wxw/bin";
+		};
 		FDB379F9ABFD57E97641C102 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -286,9 +285,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Mac Developer: monsterkodi (D6XMKLSTH6)";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = C3ZL42RF52;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -346,9 +347,11 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_IDENTITY = "Mac Developer: monsterkodi (D6XMKLSTH6)";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = C3ZL42RF52;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -372,10 +375,10 @@
 			baseConfigurationReference = 4CFCFFE3C0EB94B96A643BD3 /* Pods-mc.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = C3ZL42RF52;
 				INFOPLIST_FILE = mc/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -393,10 +396,10 @@
 			baseConfigurationReference = 9CE2989333EE9050EDBF31ED /* Pods-mc.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = C3ZL42RF52;
 				INFOPLIST_FILE = mc/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

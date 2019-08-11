@@ -33,10 +33,10 @@ func matchProc(_ id:String) -> [procInfo]
         
         if path.startsWith("/System/Library/CoreServices/") 
         { 
-            if !cmp(base(path), "Finder") { continue }
+            if !cmp(basename(path), "Finder") { continue }
         }
         if path.startsWith("/System/Library/PrivateFrameworks/") { continue }
-        if cmp(base(path), "plugin-container") { continue }
+        if cmp(basename(path), "plugin-container") { continue }
         
         if id.count > 0 && path != id && !contains(app.bundleURL!.lastPathComponent, id) && app.processIdentifier != Int32(id) { continue }
 

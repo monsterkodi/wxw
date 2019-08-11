@@ -4,7 +4,7 @@
 #  000     000   000  000   000  000 0 000  
 # 0000000   0000000    0000000   000   000  
 
-{ childp, post, karg, slash, drag, prefs, clamp, kpos, klog, $ } = require 'kxk'
+{ childp, post, karg, slash, drag, prefs, clamp, kpos, klog, os, $ } = require 'kxk'
 
 wc = require './wc'
 electron = require 'electron'
@@ -85,7 +85,8 @@ createWindow = (opt) ->
         <script>
             var pth = process.resourcesPath + "/app/js/zoom.js";
             if (process.resourcesPath.indexOf("node_modules\\\\electron\\\\dist\\\\resources")>=0) { pth = process.cwd() + "/js/zoom.js"; }
-            console.log(pth, process.resourcesPath);
+            else if (process.resourcesPath.indexOf("node_modules/electron/dist/Electron.app")>=0) { pth = process.cwd() + "/js/zoom.js"; }
+            //console.log(pth, process.resourcesPath);
             require(pth).init();
         </script>
         </body>
@@ -97,13 +98,16 @@ createWindow = (opt) ->
     win.debug = opt.debug
     
     win.webContents.on 'dom-ready' ->
-        info = wc('info' 'taskbar')[0]
-        if info.status != 'hidden'
-            post.toWin win.id, 'taskbar' true
-        else
-            post.toWin win.id, 'taskbar' false
+        
+        if os.platform() == 'win32'
+            info = wc('info' 'taskbar')[0]
+            if info.status != 'hidden'
+                post.toWin win.id, 'taskbar' true
+            else
+                post.toWin win.id, 'taskbar' false
         
     if opt.debug then win.webContents.openDevTools mode:'detach'
+    # win.webContents.openDevTools mode:'detach'
 
     win
 

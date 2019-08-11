@@ -58,7 +58,7 @@ extension String
 
 func cmp(_ a:String, _ b:String) -> Bool
 {
-    return a==b;
+    return a.lowercased() == b.lowercased();
 }
 
 //  0000000   0000000   000   000  000000000   0000000   000  000   000   0000000  

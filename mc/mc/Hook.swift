@@ -84,6 +84,8 @@ func onInput(event: NSEvent!)
 
 func initHook(_ id:String)
 {
+    _ = isTrusted()
+
     udp = UDPClient(address: "127.0.0.1", port: 65432)
 
     if cmp(id, "input")
