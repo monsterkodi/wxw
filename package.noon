@@ -1,5 +1,5 @@
 name            wxw
-version         1.77.0
+version         1.78.0
 description     moves my windows
 keywords
                 windows
@@ -12,7 +12,6 @@ files
                 bin/mc.app
                 bin/mc
                 bin/wxw
-                js/wc.js
                 js/wxw.js
                 icons/*.png
 repository      github:monsterkodi/wxw
@@ -20,7 +19,9 @@ author          monsterkodi
 license         Unlicense
 bin             ./bin/wxw
 dependencies
-                kxk  ^0.334.0
+                kslash  ^1.16.0
+                kstr    ^0.6.0
+                noon    ^3.0.0
 devDependencies
                 electron        ^6.0.1
                 electron-notarize  ^0.1.1

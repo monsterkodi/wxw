@@ -1,6 +1,6 @@
 {
   "name": "wxw",
-  "version": "1.77.0",
+  "version": "1.78.0",
   "description": "moves my windows",
   "keywords": [
     "windows",
@@ -15,7 +15,6 @@
     "bin/mc.app",
     "bin/mc",
     "bin/wxw",
-    "js/wc.js",
     "js/wxw.js",
     "icons/*.png"
   ],
@@ -24,7 +23,9 @@
   "license": "Unlicense",
   "bin": "./bin/wxw",
   "dependencies": {
-    "kxk": "^0.334.0"
+    "kslash": "^1.16.0",
+    "kstr": "^0.6.0",
+    "noon": "^3.0.0"
   },
   "devDependencies": {
     "electron": "^6.0.1",
