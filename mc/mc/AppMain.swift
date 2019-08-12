@@ -3,16 +3,22 @@ import Cocoa
 import Foundation
 import SwiftSocket
 
+var asked   = false
+var trusted = false
+
 func isTrusted() -> Bool
 {
+    if asked { return trusted }
     let checkOptPrompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as NSString
     let options = [checkOptPrompt: true]
-    let trusted = AXIsProcessTrustedWithOptions(options as CFDictionary)
+    trusted = AXIsProcessTrustedWithOptions(options as CFDictionary)
     
     if !trusted
     {
         print("not trusted")
     }
+    
+    asked = true
     return trusted
 }
 

@@ -30,9 +30,23 @@ func recvCmd()
             {
                 if let array = try JSONSerialization.jsonObject(with: Data(ret.0!)) as? NSArray
                 {
-                    var argv:[String] = ["wxw"]
-                    argv += array as! [String]
+                    var argv = ["wxw"]
+                    for item in array
+                    {
+                        if let num = item as? NSNumber
+                        {
+                            argv.append(String(item as! Int))
+                        }
+                        else
+                        {
+                            argv.append(String(item as! NSString))
+                        }
+                    }
                     execCmd(argv)
+                }
+                else
+                {
+                    print("no array?")
                 }
             }
             catch
@@ -40,6 +54,10 @@ func recvCmd()
                 print(error.localizedDescription)
             }
         }
+    }
+    else
+    {
+        print("no srv?")
     }
 }
 

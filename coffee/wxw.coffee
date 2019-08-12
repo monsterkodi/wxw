@@ -22,9 +22,7 @@ sendCmd = (args) ->
         if process.argv[1].endsWith 'wxw'
             process.exit 0
     usck.sendCB.apply usck, [cb].concat args
-    if cmd in ['launch' 'raise' 'focus']
-        return ''
-    return 'should use socket!'
+    ''
 
 if os.platform() == 'win32'
     wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
@@ -75,12 +73,11 @@ exec = (argv...) ->
                 
         argv[0] = cmd
                       
-        # if os.platform() == 'darwin' and cmd not in ['hook']
-            # return sendCmd argv
-        # else
-        if true
+        if os.platform() == 'darwin' and cmd in ['bounds' 'launch' 'raise' 'focus']
+            return sendCmd argv
+        else
             if cmd in ['launch' 'raise' 'focus' 'hook']
-                return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true #stdio:'inherit'
+                return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true, detached:true
             else
                 args = (kstr(s) for s in argv).join " "
                 outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
