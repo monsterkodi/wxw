@@ -200,7 +200,7 @@ activate = ->
             infos = wc 'info' 'ApplicationFrameHost.exe'
             for info in infos
                 if info.title.endsWith activeApp.id
-                    wc 'focus' info.hwnd
+                    wc 'focus' info.id
                     return
             childp.spawn 'start', [{Mail:'outlookmail:' Calendar:'outlookcal:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'            
             
@@ -209,7 +209,7 @@ activate = ->
             infos = wc 'info' 'ApplicationFrameHost.exe'
             for info in infos
                 if info.title == activeApp.id
-                    wc 'focus' info.hwnd
+                    wc 'focus' info.id
                     return
             childp.spawn 'start', [{Calculator:'calculator:' Settings:'ms-settings:' 'Microsoft Store':'ms-windows-store:'}[activeApp.id]], encoding:'utf8' shell:true detached:true stdio:'inherit'
         else

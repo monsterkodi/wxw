@@ -7,13 +7,13 @@ struct winfo
 {
     string path;
     wstring title;
-    string hwnd;
+    string id;
     DWORD  pid;
     LONG   x;
     LONG   y;
     LONG   width;
     LONG   height;
-    LONG   zindex;
+    LONG   index;
     string status;
 };
 

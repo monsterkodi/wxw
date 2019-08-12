@@ -57,13 +57,13 @@ HRESULT info(char *id="all")
          printf(".\n");
          printf( "    path    %s\n",  i.path.c_str()); 
         wprintf(L"    title   %ls\n", i.title.c_str());
-         printf( "    hwnd    %s\n",  i.hwnd.c_str());
          printf( "    pid     %lu\n", i.pid);
+         printf( "    id      %s\n",  i.id.c_str());
          printf( "    x       %d\n",  i.x);
          printf( "    y       %d\n",  i.y);
          printf( "    width   %d\n",  i.width);
          printf( "    height  %d\n",  i.height);
-         printf( "    zindex  %d\n",  i.zindex);
+         printf( "    index   %d\n",  i.index);
          printf( "    status  %s\n",  i.status.c_str());
     }
 
@@ -378,7 +378,7 @@ HRESULT bounds(char *id, char *x=NULL, char *y=NULL, char *w=NULL, char *h=NULL)
         {
             wRect wr = winRect(hWnd);
             printf(".\n");
-            printf( "    hwnd    %s\n",  itos((unsigned __int64)hWnd, 16).c_str());
+            printf( "    id      %s\n",  itos((unsigned __int64)hWnd, 16).c_str());
             printf( "    x       %d\n",  wr.x);
             printf( "    y       %d\n",  wr.y);
             printf( "    width   %d\n",  wr.width);
@@ -477,6 +477,35 @@ void keyEvent(const char* key, int type=0)
     else if (cmp(key, "x"))     keybd_event((BYTE)VkKeyScan('X'), 0xad, type, NULL);
     else if (cmp(key, "y"))     keybd_event((BYTE)VkKeyScan('Y'), 0x95, type, NULL);
     else if (cmp(key, "z"))     keybd_event((BYTE)VkKeyScan('Z'), 0xac, type, NULL);
+}
+
+HRESULT getKey()
+{
+    string mod;
+    
+    if (GetKeyState(VK_MENU) & 0x8000)
+    {
+        if (mod.size()) mod += "+";
+        mod += "alt";
+    }
+    if (GetKeyState(VK_CONTROL) & 0x8000)
+    {
+        if (mod.size()) mod += "+";
+        mod += "ctrl";
+    }
+    if (GetKeyState(VK_LWIN) & 0x8000)
+    {
+        if (mod.size()) mod += "+";
+        mod += "command";
+    }
+    if (GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        if (mod.size()) mod += "+";
+        mod += "shift";
+    }
+    cout << mod << endl;
+    
+    return S_OK;
 }
 
 HRESULT key(char* id, char* upDownOrTap)
@@ -689,23 +718,23 @@ HRESULT usage()
     klog("");
     klog("    commands:");
     klog("");
-    klog("         info       [id|title]");
-    klog("         raise       id");
-    klog("         minimize    id");
-    klog("         maximize    id");
-    klog("         restore     id");
-    klog("         focus       id");
-    klog("         close       id");
-    klog("         quit        id");
-    klog("         bounds      id [x y w h]");
-    klog("         move        id x y");
-    klog("         size        id w h");
+    klog("         info       [wid]");
+    klog("         raise       wid");
+    klog("         minimize    wid");
+    klog("         maximize    wid");
+    klog("         restore     wid");
+    klog("         focus       wid");
+    klog("         close       wid");
+    klog("         quit        wid");
+    klog("         bounds      wid [x y w h]");
+    klog("         move        wid x y");
+    klog("         size        wid w h");
     klog("         launch      path");
     klog("         handle     [pid|path]");
     klog("         proc       [pid|file]");
     klog("         terminate  [pid|file]");
     klog("         mouse");
-    klog("         key        [shift+|ctrl+|alt+]key");
+    klog("         key        [[alt+|ctrl+|shift+]key [down|up]]");
     klog("         help        command");
     klog("         folder      name");
     klog("         trash       count|empty|file");
@@ -714,17 +743,14 @@ HRESULT usage()
     klog("         screenshot [targetfile]");
     klog("         icon        path [targetfile]");
     klog("");
-    klog("    id:");
+    klog("    wid:");
     klog("");
-    klog("         process id");
-    klog("         executable path");
-    klog("         window handle");
-    klog("         nickname");
+    klog("         id, pid, path, or nickname");
     klog("");    
     klog("    nickname:");
     klog("");    
     klog("         normal|maximized|minimized");    
-    klog("         top|topmost|front|frontmost|foreground");
+    klog("         top|front|foreground");
     klog("         taskbar");
     klog("");
     return S_OK;
@@ -742,49 +768,49 @@ HRESULT help(char *command)
     
     if (cmp(command, "info"))
     {
-        klog("wxw info [pid|path|hwnd|nick|title]");
+        klog("wxw info [id|pid|path|nick|title]");
         klog("");
         klog("      Print information about windows");
         klog("");
     }
     else if (cmp(command, "raise"))
     {
-        klog("wxw raise pid|path|hwnd|nick");
+        klog("wxw raise id|pid|path|nick");
         klog("");
         klog("      Raise window(s)");
         klog("");
     }
     else if (cmp(command, "minimize"))
     {
-        klog("wxw minimize pid|path|hwnd|nick");
+        klog("wxw minimize id|pid|path|nick");
         klog("");
         klog("      Minimize window(s)");
         klog("");
     }
     else if (cmp(command, "maximize"))
     {
-        klog("wxw maximize pid|path|hwnd|nick");
+        klog("wxw maximize id|pid|path|nick");
         klog("");
         klog("      Maximize window(s)");
         klog("");
     }
     else if (cmp(command, "restore"))
     {
-        klog("wxw restore pid|path|hwnd|nick");
+        klog("wxw restore id|pid|path|nick");
         klog("");
         klog("      Restore window(s)");
         klog("");
     }
     else if (cmp(command, "focus"))
     {
-        klog("wxw focus pid|path|hwnd|nick");
+        klog("wxw focus id|pid|path|nick");
         klog("");
         klog("      Focus window(s)");
         klog("");
     }
     else if (cmp(command, "close"))
     {
-        klog("wxw close pid|path|hwnd|nick");
+        klog("wxw close id|pid|path|nick");
         klog("");
         klog("      Close window(s)");
         klog("");
@@ -843,9 +869,14 @@ HRESULT help(char *command)
     }
     else if (cmp(command, "key"))
     {
-        klog("wxw key [ctrl+|shift+|alt+]key");
+        klog("wxw key");
         klog("");
-        klog("      Simulate key press");
+        klog("      Print modifier key state");
+        klog("");
+        klog("wxw key [ctrl+|shift+|alt+]key [down|up]");
+        klog("");
+        klog("      Simulate key press or release");
+        klog("      Emits down and up event if last parameter is omitted");
     }
     else if (cmp(command, "mouse"))
     {
@@ -1073,7 +1104,7 @@ int WINAPI WinMain(__in HINSTANCE hInstance, __in_opt HINSTANCE hPrevInstance, _
     }
     else if (cmp(cmd, "key"))
     {
-        if (argc == 2) hr = help(cmd);
+        if (argc == 2) hr = getKey();
         else           hr = key(argv[2], (argc >= 4) ? argv[3] : "tap");
     }
     else if (cmp(cmd, "mouse"))

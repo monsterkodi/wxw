@@ -141,13 +141,13 @@ DWORD WINAPI sendInfo(LPVOID lParam)
         
         ss << "   {\"path\":    \"" << slash(i.path) << "\",\n";
         ss << "    \"title\":   \"" << title         << "\",\n";
-        ss << "    \"hwnd\":    \"" << i.hwnd        << "\",\n";
+        ss << "    \"id\":      \"" << i.id          << "\",\n";
         ss << "    \"pid\":     "   << i.pid         << ",\n";
         ss << "    \"x\":       "   << i.x           << ",\n";
         ss << "    \"y\":       "   << i.y           << ",\n";
         ss << "    \"width\":   "   << i.width       << ",\n";
         ss << "    \"height\":  "   << i.height      << ",\n";
-        ss << "    \"zindex\":  "   << i.zindex      << ",\n";
+        ss << "    \"index\":   "   << i.index       << ",\n";
         ss << "    \"status\":  \"" << i.status      << "\"\n";
         ss << "   },\n";
     }

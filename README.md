@@ -16,23 +16,23 @@ wxw [command] [args...]
 
     commands:
 
-         info       [id|title]
-         raise       id
-         minimize    id
-         maximize    id
-         restore     id
-         focus       id
-         close       id
-         quit        id
-         bounds      id [x y w h]
-         move        id x y
-         size        id w h
+         info       [wid]
+         raise       wid
+         minimize    wid
+         maximize    wid
+         restore     wid
+         focus       wid
+         close       wid
+         quit        wid
+         bounds      wid [x y w h]
+         move        wid x y
+         size        wid w h
          launch      path
          handle     [pid|path]
          proc       [pid|file]
          terminate  [pid|file]
          mouse
-         key        [shift+|ctrl+|alt+]key
+         key        [[alt+|ctrl+|shift+]key [down|up]]
          help        command
          folder      name
          trash       count|empty|file
@@ -41,17 +41,14 @@ wxw [command] [args...]
          screenshot [targetfile]
          icon        path [targetfile]
 
-    id:
+    wid:
 
-         process id
-         executable path
-         window handle
-         nickname
+         id, pid, path, or nickname
 
     nickname:
 
          normal|maximized|minimized
-         top|topmost|front|frontmost|foreground
+         top|front|foreground
          taskbar
 ```
 

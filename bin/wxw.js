@@ -1,4 +1,4 @@
-// koffee 1.3.0
+// koffee 1.4.0
 var args, out, wc;
 
 wc = require('../js/wc');
