@@ -12,6 +12,19 @@ kstr    = require 'kstr'
 noon    = require 'noon'
 slash   = require 'kslash'
 childp  = require 'child_process'
+udp     = require './udp'
+
+usck = null
+sendCmd = (args) ->
+
+    usck = new udp({}) if not usck
+    cb = (data) -> 
+        if process.argv[1].endsWith 'wxw'
+            process.exit 0
+    usck.sendCB.apply usck, [cb].concat args
+    if cmd in ['launch' 'raise' 'focus']
+        return ''
+    return 'should use socket!'
 
 if os.platform() == 'win32'
     wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
@@ -61,18 +74,21 @@ exec = (argv...) ->
                 argv[i] = '"' + argv[i] + '"'
                 
         argv[0] = cmd
-                        
-        # if cmd in ['launch' 'raise' 'focus' 'hook']
-        if cmd in ['launch' 'raise' 'focus' 'hook' 'bounds']
-            return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true #stdio:'inherit'
-        else
-            args = (kstr(s) for s in argv).join " "
-            outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
-            
-            if cmd == 'quit' and not outp.startsWith 'terminated'
-                return quit argv.slice 1
-            
-            return outp
+                      
+        # if os.platform() == 'darwin' and cmd not in ['hook']
+            # return sendCmd argv
+        # else
+        if true
+            if cmd in ['launch' 'raise' 'focus' 'hook']
+                return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true #stdio:'inherit'
+            else
+                args = (kstr(s) for s in argv).join " "
+                outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
+                
+                if cmd == 'quit' and not outp.startsWith 'terminated'
+                    return quit argv.slice 1
+                
+                return outp
     catch err
         return ''
     

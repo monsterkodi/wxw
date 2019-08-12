@@ -53,6 +53,11 @@ extension String
     {
         return self.hasPrefix(prefix)
     }
+    
+    func endsWith(_ suffix:String) -> Bool
+    {
+        return self.hasSuffix(suffix)
+    }
 }
 
 //  0000000  00     00  00000000   

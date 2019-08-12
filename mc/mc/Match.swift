@@ -43,7 +43,7 @@ struct cgInfo
 
 func matchWin(_ id:String) -> [winInfo]
 {
-    _ = isTrusted()
+    // _ = isTrusted()
     
     var infos:[winInfo] = []
         
@@ -120,15 +120,12 @@ func matchWin(_ id:String) -> [winInfo]
                     }
                 }
                 
-                //print ("info", wi)
-                
                 infos.append(wi)
                     
                 zindex += 1
             }
         }
     }   
-    
     return infos
 }
 

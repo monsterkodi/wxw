@@ -119,30 +119,6 @@ func icon(_ id:String, _ target:String)
             }
         }
     }
-
-    // let path = resolve(id)
-    // print("path:", path)
-    // let icon = NSWorkspace.shared.icon(forFile:path)
-    // print("icon:", icon)
-//         
-    // let bitmapRep = NSBitmapImageRep(data: icon.tiffRepresentation!)!
-    // let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
-//     
-    // var fileUrl:URL
-    // if (target != nil && target!.count > 0)
-    // {
-        // fileUrl = URL(fileURLWithPath:resolve(target!))
-    // }
-    // else
-    // {
-        // fileUrl = URL(fileURLWithPath:join(folder("desktop"), "icon.png"))
-    // }
-//     
-    // do 
-    // {
-        // try pngData.write(to:fileUrl, options: .atomic)
-    // }
-    // catch {print("error: \(error)")}
 }
 
 // 000  000   000  00000000   0000000
@@ -239,28 +215,25 @@ func usage()
     print("")
 }
 
-//  0000000   00000000    0000000   000   000  00     00  00000000  000   000  000000000   0000000
-// 000   000  000   000  000        000   000  000   000  000       0000  000     000     000
-// 000000000  0000000    000  0000  000   000  000000000  0000000   000 0 000     000     0000000
-// 000   000  000   000  000   000  000   000  000 0 000  000       000  0000     000          000
-// 000   000  000   000   0000000    0000000   000   000  00000000  000   000     000     0000000
+// 00000000  000   000  00000000   0000000   0000000  00     00  0000000    
+// 000        000 000   000       000       000       000   000  000   000  
+// 0000000     00000    0000000   000       000       000000000  000   000  
+// 000        000 000   000       000       000       000 0 000  000   000  
+// 00000000  000   000  00000000   0000000   0000000  000   000  0000000    
 
-func appMain() -> Bool
+func execCmd(_ argv:[String]) -> Bool
 {
-    let argc = CommandLine.arguments.count
-    let argv = CommandLine.arguments
-
-    // print("argc:", argc)
-    // print("argv:", argv)
-    
+    let argc = argv.count
     if (argc == 1)
     {
         usage()
     }
     else
     {
-        let cmd = CommandLine.arguments[1]
+        let cmd = argv[1]
 
+        //print(cmd)
+        
         if (cmp(cmd, "help"))
         {
             if (argc == 2) { usage() }
@@ -391,8 +364,10 @@ func appMain() -> Bool
         else if (cmp(cmd, "hook"))
         {
             if (argc == 2) { help(cmd) }
-            else { initHook(argv[2]) }
-            return false
+            else 
+            { 
+                if initHook(argv[2]) { return false }
+            }
         }
     }
     return true

@@ -29,8 +29,10 @@ func matchProc(_ id:String) -> [procInfo]
     {
         if app.bundleURL == nil { continue }
         if app.bundleURL!.pathExtension != "app" { continue }
+        
         let path = app.bundleURL!.path
         
+        if path.hasSuffix("/mc.app") && !contains(id, "mc") { continue }
         if path.startsWith("/System/Library/CoreServices/") 
         { 
             if !cmp(basename(path), "Finder") { continue }
@@ -41,7 +43,7 @@ func matchProc(_ id:String) -> [procInfo]
         if id.count > 0 && path != id && !contains(app.bundleURL!.lastPathComponent, id) && app.processIdentifier != Int32(id) { continue }
 
         infos.append(procInfo(
-            path:   app.bundleURL!.path,
+            path:   path,
             pid:    app.processIdentifier))
     }
 

@@ -1,9 +1,9 @@
 
-wc = require '../js/wc'
+wxw = require '../js/wxw'
 
 args = process.argv.slice 2
 
-out = wc.exec.apply null, args
+out = wxw.exec.apply null, args
 
 switch args[0]
     when 'launch' 'raise' 'focus' 'hook'

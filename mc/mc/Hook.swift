@@ -11,6 +11,48 @@ import Foundation
 import SwiftSocket
 
 var udp:UDPClient? = nil
+var srv:UDPServer? = nil
+
+//  0000000  00     00  0000000    
+// 000       000   000  000   000  
+// 000       000000000  000   000  
+// 000       000 0 000  000   000  
+//  0000000  000   000  0000000    
+
+func recvCmd()
+{
+    if (srv != nil)
+    {
+        let ret = srv!.recv(1024*20)
+        if (ret.0 != nil)
+        {
+            do
+            {
+                if let array = try JSONSerialization.jsonObject(with: Data(ret.0!)) as? NSArray
+                {
+                    var argv:[String] = ["wxw"]
+                    argv += array as! [String]
+                    execCmd(argv)
+                }
+            }
+            catch
+            {
+                print(error.localizedDescription)
+            }
+        }
+    }
+}
+
+func cmdServer() -> Bool
+{
+    srv = UDPServer(address: "127.0.0.1", port: 54321)
+    if srv != nil
+    {
+        _ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats:true) {_ in recvCmd() }
+        return true
+    }
+    return false
+}
 
 // 000  000   000  00000000   0000000
 // 000  0000  000  000       000   000
@@ -82,10 +124,15 @@ func onInput(event: NSEvent!)
     _ = udp!.send(string:s)
 }
 
-func initHook(_ id:String)
+func initHook(_ id:String) -> Bool
 {
     _ = isTrusted()
 
+    if (cmp(id, "cmd"))
+    {
+        return cmdServer()
+    }
+    
     udp = UDPClient(address: "127.0.0.1", port: 65432)
 
     if cmp(id, "input")
@@ -99,5 +146,12 @@ func initHook(_ id:String)
     else if (cmp(id, "info"))
     {
         _ = Timer.scheduledTimer(withTimeInterval: 0.5, repeats:true) {_ in sendInfo() }
+    }   
+    else
+    {
+        print("unknown hook", id)
+        return false
     }
+    
+    return true
 }
