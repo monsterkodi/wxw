@@ -185,6 +185,10 @@ void initHook(const char* id)
                 TranslateMessage(&message);
                 DispatchMessage(&message);
             }
+            else
+            {
+                Sleep(5);
+            }
         }
                 
         hook_end();
