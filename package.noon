@@ -1,9 +1,10 @@
 name            wxw
-version         1.79.0
+version         1.80.0
 description     moves my windows
 keywords
-                windows
                 toolkit
+                windows
+                mac
 main            js/wxw.js
 scripts
                 build  ./node_modules/.bin/konrad --build
@@ -13,7 +14,7 @@ files
                 bin/mc
                 bin/wxw
                 js/wxw.js
-                icons/*.png
+                js/udp.js
 repository      github:monsterkodi/wxw
 author          monsterkodi
 license         Unlicense
@@ -23,10 +24,5 @@ dependencies
                 kstr    ^0.6.0
                 noon    ^3.0.0
 devDependencies
-                electron        ^6.0.1
-                electron-notarize  ^0.1.1
-                electron-packager  ^14.0.4
-                electron-rebuild  ^1.8.5
-                konrad          ^0.159.0
-                node-abi        ^2.10.0
-                sds             ^3.2.0
+                konrad  ^0.159.0
+                sds     ^3.2.0
