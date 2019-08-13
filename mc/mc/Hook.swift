@@ -35,14 +35,14 @@ func recvCmd()
                     {
                         if let num = item as? NSNumber
                         {
-                            argv.append(String(item as! Int))
+                            argv.append(String(num as! Int))
                         }
                         else
                         {
                             argv.append(String(item as! NSString))
                         }
                     }
-                    execCmd(argv)
+                    _ = execCmd(argv)
                 }
                 else
                 {

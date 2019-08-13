@@ -14,12 +14,14 @@ slash   = require 'kslash'
 childp  = require 'child_process'
 udp     = require './udp'
 
+useSend = false
+
 usck = null
 sendCmd = (args) ->
 
     usck = new udp({}) if not usck
     cb = (data) -> 
-        if process.argv[1].endsWith 'wxw'
+        if process.argv[1]?.endsWith 'wxw'
             process.exit 0
     usck.sendCB.apply usck, [cb].concat args
     ''
@@ -73,7 +75,7 @@ exec = (argv...) ->
                 
         argv[0] = cmd
                       
-        if os.platform() == 'darwin' and cmd in ['bounds' 'launch' 'raise' 'focus']
+        if useSend and os.platform() == 'darwin' and cmd in ['bounds' 'launch' 'raise' 'focus' 'minimize' 'maximize']
             return sendCmd argv
         else
             if cmd in ['launch' 'raise' 'focus' 'hook']
@@ -90,7 +92,8 @@ exec = (argv...) ->
         return ''
     
 wxw = ->
-            
+        
+    useSend = true
     out = exec.apply null, [].slice.call arguments, 0
         
     switch kstr arguments[0]

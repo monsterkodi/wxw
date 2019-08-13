@@ -88,43 +88,56 @@ func screenshot(_ id:String)
 // 000  000       000   000  000  0000  
 // 000   0000000   0000000   000   000  
 
+func writeImage(_ icon:NSImage, _ target:String)
+{
+    let bitmapRep = NSBitmapImageRep(data: icon.tiffRepresentation!)!
+    let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
+    
+    let fileUrl:URL = URL(fileURLWithPath:resolve(target))
+    
+    do
+    {
+        if ensureDir(dirname(fileUrl.path))
+        {
+            // print("write:", fileUrl.path)
+            try pngData.write(to:fileUrl, options: .atomic)
+            print(fileUrl.path)
+        }
+    }
+    catch
+    {
+        print(error.localizedDescription)
+    }
+}
+
 func icon(_ id:String, _ target:String)
 {
-    print("target:", target)
+    var path:String = target
     for proc in matchProc(id)
     {
         if let app = NSRunningApplication(processIdentifier:proc.pid)
         {
-            let icon = app.icon!
-                
-            let bitmapRep = NSBitmapImageRep(data: icon.tiffRepresentation!)!
-            let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
-            
-            var fileUrl:URL
-            if (target.count > 0)
+            if app.icon != nil
             {
-                fileUrl = URL(fileURLWithPath:resolve(target))
-            }
-            else
-            {
-                fileUrl = URL(fileURLWithPath:join(resolve("."), basename(proc.path)+".png"))
-            }
-            
-            do 
-            {
-                if ensureDir(dirname(fileUrl.path))
+                if target.count == 0
                 {
-                    print("write:", fileUrl.path)
-                    try pngData.write(to:fileUrl, options: .atomic)
-                    print(fileUrl.path)
+                    path = join(resolve("."), basename(proc.path)+".png")
                 }
-            }
-            catch 
-            {
-                print(error.localizedDescription)
+
+                writeImage(app.icon!, path)
+                return
             }
         }
     }
+
+    if target.count == 0
+    {
+        path = join(resolve("."), basename(id)+".png")
+    }
+
+    let icon = NSWorkspace.shared.icon(forFile:id)
+
+    writeImage(icon, path)
 }
 
 // 000  000   000  00000000   0000000
