@@ -15,26 +15,22 @@ childp  = require 'child_process'
 udp     = require './udp'
 net     = require 'net'
 
-useSend = true
+useSend = false
 sendCmd = (args) ->
     
-    # log 'sendCmd' args
-        
     gotData = null
     
     client = new net.Socket()
     
     client.on 'data' (data) -> gotData = data.toString('utf8')
-    client.on 'close'   -> #log 'Client socket close. '
-    client.on 'end'     -> #log 'Client socket disconnect. '
     client.on 'error' (err) -> error JSON.stringify(err)
 
     client.connect port:54321 host:'localhost' -> 
-        log JSON.stringify args
+        # log JSON.stringify args
         client.write JSON.stringify(args)+"\n\n"
     
     require('deasync').loopWhile -> not gotData
-    log gotData
+    # log gotData
     gotData
 
 if os.platform() == 'win32'
@@ -89,7 +85,7 @@ exec = (argv...) ->
         if useSend and os.platform() == 'darwin' and cmd not in ['hook']
             return sendCmd argv
         else
-            log 'spawn' cmd
+            # log 'spawn' cmd
             if cmd in ['launch' 'raise' 'focus' 'hook']
                 return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true, detached:true
             else

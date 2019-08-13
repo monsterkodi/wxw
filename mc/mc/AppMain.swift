@@ -15,12 +15,12 @@ func isTrusted() -> Bool
     
     if !trusted
     {
-        print("not trusted")
+        print("not trusted!")
     }
-    else
-    {
-        print("trusted")
-    }
+//    else
+//    {
+//        print("trusted")
+//    }
     
     asked = true
     return trusted
