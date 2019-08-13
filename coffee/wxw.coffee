@@ -13,17 +13,41 @@ noon    = require 'noon'
 slash   = require 'kslash'
 childp  = require 'child_process'
 udp     = require './udp'
+net     = require 'net'
 
 useSend = false
 
 usck = null
 sendCmd = (args) ->
+    log 'sendCmd' args
+        
+    option = 
+        host:'localhost'
+        port: 54321
 
-    usck = new udp({}) if not usck
-    cb = (data) -> 
-        if process.argv[1]?.endsWith 'wxw'
-            process.exit 0
-    usck.sendCB.apply usck, [cb].concat args
+    client = new net.Socket()
+    # client = net.createConnection option, ->
+        # log 'Connection local address : ' + client.localAddress + ":" + client.localPort
+        # log 'Connection remote address : ' + client.remoteAddress + ":" + client.remotePort
+
+    # client.setTimeout 10000
+    # client.setEncoding 'utf8'
+
+    client.on 'data' (data) -> log 'return data: ' + data
+    client.on 'close' -> log 'Client socket close. '
+    client.on 'end' -> log 'Client socket disconnect. '
+    client.on 'timeout' -> log 'Client connection timeout. '
+    client.on 'error' (err) -> error JSON.stringify(err)
+
+    client.connect 54321, 'localhost', ->
+        log 'connected!' JSON.stringify(args)
+        client.write JSON.stringify(args)
+    
+    # usck = new udp({}) if not usck
+    # cb = (data) -> 
+        # if process.argv[1]?.endsWith 'wxw'
+            # process.exit 0
+    # usck.sendCB.apply usck, [cb].concat args
     ''
 
 if os.platform() == 'win32'
@@ -92,7 +116,9 @@ exec = (argv...) ->
         return ''
     
 wxw = ->
-        
+ 
+    log 'useSend' arguments
+    
     useSend = true
     out = exec.apply null, [].slice.call arguments, 0
         

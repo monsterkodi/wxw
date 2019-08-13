@@ -6,6 +6,33 @@ import SwiftSocket
 var asked   = false
 var trusted = false
 
+var klogToString:String? = nil
+
+func klog(_ args:Any...)
+{
+    if klogToString != nil
+    {
+        for arg in args
+        {
+            if let num = arg as? Int
+            {
+                klogToString! += String(num)
+            }
+            else
+            {
+                klogToString! += String(arg as! String)
+            }
+        }
+    }
+    else
+    {
+        for arg in args
+        {
+            print(arg)
+        }
+    }
+}
+
 func isTrusted() -> Bool
 {
     if asked { return trusted }
@@ -31,8 +58,8 @@ func isTrusted() -> Bool
 func mouse() -> NSPoint
 {
     let mouseLoc = NSEvent.mouseLocation
-    print ("x ", Int(mouseLoc.x))
-    print ("y ", screenSize().height - Int(mouseLoc.y))
+    klog ("x ", Int(mouseLoc.x))
+    klog ("y ", screenSize().height - Int(mouseLoc.y))
     return mouseLoc
 }
 
@@ -391,4 +418,3 @@ func execCmd(_ argv:[String]) -> Bool
     }
     return true
 }
-

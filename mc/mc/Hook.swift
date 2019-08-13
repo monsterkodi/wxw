@@ -11,7 +11,9 @@ import Foundation
 import SwiftSocket
 
 var udp:UDPClient? = nil
-var srv:UDPServer? = nil
+//var srv:UDPServer? = nil
+var srv:TCPServer? = nil
+//var clt:TCPClient? = nil
 
 //  0000000  00     00  0000000    
 // 000       000   000  000   000  
@@ -23,37 +25,93 @@ func recvCmd()
 {
     if (srv != nil)
     {
-        let ret = srv!.recv(1024*20)
-        if (ret.0 != nil)
+        if let client = srv!.accept()
         {
-            do
+            print("client connected from:\(client.address)[\(client.port)]")
+            var ret = client.read(1024*10, timeout:10)
+            print("client read")
+            if (ret != nil)
             {
-                if let array = try JSONSerialization.jsonObject(with: Data(ret.0!)) as? NSArray
+                print("client data", ret!.count)
+                do
                 {
-                    var argv = ["wxw"]
-                    for item in array
+                    if let array = try JSONSerialization.jsonObject(with: Data(ret!)) as? NSArray
                     {
-                        if let num = item as? NSNumber
+                        var argv = ["wxw"]
+                        for item in array
                         {
-                            argv.append(String(num as! Int))
+                            if let num = item as? NSNumber
+                            {
+                                argv.append(String(num as! Int))
+                            }
+                            else
+                            {
+                                argv.append(String(item as! NSString))
+                            }
                         }
-                        else
-                        {
-                            argv.append(String(item as! NSString))
-                        }
+
+                        print("argv", argv)
+
+                        klogToString = String("")
+                        _ = execCmd(argv)
+                        print("send back", klogToString!)
+                        _ = client.send(string: klogToString!)
+                        client.close()
                     }
-                    _ = execCmd(argv)
+                    else
+                    {
+                        print("no array?")
+                    }
                 }
-                else
+                catch
                 {
-                    print("no array?")
+                    print(error.localizedDescription)
                 }
+                
+                client.close()
             }
-            catch
+            else
             {
-                print(error.localizedDescription)
+               print("nuttin")
             }
+            
+            //client.send(data: d!)
         }
+        else
+        {
+            print("no accept?")
+        }
+//        let ret = srv!.recv(1024*20)
+//        if (ret.0 != nil)
+//        {
+//            do
+//            {
+//                if let array = try JSONSerialization.jsonObject(with: Data(ret.0!)) as? NSArray
+//                {
+//                    var argv = ["wxw"]
+//                    for item in array
+//                    {
+//                        if let num = item as? NSNumber
+//                        {
+//                            argv.append(String(num as! Int))
+//                        }
+//                        else
+//                        {
+//                            argv.append(String(item as! NSString))
+//                        }
+//                    }
+//                    _ = execCmd(argv)
+//                }
+//                else
+//                {
+//                    print("no array?")
+//                }
+//            }
+//            catch
+//            {
+//                print(error.localizedDescription)
+//            }
+//        }
     }
     else
     {
@@ -63,10 +121,14 @@ func recvCmd()
 
 func cmdServer() -> Bool
 {
-    srv = UDPServer(address: "127.0.0.1", port: 54321)
+    //srv = UDPServer(address: "127.0.0.1", port: 54321)
+    srv = TCPServer(address: "127.0.0.1", port: 54321)
     if srv != nil
     {
-        _ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats:true) {_ in recvCmd() }
+        if srv!.listen().isSuccess
+        {
+            _ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats:true) {_ in recvCmd() }
+        }
         return true
     }
     return false
