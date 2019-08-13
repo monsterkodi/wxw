@@ -116,7 +116,6 @@ func moveWin(id:String, x:Int, y:Int, width:Int, height:Int, infos:[winInfo]?)
 {
     if let win = winWithId(id, infos)
     {
-        print("mv")
         var position: CFTypeRef
         var size: CFTypeRef
         var newPoint = CGPoint(x: x, y: y)

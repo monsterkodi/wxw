@@ -84,7 +84,7 @@ func matchWin(_ id:String) -> [winInfo]
                 
                 let wid = "\(proc.pid):\(index)"
                 
-                if id.count > 0 && id != wid && id != "top" && (Int(id) ?? 0) != proc.pid && !contains(proc.path, id) 
+                if id.count > 0 && id != wid && id != "top" && (Int(id) ?? 0) != proc.pid && !contains(proc.path, id) && !cmp(status, id)
                 { 
                     continue 
                 }

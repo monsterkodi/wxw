@@ -45,14 +45,16 @@ func recvCmd()
                             }
                         }
                         
-                        print(argv)
+                        //print(argv)
 
                         KLOG.toString = String("")
                         
                         _ = execCmd(argv)
                         
                         if KLOG.toString!.count == 0 { KLOG.toString = "OK" }
-                        print(KLOG.toString!)
+                        
+                        //print(KLOG.toString!)
+                        
                         _ = client.send(string: KLOG.toString!)
                         client.close()
                         

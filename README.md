@@ -62,7 +62,7 @@ console.log wxw('info', 'top')
 
 # [
 #   {
-#     path: 'C:\\msys64\\usr\\bin\\mintty.exe',
+#     path: 'C:/msys64/usr/bin/mintty.exe',
 #     title: '/c/Users/kodi/s/wxw',
 #     pid: 12384,
 #     id: '8f04c6',  ◂◂◂ use this to control a single window
@@ -78,9 +78,16 @@ console.log wxw('info', 'top')
 wxw('minimize', '8f04c6')
 wxw('launch',   'firefox')
 wxw('restore',  'minimized')
+
+wxw('move',     'top', 0, 0)
+wxw('size',     'top', 1000, 1000)
+wxw('bounds',   'top', 0, 0, 1000, 1000)
+
+wxw('screenshot', 'myscreen.png')
+
 wxw('trash',    './crap.txt')
-wxw('trash',    'count')
-wxw('trash',    'empty')
+if (wxw('trash', 'count'))
+    wxw('trash', 'empty')
 
 ```
 
