@@ -11,9 +11,7 @@ import Foundation
 import SwiftSocket
 
 var udp:UDPClient? = nil
-//var srv:UDPServer? = nil
 var srv:TCPServer? = nil
-//var clt:TCPClient? = nil
 
 //  0000000  00     00  0000000    
 // 000       000   000  000   000  
@@ -27,12 +25,9 @@ func recvCmd()
     {
         if let client = srv!.accept()
         {
-            print("client connected from:\(client.address)[\(client.port)]")
-            var ret = client.read(1024*10, timeout:10)
-            print("client read")
+            let ret = client.read(1024*10, timeout:0)
             if (ret != nil)
             {
-                print("client data", ret!.count)
                 do
                 {
                     if let array = try JSONSerialization.jsonObject(with: Data(ret!)) as? NSArray
@@ -49,85 +44,42 @@ func recvCmd()
                                 argv.append(String(item as! NSString))
                             }
                         }
+                        
+                        print(argv)
 
-                        print("argv", argv)
-
-                        klogToString = String("")
+                        KLOG.toString = String("")
+                        
                         _ = execCmd(argv)
-                        print("send back", klogToString!)
-                        _ = client.send(string: klogToString!)
+                        
+                        if KLOG.toString!.count == 0 { KLOG.toString = "OK" }
+                        print(KLOG.toString!)
+                        _ = client.send(string: KLOG.toString!)
                         client.close()
+                        
+                        KLOG.toString = nil
                     }
-                    else
-                    {
-                        print("no array?")
-                    }
+                    else { print("no array?") }
                 }
                 catch
                 {
                     print(error.localizedDescription)
                 }
-                
-                client.close()
             }
-            else
-            {
-               print("nuttin")
-            }
-            
-            //client.send(data: d!)
+            else { print("nuttin") }
         }
-        else
-        {
-            print("no accept?")
-        }
-//        let ret = srv!.recv(1024*20)
-//        if (ret.0 != nil)
-//        {
-//            do
-//            {
-//                if let array = try JSONSerialization.jsonObject(with: Data(ret.0!)) as? NSArray
-//                {
-//                    var argv = ["wxw"]
-//                    for item in array
-//                    {
-//                        if let num = item as? NSNumber
-//                        {
-//                            argv.append(String(num as! Int))
-//                        }
-//                        else
-//                        {
-//                            argv.append(String(item as! NSString))
-//                        }
-//                    }
-//                    _ = execCmd(argv)
-//                }
-//                else
-//                {
-//                    print("no array?")
-//                }
-//            }
-//            catch
-//            {
-//                print(error.localizedDescription)
-//            }
-//        }
+        else { print("no accept?") }
     }
-    else
-    {
-        print("no srv?")
-    }
+    else { print("no srv?") }
 }
 
 func cmdServer() -> Bool
 {
-    //srv = UDPServer(address: "127.0.0.1", port: 54321)
     srv = TCPServer(address: "127.0.0.1", port: 54321)
     if srv != nil
     {
         if srv!.listen().isSuccess
         {
-            _ = Timer.scheduledTimer(withTimeInterval: 0.1, repeats:true) {_ in recvCmd() }
+            _ = Timer.scheduledTimer(withTimeInterval: 0.01, repeats:true) {_ in recvCmd() }
         }
         return true
     }

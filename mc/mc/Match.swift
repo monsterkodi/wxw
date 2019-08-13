@@ -43,8 +43,6 @@ struct cgInfo
 
 func matchWin(_ id:String) -> [winInfo]
 {
-    // _ = isTrusted()
-    
     var infos:[winInfo] = []
         
     var zindex = 0
@@ -133,7 +131,7 @@ func winForWin(_ info:winInfo, _ infos:inout [cgInfo]) -> cgInfo?
 {
     for win in infos
     {
-        if win.x == info.x && win.y == info.y && win.width == info.width && win.height == info.height && win.pid == info.pid // && win.title == info.title
+        if win.x == info.x && win.y == info.y && win.width == info.width && win.height == info.height && win.pid == info.pid
         {
             return win
         }

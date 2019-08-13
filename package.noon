@@ -1,5 +1,5 @@
 name            wxw
-version         1.80.0
+version         1.81.0
 description     moves my windows
 keywords
                 toolkit
@@ -20,9 +20,10 @@ author          monsterkodi
 license         Unlicense
 bin             ./bin/wxw
 dependencies
-                kslash  ^1.16.0
-                kstr    ^0.6.0
-                noon    ^3.0.0
+                deasync   ^0.1.15
+                kslash    ^1.16.0
+                kstr      ^0.6.0
+                noon      ^3.0.0
 devDependencies
                 konrad  ^0.159.0
                 sds     ^3.2.0

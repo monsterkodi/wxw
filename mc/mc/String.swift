@@ -82,3 +82,25 @@ func contains(_ a:String, _ b:String) -> Bool
     return a.lowercased().contains(b.lowercased())
 }
 
+public struct KLOG
+{
+    public static var toString:String? = nil
+}
+
+func klog(_ args:Any...)
+{
+    if KLOG.toString != nil
+    {
+        for arg in args
+        {
+            KLOG.toString! += "\(arg)"
+        }
+        KLOG.toString! += "\n"
+    }
+    else
+    {
+        print(args.map({ (a) -> String in
+            "\(a)"
+        }).joined(separator:" "))
+    }
+}

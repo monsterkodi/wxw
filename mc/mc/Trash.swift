@@ -23,7 +23,7 @@ func trash(_ id:String)
     {
         do {
             let files = try FileManager.default.contentsOfDirectory(atPath:folder("trash"))
-            print(files.count)
+            klog(files.count)
         }
         catch let error as NSError {
             print("Error: \(error)")

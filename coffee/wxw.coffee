@@ -15,40 +15,27 @@ childp  = require 'child_process'
 udp     = require './udp'
 net     = require 'net'
 
-useSend = false
-
-usck = null
+useSend = true
 sendCmd = (args) ->
-    log 'sendCmd' args
+    
+    # log 'sendCmd' args
         
-    option = 
-        host:'localhost'
-        port: 54321
-
+    gotData = null
+    
     client = new net.Socket()
-    # client = net.createConnection option, ->
-        # log 'Connection local address : ' + client.localAddress + ":" + client.localPort
-        # log 'Connection remote address : ' + client.remoteAddress + ":" + client.remotePort
-
-    # client.setTimeout 10000
-    # client.setEncoding 'utf8'
-
-    client.on 'data' (data) -> log 'return data: ' + data
-    client.on 'close' -> log 'Client socket close. '
-    client.on 'end' -> log 'Client socket disconnect. '
-    client.on 'timeout' -> log 'Client connection timeout. '
+    
+    client.on 'data' (data) -> gotData = data.toString('utf8')
+    client.on 'close'   -> #log 'Client socket close. '
+    client.on 'end'     -> #log 'Client socket disconnect. '
     client.on 'error' (err) -> error JSON.stringify(err)
 
-    client.connect 54321, 'localhost', ->
-        log 'connected!' JSON.stringify(args)
-        client.write JSON.stringify(args)
+    client.connect port:54321 host:'localhost' -> 
+        log JSON.stringify args
+        client.write JSON.stringify(args)+"\n\n"
     
-    # usck = new udp({}) if not usck
-    # cb = (data) -> 
-        # if process.argv[1]?.endsWith 'wxw'
-            # process.exit 0
-    # usck.sendCB.apply usck, [cb].concat args
-    ''
+    require('deasync').loopWhile -> not gotData
+    log gotData
+    gotData
 
 if os.platform() == 'win32'
     wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
@@ -99,9 +86,10 @@ exec = (argv...) ->
                 
         argv[0] = cmd
                       
-        if useSend and os.platform() == 'darwin' and cmd in ['bounds' 'launch' 'raise' 'focus' 'minimize' 'maximize']
+        if useSend and os.platform() == 'darwin' and cmd not in ['hook']
             return sendCmd argv
         else
+            log 'spawn' cmd
             if cmd in ['launch' 'raise' 'focus' 'hook']
                 return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true, detached:true
             else
@@ -117,8 +105,6 @@ exec = (argv...) ->
     
 wxw = ->
  
-    log 'useSend' arguments
-    
     useSend = true
     out = exec.apply null, [].slice.call arguments, 0
         

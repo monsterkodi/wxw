@@ -26,8 +26,8 @@ struct bounds
 func screen(_ id:String)
 {
     let bounds = screenSize()
-    print("width    \(bounds.width)")
-    print("height   \(bounds.height)")
+    klog("width    \(bounds.width)")
+    klog("height   \(bounds.height)")
 }
 
 func screenSize() -> bounds
@@ -88,17 +88,17 @@ func getBounds(_ id:String)
 {
     for win in matchWin(id)
     {
-        print (".")
-        print ("    id       ", win.id)
-        print ("    x        ", win.x)
-        print ("    y        ", win.y)
-        print ("    width    ", win.width)
-        print ("    height   ", win.height)
+        klog (".")
+        klog ("    id       ", win.id)
+        klog ("    x        ", win.x)
+        klog ("    y        ", win.y)
+        klog ("    width    ", win.width)
+        klog ("    height   ", win.height)
     }
 }
 
 func setBounds(_ id:String, _ x:String, _ y:String, _ width:String, _ height:String)
-{    
+{
     let infos = allWins()
     for info in matchWin(id)
     {
@@ -116,6 +116,7 @@ func moveWin(id:String, x:Int, y:Int, width:Int, height:Int, infos:[winInfo]?)
 {
     if let win = winWithId(id, infos)
     {
+        print("mv")
         var position: CFTypeRef
         var size: CFTypeRef
         var newPoint = CGPoint(x: x, y: y)
@@ -239,7 +240,7 @@ func launch(_ id:String)
 {
     if (!focus(id))
     {
-        print("launch", id)
+        klog("launch", id)
         
         let task = Process()
         task.launchPath = "/usr/bin/open"
@@ -275,7 +276,7 @@ func quit(_ id:String)
     {
         if let app = NSRunningApplication(processIdentifier:pid)
         {
-            print("terminated", pid)
+            klog("terminated", pid)
             app.terminate()
         }
     }

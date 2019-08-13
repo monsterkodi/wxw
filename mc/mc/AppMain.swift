@@ -6,33 +6,6 @@ import SwiftSocket
 var asked   = false
 var trusted = false
 
-var klogToString:String? = nil
-
-func klog(_ args:Any...)
-{
-    if klogToString != nil
-    {
-        for arg in args
-        {
-            if let num = arg as? Int
-            {
-                klogToString! += String(num)
-            }
-            else
-            {
-                klogToString! += String(arg as! String)
-            }
-        }
-    }
-    else
-    {
-        for arg in args
-        {
-            print(arg)
-        }
-    }
-}
-
 func isTrusted() -> Bool
 {
     if asked { return trusted }
@@ -43,6 +16,10 @@ func isTrusted() -> Bool
     if !trusted
     {
         print("not trusted")
+    }
+    else
+    {
+        print("trusted")
     }
     
     asked = true
@@ -72,7 +49,7 @@ func getKey()
     if (flags.isSuperset(of: NSEvent.ModifierFlags.command)) { mods.append("cmd")}
     if (flags.isSuperset(of: NSEvent.ModifierFlags.shift))   { mods.append("shift")}
 
-    print(mods.joined(separator:"+"))
+    klog(mods.joined(separator:"+"))
 }
 
 //  0000000   0000000  00000000   00000000  00000000  000   000   0000000  000   000   0000000   000000000  
@@ -121,14 +98,12 @@ func writeImage(_ icon:NSImage, _ target:String)
     let pngData  = bitmapRep.representation(using: NSBitmapImageRep.FileType.png, properties: [:])!
     
     let fileUrl:URL = URL(fileURLWithPath:resolve(target))
-    
     do
     {
         if ensureDir(dirname(fileUrl.path))
         {
-            // print("write:", fileUrl.path)
             try pngData.write(to:fileUrl, options: .atomic)
-            print(fileUrl.path)
+            klog(fileUrl.path)
         }
     }
     catch
@@ -177,17 +152,17 @@ func info(_ id:String)
 {
     for win in matchWin(id)
     {
-        print (".")
-        print ("    title    ", win.title)
-        print ("    path     ", win.path)
-        print ("    pid      ", win.pid)
-        print ("    id       ", win.id)
-        print ("    x        ", win.x)
-        print ("    y        ", win.y)
-        print ("    width    ", win.width)
-        print ("    height   ", win.height)
-        print ("    index    ", win.index)
-        print ("    status   ", win.status)
+        klog (".")
+        klog ("    title    ", win.title)
+        klog ("    path     ", win.path)
+        klog ("    pid      ", win.pid)
+        klog ("    id       ", win.id)
+        klog ("    x        ", win.x)
+        klog ("    y        ", win.y)
+        klog ("    width    ", win.width)
+        klog ("    height   ", win.height)
+        klog ("    index    ", win.index)
+        klog ("    status   ", win.status)
     }
 }
 
@@ -195,9 +170,9 @@ func proc(_ id:String)
 {
     for app in matchProc(id)
     {
-        print (".")
-        print ("    path    ", app.path)
-        print ("    pid     ", app.pid)
+        klog (".")
+        klog ("    path    ", app.path)
+        klog ("    pid     ", app.pid)
     }
 }
 
@@ -211,6 +186,7 @@ func help(_ id:String)
 {
     if (false)
     {
+        // insert help!
     }
     else
     {
@@ -278,8 +254,6 @@ func execCmd(_ argv:[String]) -> Bool
     {
         let cmd = argv[1]
 
-        //print(cmd)
-        
         if (cmp(cmd, "help"))
         {
             if (argc == 2) { usage() }

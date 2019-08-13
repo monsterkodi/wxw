@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/libswiftRemoteMirror.dylib</key>
 		<data>
-		xI6EodllC7RHnByy20oFp+wkGug=
+		uAm1yyS6w+u0WzrRv4vgL2GNlZ8=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -19,7 +19,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Nm8XCYJ642MYEsAyyKq+B4m4nj0=
+			tXpt8qcutHk2GKt2nMIs9tKHD3w=
 			</data>
 			<key>requirement</key>
 			<string>identifier "org.cocoapods.SwiftSocket" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -28,7 +28,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			gsYhpqlP0QJ8pBOrEVE4Y98dhgo=
+			tojn4DPYzVAM7HdGjpXFz5WYRrc=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftAppKit" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -37,7 +37,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			ZAz+rzx0ecKex/9lEN7fxmMrbAA=
+			EmruLzxJc7dPcqcrdh6twR3k9Ko=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftCore" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -46,7 +46,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			OuDqvgGQL0DiqDreicZZ3JmRQCM=
+			7BoC20qnvj5gu+cMoFAYC7qmPJY=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftCoreAudio" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -55,7 +55,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			5TK6ikR9bRG7dDWONK2eVCgVSco=
+			DtA0lITTnhbVyX45BUhYOj6Td4k=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftCoreData" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -64,7 +64,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			MuauR7GoSrpLyaVn2wAhJB6AGNs=
+			5Lcfu9yXhXXbr/vziRdfLRJG7vw=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftCoreFoundation" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -73,7 +73,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			EfWclkfDqY2/u4nFhSKOAI8g7SM=
+			Bl/bQdBpLj69jjG9nbsX7YcUNYE=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftCoreGraphics" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -82,7 +82,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Vnn2o4TYLvJuVYYQuy8PPqT/sfQ=
+			2BWeCssJLDuvopVmkDBPA8Jin0o=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftCoreImage" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -91,7 +91,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			4knCMqrMOcFnXKQx5DTk+S3zRMA=
+			4G7zwILWdFN48F4zkMlDLHZnoPI=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftDarwin" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -100,7 +100,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			fz4/aKycvwgBEJxjIfDXfPBq9ns=
+			QTMkrTkCX5sTYdEXycpWMaT7jig=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftDispatch" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -109,7 +109,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			SZt7iDv01yRqQBKFA0ZrNvqi//U=
+			R49L+icgNOEsc76uczE3+zwMilw=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftFoundation" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -118,7 +118,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Za4ub/arZkb8WCEFQC9t3UGmHHA=
+			YrzHRDrKlaMo0ZvRptUuADzNByY=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftIOKit" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -127,7 +127,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			n0t5QP7RFrKpKYKXJfkqgznGu8o=
+			5nEiFEJZiIkOCPHR/rKBADRmc4A=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftMetal" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -136,7 +136,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			Y3T/hNk21poi0x8mvGkz0HNSFIg=
+			CIT/QFYgufg6/F31amN+v6jJK8Q=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftObjectiveC" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -145,25 +145,16 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			5BJBq3prZ8GOATTfaBJpM6WBuLM=
+			bAvCc0P4KDA30oYs2pK70ePod9A=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftQuartzCore" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
-		</dict>
-		<key>Frameworks/libswiftSwiftOnoneSupport.dylib</key>
-		<dict>
-			<key>cdhash</key>
-			<data>
-			3apGHbj2UTJOcCKzhlATuMSgD2g=
-			</data>
-			<key>requirement</key>
-			<string>identifier "com.apple.dt.runtime.swiftSwiftOnoneSupport" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
 		</dict>
 		<key>Frameworks/libswiftXPC.dylib</key>
 		<dict>
 			<key>cdhash</key>
 			<data>
-			hlLMxrGXhw1+AcFw/jH7Bnww/UU=
+			l0z+MtaLaHiCKzNF/MBD+7xb67Q=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftXPC" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -172,7 +163,7 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			QkzqDxOlrnU1R4nBeiPocDMvZWg=
+			sogDio8xtv9XB24sEvgGa0z1lfA=
 			</data>
 			<key>requirement</key>
 			<string>identifier "com.apple.dt.runtime.swiftos" and anchor apple generic and certificate leaf[subject.CN] = "Mac Developer: monsterkodi (D6XMKLSTH6)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
@@ -188,7 +179,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			7XJDQJgDPJFD2W3YSmuNBDQbOSsUe1xm+dDsJXKpcdg=
+			noPqjK+gCdxVdLnaQxhxGU+P4DeujViaDbpDIYNjQ7A=
 			</data>
 		</dict>
 	</dict>

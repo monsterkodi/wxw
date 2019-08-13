@@ -32,6 +32,7 @@ func matchProc(_ id:String) -> [procInfo]
         
         let path = app.bundleURL!.path
         
+        if contains(path, "/kachel") && !contains(id, "kachel") { continue }
         if path.hasSuffix("/mc.app") && !contains(id, "mc") { continue }
         if path.startsWith("/System/Library/CoreServices/") 
         { 
