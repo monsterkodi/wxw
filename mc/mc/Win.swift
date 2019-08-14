@@ -239,11 +239,17 @@ func launch(_ id:String)
 {
     if (!focus(id))
     {
-        klog("launch", id)
-        
+        var app = id
+        if app.startsWith("\"") && app.endsWith("\"")
+        {
+            app = String(app.dropLast().dropFirst())
+        }
+
+        klog("launch", app)
+
         let task = Process()
         task.launchPath = "/usr/bin/open"
-        task.arguments = [id]
+        task.arguments = [app]
         task.launch()
     }
 }

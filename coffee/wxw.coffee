@@ -26,11 +26,9 @@ sendCmd = (args) ->
     client.on 'error' (err) -> error JSON.stringify(err)
 
     client.connect port:54321 host:'localhost' -> 
-        # log JSON.stringify args
         client.write JSON.stringify(args)+"\n\n"
     
     require('deasync').loopWhile -> not gotData
-    # log gotData
     gotData
 
 if os.platform() == 'win32'
@@ -108,7 +106,7 @@ wxw = ->
         when 'info' 'screen' 'mouse' 'trash' 'proc'
             noon.parse out.trim()
         else
-            out
+            out.trim()
             
 wxw.exec = exec
     

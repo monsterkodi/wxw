@@ -93,7 +93,7 @@ func klog(_ args:Any...)
     {
         for arg in args
         {
-            KLOG.toString! += "\(arg)"
+            KLOG.toString! += "\(arg) "
         }
         KLOG.toString! += "\n"
     }
