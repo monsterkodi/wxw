@@ -41,7 +41,13 @@ func recvCmd()
                             }
                             else
                             {
-                                argv.append(String(item as! NSString))
+                                var arg = String(item as! NSString)
+                                if arg.startsWith("\"") && arg.endsWith("\"")
+                                {
+                                    arg = String(arg.dropLast().dropFirst())
+                                }
+                                
+                                argv.append(arg)
                             }
                         }
                         
