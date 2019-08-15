@@ -106,7 +106,7 @@ wxw = ->
         when 'info' 'screen' 'mouse' 'trash' 'proc'
             noon.parse out.trim()
         else
-            out.trim()
+            out.trim? and out.trim() or out
             
 wxw.exec = exec
     
