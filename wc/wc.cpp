@@ -597,20 +597,17 @@ HRESULT volume(char *id=NULL)
     defaultDevice->Release();
     defaultDevice = NULL;
 
-    if (id == NULL)
-    {
-        float currentVolume = 0;
-        hr = endpointVolume->GetMasterVolumeLevelScalar(&currentVolume);
-        cout << currentVolume*100 << endl;
-    }
-    else
+    if (id != NULL)
     {
         float newVolume = stoi(id)/100.0f;
         if (newVolume < 0) newVolume = 0;
         if (newVolume > 1) newVolume = 1;
         hr = endpointVolume->SetMasterVolumeLevelScalar((float)newVolume, NULL);
     }
-  
+	float currentVolume = 0;
+	hr = endpointVolume->GetMasterVolumeLevelScalar(&currentVolume);
+	cout << currentVolume * 100 << endl;
+
     endpointVolume->Release();
     CoUninitialize();
     

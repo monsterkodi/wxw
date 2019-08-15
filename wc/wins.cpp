@@ -19,8 +19,16 @@ bool matchWin(HWND hWnd, DWORD pid, wchar_t* path, const wchar_t* title, char* i
 {
     if (!id) return false;
     
+	if (!contains(id, "kachel"))
+	{
+		if (endsWith(path, "kachel.exe"))
+		{
+			return false;
+		}
+	}
+
     if (cmp(id, "all"))
-    {
+    {	
         return true;
     }
     else if (cmp(id, "normal") || cmp(id, "minimized") || cmp(id, "maximized"))

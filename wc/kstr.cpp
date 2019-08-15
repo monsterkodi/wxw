@@ -35,27 +35,6 @@ int cmp(const string& a,  const string& b)  { return a.compare(b) == 0; }
 int cmp(const wstring& a, const char*    b) { return cmp(a, s2w(b)); }
 int cmp(const char*    a, const char*    b) { return _strcmpi(a, b) == 0; }
 
-//  0000000   0000000   000   000  000000000   0000000   000  000   000   0000000  
-// 000       000   000  0000  000     000     000   000  000  0000  000  000       
-// 000       000   000  000 0 000     000     000000000  000  000 0 000  0000000   
-// 000       000   000  000  0000     000     000   000  000  000  0000       000  
-//  0000000   0000000   000   000     000     000   000  000  000   000  0000000   
-
-bool contains(const wstring& str, const wstring& sub)
-{
-    return str.find(sub) != wstring::npos;
-}
-
-bool contains(const string& str, const string& sub)
-{
-    return str.find(sub) != string::npos;
-}
-
-bool matchPath(const string& a, const string& b)
-{
-    return cmp(slash(a),slash(b));
-}
-
 // 000       0000000   000   000  00000000  00000000   
 // 000      000   000  000 0 000  000       000   000  
 // 000      000   000  000000000  0000000   0000000    
@@ -64,9 +43,46 @@ bool matchPath(const string& a, const string& b)
 
 string lower(const string& in)
 {
-    string out(in);
-    transform(out.begin(), out.end(), out.begin(), [](unsigned char c) { return tolower(c); });
-    return out;
+	string out(in);
+	transform(out.begin(), out.end(), out.begin(), ::tolower);
+	return out;
+}
+
+wstring lower(const wstring& in)
+{
+	wstring out(in);
+	transform(out.begin(), out.end(), out.begin(), ::tolower);
+	return out;
+}
+
+//  0000000   0000000   000   000  000000000   0000000   000  000   000   0000000  
+// 000       000   000  0000  000     000     000   000  000  0000  000  000       
+// 000       000   000  000 0 000     000     000000000  000  000 0 000  0000000   
+// 000       000   000  000  0000     000     000   000  000  000  0000       000  
+//  0000000   0000000   000   000     000     000   000  000  000   000  0000000   
+
+bool contains(const wstring& str, const wstring& sub)
+{
+    return lower(str).find(lower(sub)) != wstring::npos;
+}
+
+bool contains(const string& str, const string& sub)
+{
+    return lower(str).find(lower(sub)) != string::npos;
+}
+
+bool matchPath(const string& a, const string& b)
+{
+    return cmp(slash(a),slash(b));
+}
+
+bool endsWith(const wstring& str, const  string& suffix)
+{
+	if (str.length() >= suffix.length()) 
+	{
+		return (0 == str.compare(str.length() - suffix.length(), suffix.length(), lower(s2w(suffix))));
+	}
+	return false;
 }
 
 // 00000000   00000000  00000000   000       0000000    0000000  00000000  

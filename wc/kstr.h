@@ -23,6 +23,7 @@ int cmp(const char*    a, const char*    b);
 bool contains(const wstring& str, const wstring& sub);
 bool contains(const  string& str, const  string& sub);
 bool matchPath(const string& a,   const  string& b);
+bool endsWith(const wstring& str, const  string& suffix);
 
 string itos(unsigned __int64 i, int radix=10);
 string replace(const string& original, const string& from, const string& to);
