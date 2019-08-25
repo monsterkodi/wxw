@@ -187,7 +187,7 @@ void initHook(const char* id)
             }
             else
             {
-                Sleep(5);
+                Sleep(2);
             }
         }
                 
