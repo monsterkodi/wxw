@@ -159,8 +159,10 @@ string procPath(DWORD pid)
 
 	if (QueryFullProcessImageNameA(hProcess, 0, path, &pathSize))
 	{
+		CloseHandle(hProcess);
         return slash(path);
 	}
+	CloseHandle(hProcess);
 	return string("");
 }
 

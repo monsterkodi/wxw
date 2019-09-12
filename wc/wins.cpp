@@ -102,6 +102,8 @@ static BOOL CALLBACK matchCB(HWND hWnd, LPARAM param)
             wins->push_back(hWnd);
         }
     }
+
+	CloseHandle(hProcess);
     return true;
 }
 
@@ -165,6 +167,7 @@ winfo winInfo(HWND hWnd)
     sprintf_s(swnd, "%llx", (unsigned __int64)hWnd);
     
     wRect wr = winRect(hWnd);
-        
+       
+	CloseHandle(hProcess);
     return { procPath(pid), title, swnd, pid, wr.x, wr.y, wr.width, wr.height, zindex, status };
 }
