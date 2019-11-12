@@ -73,8 +73,7 @@ bool saveBitmap(HBITMAP hbitmap, const char* targetfile)
 
 HBITMAP iconToBitmap(HICON hIcon, int x, int y)
 {
-    HDC hDC = GetDC(0);
-    HDC hMemDC = CreateCompatibleDC(hDC);
+    HDC hMemDC = CreateCompatibleDC(NULL);
 
     VOID* pvBits;
     BITMAPINFO bmi;
@@ -89,15 +88,13 @@ HBITMAP iconToBitmap(HICON hIcon, int x, int y)
     bmi.bmiHeader.biSizeImage = x * y * 4;
 
     HBITMAP hBitmap;
-    if (hBitmap = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0))
+    if (hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0x0))
     { 
-        HGDIOBJ hOrgBMP = SelectObject(hMemDC, hBitmap);
+        SelectObject(hMemDC, hBitmap);
         DrawIconEx(hMemDC, 0, 0, hIcon, x, y, 0, NULL, DI_NORMAL);
-        SelectObject(hMemDC, hOrgBMP);
     }
 
     DeleteDC(hMemDC);
-    ReleaseDC(NULL, hDC);
     return hBitmap;
 }
 
