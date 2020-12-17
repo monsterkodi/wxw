@@ -12,24 +12,6 @@ kstr    = require 'kstr'
 noon    = require 'noon'
 slash   = require 'kslash'
 childp  = require 'child_process'
-udp     = require './udp'
-net     = require 'net'
-
-useSend = false
-sendCmd = (args) ->
-    
-    gotData = null
-    
-    client = new net.Socket()
-    
-    client.on 'data' (data) -> gotData = data.toString('utf8')
-    client.on 'error' (err) -> error JSON.stringify(err)
-
-    client.connect port:54321 host:'localhost' -> 
-        client.write JSON.stringify(args)+"\n\n"
-    
-    require('deasync').loopWhile -> not gotData
-    gotData
 
 if os.platform() == 'win32'
     wcexe = slash.unslash slash.resolve slash.join __dirname, '..' 'bin' 'wc.exe'
@@ -80,26 +62,21 @@ exec = (argv...) ->
                 
         argv[0] = cmd
                       
-        if useSend and os.platform() == 'darwin' and cmd not in ['hook']
-            return sendCmd argv
+        if cmd in ['launch' 'raise' 'focus' 'hook']
+            return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true, detached:true
         else
-            # log 'spawn' cmd
-            if cmd in ['launch' 'raise' 'focus' 'hook']
-                return childp.spawn "\"#{wcexe}\"", argv, encoding:'utf8' shell:true, detached:true
-            else
-                args = (kstr(s) for s in argv).join " "
-                outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
-                
-                if cmd == 'quit' and not outp.startsWith 'terminated'
-                    return quit argv.slice 1
-                
-                return outp
+            args = (kstr(s) for s in argv).join " "
+            outp = childp.execSync "\"#{wcexe}\" #{args}" encoding:'utf8' shell:true
+            
+            if cmd == 'quit' and not outp.startsWith 'terminated'
+                return quit argv.slice 1
+            
+            return outp
     catch err
         return ''
     
 wxw = ->
  
-    useSend = true
     out = exec.apply null, [].slice.call arguments, 0
         
     switch kstr arguments[0]

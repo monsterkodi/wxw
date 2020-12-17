@@ -112,9 +112,9 @@ func matchWin(_ id:String) -> [winInfo]
                 {
                     wi.index = cg.index
                     
-                    if (cg.index == 0 && id == "top") 
-                    {
-                        return [wi]
+                    if (cg.index == 0 && id == "top") // doesn't work!
+                    {                                 // index of topmost is
+                        return [wi]                   // normally > 0
                     }
                 }
                 
