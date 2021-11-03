@@ -1,6 +1,6 @@
 {
   "name": "wxw",
-  "version": "1.88.0",
+  "version": "1.89.0",
   "description": "moves my windows",
   "keywords": [
     "toolkit",
@@ -24,12 +24,12 @@
   "license": "Unlicense",
   "bin": "./bin/wxw",
   "dependencies": {
-    "kslash": "^1.30.0",
+    "kslash": "^2.3.0",
     "kstr": "^0.13.0",
     "noon": "^3.1.0"
   },
   "devDependencies": {
-    "konrad": "^0.187.0",
+    "konrad": "^0.189.0",
     "sds": "^4.4.0"
   }
 }
