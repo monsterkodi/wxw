@@ -24,12 +24,12 @@
   "license": "Unlicense",
   "bin": "./bin/wxw",
   "dependencies": {
-    "kslash": "^2.3.0",
+    "kslash": "^2.4.0",
     "kstr": "^0.13.0",
     "noon": "^3.1.0"
   },
   "devDependencies": {
-    "konrad": "^0.189.0",
+    "konrad": "^0.192.0",
     "sds": "^4.4.0"
   }
 }
