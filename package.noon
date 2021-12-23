@@ -1,13 +1,12 @@
 name            wxw
-version         1.89.0
+version         1.90.0
 description     moves my windows
 keywords
                 toolkit
                 windows
                 mac
-main            js/wxw.js
 scripts
-                build  ./node_modules/.bin/konrad --build
+                build  ./node_modules/.bin/kode -Ho js kode/*.kode
 files
                 bin/wc.exe
                 bin/mc.app
@@ -15,14 +14,15 @@ files
                 bin/wxw
                 js/wxw.js
                 js/udp.js
+main            js/wxw.js
+bin             ./bin/wxw
 repository      github:monsterkodi/wxw
 author          monsterkodi
 license         Unlicense
-bin             ./bin/wxw
 dependencies
-                kslash  ^2.4.0
-                kstr    ^0.13.0
-                noon    ^3.1.0
+                kslash  monsterkodi/kslash
+                kstr    monsterkodi/kstr
+                noon    monsterkodi/noon
 devDependencies
-                konrad  ^0.191.0
-                sds     ^4.4.0
+                kode    monsterkodi/kode
+                sds     monsterkodi/sds

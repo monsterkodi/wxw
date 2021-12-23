@@ -1,35 +1,35 @@
 {
-  "name": "wxw",
-  "version": "1.89.0",
-  "description": "moves my windows",
-  "keywords": [
-    "toolkit",
-    "windows",
-    "mac"
-  ],
-  "main": "js/wxw.js",
-  "scripts": {
-    "build": "./node_modules/.bin/konrad --build"
-  },
-  "files": [
-    "bin/wc.exe",
-    "bin/mc.app",
-    "bin/mc",
-    "bin/wxw",
-    "js/wxw.js",
-    "js/udp.js"
-  ],
-  "repository": "github:monsterkodi/wxw",
-  "author": "monsterkodi",
-  "license": "Unlicense",
-  "bin": "./bin/wxw",
-  "dependencies": {
-    "kslash": "^2.4.0",
-    "kstr": "^0.13.0",
-    "noon": "^3.1.0"
-  },
-  "devDependencies": {
-    "konrad": "^0.192.0",
-    "sds": "^4.4.0"
-  }
+    "name": "wxw",
+    "version": "1.90.0",
+    "description": "moves my windows",
+    "keywords": [
+        "toolkit",
+        "windows",
+        "mac"
+    ],
+    "scripts": {
+        "build": "./node_modules/.bin/kode -Ho js kode/*.kode"
+    },
+    "files": [
+        "bin/wc.exe",
+        "bin/mc.app",
+        "bin/mc",
+        "bin/wxw",
+        "js/wxw.js",
+        "js/udp.js"
+    ],
+    "main": "js/wxw.js",
+    "bin": "./bin/wxw",
+    "repository": "github:monsterkodi/wxw",
+    "author": "monsterkodi",
+    "license": "Unlicense",
+    "dependencies": {
+        "kslash": "monsterkodi/kslash",
+        "kstr": "monsterkodi/kstr",
+        "noon": "monsterkodi/noon"
+    },
+    "devDependencies": {
+        "kode": "monsterkodi/kode",
+        "sds": "monsterkodi/sds"
+    }
 }
